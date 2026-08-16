@@ -66,6 +66,18 @@ nativas ni `app.json`, alcanza con `npx expo start`.
 Si el huevo se mueve para el lado contrario al que girás, el único valor a tocar
 es `YAW_SIGN` en `src/screens/SearchScreen.tsx`.
 
+## Herramientas
+
+`herramientas/` convierte los videos de criaturas en los WebP animados que usa
+el juego. Se documenta solo en `herramientas/LEEME.md`, que además guarda las
+reglas de generación —qué color de fondo pedir y por qué— aprendidas a los
+golpes.
+
+```sh
+npm run criatura -- assets/fly11.mp4 --salida assets/criaturas/nueva.webp
+npm run fondo -- assets/prueba.mp4
+```
+
 ## Arte
 
 El arte va en `assets/eggs/` y se registra en `src/art/index.ts`. Mientras un
