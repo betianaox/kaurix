@@ -56,6 +56,28 @@ const ancho = Number(arg('ancho', 900));
 const fps = Number(arg('fps', 15));
 const calidad = Number(arg('calidad', 82));
 const umbralPedido = arg('umbral', null);
+
+/**
+ * Cuántas veces se repite. 0 es para siempre.
+ *
+ * Una animación que ocurre una sola vez —una eclosión, por ejemplo— se genera
+ * con `--loops 1`. Igual conviene que el juego sepa cuánto dura: no hay forma
+ * de que la app se entere de que una animación terminó, así que la duración que
+ * informa este script es la que le dice cuándo pasar a lo que sigue.
+ */
+const loops = Number(arg('loops', 0));
+
+/**
+ * Multiplicador de velocidad. 1.5 la deja una vez y media más rápida.
+ *
+ * Se aplica después del encuadre, para que el seguimiento del personaje siga
+ * usando los tiempos del video original y no se descoloque.
+ */
+const velocidad = Number(arg('velocidad', 1));
+
+/** Recorte de tiempo, en segundos, para sacar el arranque o la cola. */
+const desdeSeg = arg('desde', null);
+const hastaSeg = arg('hasta', null);
 const salida = arg('salida', path.join(__dirname, path.parse(input).name + '.webp'));
 fs.mkdirSync(path.dirname(salida), { recursive: true });
 
@@ -205,25 +227,52 @@ const umbral =
  */
 const TOLERANCIA = Math.max(45, Number(umbral) * MAXIMA * 1.05);
 
+/**
+ * Qué proporción de la columna más poblada tiene que tener una columna para
+ * contar como parte del personaje.
+ *
+ * Se usa para descartar lo que sale volando: los pedazos de una cáscara al
+ * eclosionar, chispas, hojas. Tomados como parte del personaje estiran la caja
+ * hasta los bordes del video y dejan al personaje diminuto en el medio. Con
+ * min/max puro no hay forma de distinguirlos.
+ */
+const RESTOS = 0.06;
+
 const cajas = [];
 for (let f = 0; f < cuadros; f++) {
-  let minX = N;
-  let minY = N;
-  let maxX = -1;
-  let maxY = -1;
+  const porColumna = new Array(N).fill(0);
+  const porFila = new Array(N).fill(0);
 
   for (let y = 0; y < N; y++) {
     for (let x = 0; x < N; x++) {
       if (dist(pixelEn(f, x, y), fondo) > TOLERANCIA) {
-        if (x < minX) minX = x;
-        if (x > maxX) maxX = x;
-        if (y < minY) minY = y;
-        if (y > maxY) maxY = y;
+        porColumna[x]++;
+        porFila[y]++;
       }
     }
   }
 
-  cajas.push(maxX >= minX ? { minX, minY, maxX, maxY } : null);
+  const rango = (cuentas) => {
+    const pico = Math.max(...cuentas);
+    if (pico === 0) return null;
+    const minimo = Math.max(1, pico * RESTOS);
+    let desde = -1;
+    let hasta = -1;
+    for (let i = 0; i < cuentas.length; i++) {
+      if (cuentas[i] >= minimo) {
+        if (desde < 0) desde = i;
+        hasta = i;
+      }
+    }
+    return desde < 0 ? null : { desde, hasta };
+  };
+
+  const rx = rango(porColumna);
+  const ry = rango(porFila);
+
+  cajas.push(
+    rx && ry ? { minX: rx.desde, maxX: rx.hasta, minY: ry.desde, maxY: ry.hasta } : null
+  );
 }
 
 const par = (v) => Math.max(2, Math.round(v / 2) * 2);
@@ -241,10 +290,14 @@ if (!flag('sin-recorte') && validas.length) {
     const maxX = Math.max(...validas.map((c) => c.maxX));
     const maxY = Math.max(...validas.map((c) => c.maxY));
 
-    const cw = par(((maxX - minX + 1 + margen * 2) / N) * W);
-    const ch = par(((maxY - minY + 1 + margen * 2) / N) * H);
-    const cx = par((Math.max(0, minX - margen) / N) * W);
-    const cy = par((Math.max(0, minY - margen) / N) * H);
+    // Se acota al tamaño del video: cuando el personaje llega hasta el borde
+    // —o algo suyo sale volando, como los pedazos de una cáscara— la caja con
+    // margen se pasa de cuadro y ffmpeg no acepta un recorte más grande que su
+    // entrada.
+    const cw = Math.min(W, par(((maxX - minX + 1 + margen * 2) / N) * W));
+    const ch = Math.min(H, par(((maxY - minY + 1 + margen * 2) / N) * H));
+    const cx = par(Math.max(0, Math.min(W - cw, ((minX - margen) / N) * W)));
+    const cy = par(Math.max(0, Math.min(H - ch, ((minY - margen) / N) * H)));
 
     filtroRecorte = `crop=${cw}:${ch}:${cx}:${cy},`;
     recorte = `fijo ${cw}x${ch}`;
@@ -304,20 +357,26 @@ if (flag('analizar')) process.exit(0);
 
 // --- conversión -------------------------------------------------------------
 
+const acelerar = velocidad !== 1 ? `setpts=PTS/${velocidad},` : '';
+const recorteTiempo = [];
+if (desdeSeg) recorteTiempo.push('-ss', String(desdeSeg));
+if (hastaSeg) recorteTiempo.push('-to', String(hastaSeg));
+
 const cadena =
-  `colorkey=${color}:${umbral}:${BLEND},${filtroRecorte}` +
+  `colorkey=${color}:${umbral}:${BLEND},${filtroRecorte}${acelerar}` +
   `scale=${ancho}:-1,fps=${fps},format=yuva420p`;
 
 execFileSync(
   FFMPEG,
   [
     '-hide_banner', '-loglevel', 'error', '-y',
+    ...recorteTiempo,
     '-i', input,
     '-vf', cadena,
     '-c:v', 'libwebp_anim',
     '-lossless', '0',
     '-q:v', String(calidad),
-    '-loop', '0',
+    '-loop', String(loops),
     salida,
   ],
   { stdio: 'inherit' }
@@ -380,6 +439,10 @@ console.log(`\nsalida:     ${salida}`);
 console.log(`tamaño:     ${anchoFinal} x ${altoFinal}`);
 console.log(`peso:       ${mb.toFixed(2)} MB`);
 console.log(`cuadros:    ${salieron} a ${fps} fps`);
+console.log(
+  `duracion:   ${Math.round((salieron / fps) * 1000)} ms` +
+    (loops === 1 ? '  (una sola vez: este número va en el juego)' : '  (en loop)')
+);
 console.log(
   sinAlfa.length
     ? `SIN ALFA:   ${sinAlfa.join(', ')} - hay que rehacerlo`

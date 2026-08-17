@@ -2,7 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 
 import { CriaturaView } from './CriaturaView';
-import type { Criatura } from '../art';
+import { adulto, type Criatura } from '../art';
 import { colors, elements, radius, spacing } from '../theme';
 
 type Props = {
@@ -31,7 +31,12 @@ export function FoundOverlay({
 
   return (
     <View style={styles.backdrop}>
-      <CriaturaView size={Math.round(width * 0.62)} criatura={criatura} />
+      <CriaturaView
+        size={Math.round(width * 0.62)}
+        pieza={adulto(criatura)}
+        nombre={criatura.nombre}
+        elemento={criatura.elemento}
+      />
 
       <View style={styles.card}>
         <Text style={styles.kicker}>{esNueva ? 'Nueva criatura' : 'La encontraste de nuevo'}</Text>

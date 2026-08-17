@@ -2,11 +2,12 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { DetectorScreen } from './src/screens/DetectorScreen';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
 import { colors } from './src/theme';
 
-type Screen = 'home' | 'buscar';
+type Screen = 'home' | 'buscar' | 'detector';
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home');
@@ -25,7 +26,13 @@ export default function App() {
       <StatusBar style="light" />
 
       {screen === 'home' ? (
-        <HomeScreen refreshKey={refreshKey} onSearch={() => setScreen('buscar')} />
+        <HomeScreen
+          refreshKey={refreshKey}
+          onSearch={() => setScreen('buscar')}
+          onDetector={() => setScreen('detector')}
+        />
+      ) : screen === 'detector' ? (
+        <DetectorScreen onBack={goHome} />
       ) : (
         <SearchScreen onBack={goHome} onSaved={goHome} />
       )}

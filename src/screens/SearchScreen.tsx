@@ -1,5 +1,6 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import * as Haptics from 'expo-haptics';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { DeviceMotion } from 'expo-sensors';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -12,7 +13,13 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import { criaturaNueva, type Criatura } from '../art';
+import {
+  adulto,
+  criaturaNueva,
+  fallosAntesDeRomper,
+  type Criatura,
+  type Pieza,
+} from '../art';
 import { CriaturaView, medida } from '../components/CriaturaView';
 import { FoundOverlay } from '../components/FoundOverlay';
 import { probeOrientation } from '../game/capabilities';
@@ -65,7 +72,52 @@ const CENTRADO = 0.16;
  */
 const ANCHO = 1.0;
 
+/**
+ * Qué tan chica se ve la criatura en su punto más lejano.
+ *
+ * La profundidad la maneja el juego y no el archivo de arte, y eso es lo que le
+ * permite reaccionar: se acerca porque la estás mirando, no porque le tocaba.
+ * Un acercamiento grabado adentro del video siempre hace lo mismo.
+ */
+const LEJOS = 0.45;
+
+/**
+ * Qué parte de la criatura tiene que verse para que se siga acercando.
+ *
+ * Si se te va de cuadro más de la mitad, retrocede. Perderla tiene precio, que
+ * es lo que hace que seguirla sea algo y no solo esperar.
+ */
+const A_LA_VISTA_MIN = 0.5;
+
+/** Cuánto se acerca por lectura del sensor si la tenés en el centro. */
+const ACERCA = 0.011;
+
+/**
+ * Cuánto se aleja por lectura si mirás para otro lado. Más lento que lo que se
+ * acerca, a propósito: perderla de vista un segundo no debería mandarla al
+ * fondo y obligar a empezar de nuevo.
+ */
+const ALEJA = 0.004;
+
+/** A partir de acá se considera que la tenés cerca. */
+const CERCA = 0.75;
+
+/** Etiqueta del bloqueo de pantalla, para soltar exactamente el que se tomó. */
+const DESPIERTO = 'kaurix-busqueda';
+
 type Engine = 'probando' | 'orientacion' | 'deriva';
+
+/**
+ * En qué momento de la secuencia está.
+ *
+ * Lo que se encuentra es el huevo, y hay que insistir: cada toque es un intento
+ * de salir que falla, hasta que uno rompe el cascarón. Recién el que sale de
+ * ahí se puede atrapar.
+ *
+ * Las criaturas que todavía no tienen esas animaciones arrancan directamente en
+ * `volando` y se atrapan de una: así las terminadas conviven con las que faltan.
+ */
+type Fase = 'huevo' | 'falla' | 'eclosion' | 'volando';
 
 type Props = {
   onBack: () => void;
@@ -85,9 +137,25 @@ export function SearchScreen({ onBack, onSaved }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
 
   const [criatura, setCriatura] = useState<Criatura | null>(null);
+  const [fase, setFase] = useState<Fase>('volando');
+  const faseRef = useRef<Fase>('volando');
+  /** Intentos fallidos que le faltan a este huevo antes de romperse. */
+  const fallosRestantes = useRef(0);
+  /** Toques dados a este huevo, solo para cambiar lo que dice el cartel. */
+  const [intentos, setIntentos] = useState(0);
   const [engine, setEngine] = useState<Engine>('probando');
   const [ready, setReady] = useState(false);
   const [offset, setOffset] = useState({ dYaw: 0, dPitch: 0 });
+  /** 0 = lo más lejos que llega, 1 = encima tuyo. */
+  const [cercania, setCercania] = useState(0);
+  const cercaniaRef = useRef(0);
+  /** Qué porción de la criatura entra en pantalla, entre 0 y 1. */
+  const visibleRef = useRef(0);
+  /**
+   * Tamaño de la criatura a distancia máxima, para poder calcular desde el
+   * sensor cuánto de ella entra en pantalla sin depender del render.
+   */
+  const tamanoRef = useRef({ width: 0, height: 0 });
   const [hallada, setHallada] = useState<{
     segundos: number;
     distintas: number;
@@ -95,6 +163,15 @@ export function SearchScreen({ onBack, onSaved }: Props) {
     esNueva: boolean;
   } | null>(null);
   const [contador, setContador] = useState({ total: 0, distintas: 0, posibles: 0 });
+  /**
+   * Qué está pasando por dentro, escrito en pantalla.
+   *
+   * Sin esto, un equipo donde no aparece la criatura no da ninguna pista: puede
+   * ser que el arte no cargue, que el motor elegido sea el equivocado o que
+   * esté dibujada fuera de cuadro. Son tres problemas distintos que se ven
+   * igual.
+   */
+  const [diagnostico, setDiagnostico] = useState('');
 
   /** Dirección de la criatura en el mundo, fijada al calibrar. */
   const target = useRef({ yaw: 0, pitch: -0.3 });
@@ -109,17 +186,99 @@ export function SearchScreen({ onBack, onSaved }: Props) {
 
   const focal = useMemo(() => width / 2 / Math.tan(FOV_H / 2), [width]);
   const size = Math.round(width * ANCHO);
-  const { width: cw, height: ch } = useMemo(
-    () => (criatura ? medida(size, criatura) : { width: size, height: size }),
-    [size, criatura]
+
+  /** Qué pieza toca dibujar según el momento de la secuencia. */
+  const pieza: Pieza | null = !criatura
+    ? null
+    : fase === 'huevo' && criatura.huevo
+      ? criatura.huevo
+      : fase === 'falla' && criatura.falla
+        ? criatura.falla
+        : fase === 'eclosion' && criatura.eclosion
+          ? criatura.eclosion
+          : adulto(criatura);
+
+  /**
+   * Lo que se va a mostrar después, montado invisible para que ya esté
+   * decodificado. Sin esto se ve un parpadeo en blanco en cada cambio.
+   */
+  const siguiente: Pieza | null = !criatura
+    ? null
+    : fase === 'eclosion'
+      ? adulto(criatura)
+      : fase === 'falla'
+        ? (criatura.huevo ?? null)
+        : fase === 'huevo'
+          ? (criatura.falla ?? criatura.eclosion ?? null)
+          : null;
+
+  const base = useMemo(
+    () => (pieza ? medida(size, pieza) : { width: size, height: size }),
+    [size, pieza]
   );
+
+  /**
+   * Cuánto de su tamaño se dibuja según la distancia.
+   *
+   * Se probó acompañarlo de bruma —lo lejano pierde contraste contra el fondo—
+   * pero sobre la imagen de la cámara no se lee como distancia sino como que la
+   * criatura es un fantasma y se ve el fondo a través de ella. Queda solo el
+   * tamaño, que además nunca baja de un mínimo cómodo de tocar.
+   */
+  const profundidad = LEJOS + (1 - LEJOS) * cercania;
+
+  const sizeVisible = Math.round(size * profundidad);
+  const cw = base.width * profundidad;
+  const ch = base.height * profundidad;
+
+  // El sensor corre fuera del render y necesita el tamaño para saber cuánto de
+  // la criatura queda dentro de la pantalla.
+  tamanoRef.current = base;
+
+  // Se puede leer directo porque el sensor hace redibujar treinta veces por
+  // segundo: el valor siempre está fresco.
+  const porcionVisible = visibleRef.current;
+
+  /**
+   * Mantiene la pantalla encendida mientras se busca.
+   *
+   * Buscar es mirar por la cámara sin tocar nada, y para Android eso es estar
+   * inactivo: apaga la pantalla en mitad de la búsqueda. Solo acá, no en toda
+   * la app, porque impedir que el teléfono se duerma gasta batería.
+   *
+   * Va protegido a propósito: es un módulo nativo, así que en una versión
+   * instalada de antes no existe y llamarlo tiraría la app abajo.
+   */
+  useEffect(() => {
+    let despierto = false;
+    try {
+      activateKeepAwakeAsync(DESPIERTO);
+      despierto = true;
+    } catch {
+      // El build instalado es anterior a este módulo. La búsqueda funciona
+      // igual, solo que la pantalla se apaga sola.
+    }
+
+    return () => {
+      if (!despierto) return;
+      try {
+        deactivateKeepAwake(DESPIERTO);
+      } catch {
+        // Nada que hacer: si no se pudo activar, tampoco hay que soltarlo.
+      }
+    };
+  }, []);
 
   // Elige qué criatura toca buscar, priorizando las que faltan.
   useEffect(() => {
     let alive = true;
     cargar().then((hallazgos) => {
       if (!alive) return;
-      setCriatura(criaturaNueva(especies(hallazgos)));
+      const elegida = criaturaNueva(especies(hallazgos));
+      setCriatura(elegida);
+      cambiarFase(elegida.huevo ? 'huevo' : 'volando');
+      fallosRestantes.current = elegida.falla ? fallosAntesDeRomper() : 0;
+      setIntentos(0);
       const r = resumen(hallazgos);
       setContador({ total: r.total, distintas: r.distintas, posibles: r.posibles });
     });
@@ -171,10 +330,46 @@ export function SearchScreen({ onBack, onSaved }: Props) {
         pitch: view.current.pitch + (pitch - view.current.pitch) * SMOOTHING,
       };
 
-      setOffset({
-        dYaw: wrap(target.current.yaw - view.current.yaw),
-        dPitch: target.current.pitch - view.current.pitch,
-      });
+      const dYaw = wrap(target.current.yaw - view.current.yaw);
+      const dPitch = target.current.pitch - view.current.pitch;
+
+      /*
+       * Se acerca mientras la tengas a la vista, y más rápido si la tenés en el
+       * centro.
+       *
+       * La cuenta se hace sobre la posición en pantalla y no sobre el ángulo:
+       * el ángulo vertical depende de la inclinación con que sostenés el
+       * teléfono, así que exigir un ángulo chico ahí es una condición que casi
+       * nunca se cumple aunque la criatura se vea justo en el medio.
+       */
+      const px = width / 2 + YAW_SIGN * Math.tan(acotar(dYaw)) * focal;
+      const py = height / 2 - Math.tan(acotar(dPitch)) * focal;
+
+      // Qué porción de la criatura entra en la pantalla, medida sobre el
+      // rectángulo que ocupa al tamaño que tiene ahora.
+      const prof = LEJOS + (1 - LEJOS) * cercaniaRef.current;
+      const cw = tamanoRef.current.width * prof;
+      const chh = tamanoRef.current.height * prof;
+      const x = px - cw / 2;
+      const y = py - chh / 2;
+      const anchoVisible = Math.max(0, Math.min(width, x + cw) - Math.max(0, x));
+      const altoVisible = Math.max(0, Math.min(height, y + chh) - Math.max(0, y));
+      const porcionVisible = cw * chh > 0 ? (anchoVisible * altoVisible) / (cw * chh) : 0;
+
+      const enElCentro =
+        Math.abs(px - width / 2) / width < 0.28 && Math.abs(py - height / 2) / height < 0.24;
+
+      // Mientras pasa algo —un intento, la eclosión— la distancia se congela:
+      // no corresponde que se aleje justo en ese momento.
+      if (faseRef.current !== 'eclosion' && faseRef.current !== 'falla') {
+        const paso =
+          porcionVisible < A_LA_VISTA_MIN ? -ALEJA : enElCentro ? ACERCA : ACERCA * 0.45;
+        cercaniaRef.current = Math.max(0, Math.min(1, cercaniaRef.current + paso));
+      }
+      visibleRef.current = porcionVisible;
+
+      setOffset({ dYaw, dPitch });
+      setCercania(cercaniaRef.current);
     });
 
     if (!alive) {
@@ -187,31 +382,43 @@ export function SearchScreen({ onBack, onSaved }: Props) {
       sub?.remove();
       sub = null;
     };
-  }, [engine]);
+  }, [engine, width, height, focal]);
 
   // Motor de deriva: va y viene por la pantalla, sin sensores de por medio.
   useEffect(() => {
     if (engine !== 'deriva') return;
 
     let cancelled = false;
-    const minX = -cw * 0.1;
-    const maxX = width - cw * 0.9;
-    const minY = height * 0.1;
-    const maxY = height * 0.55;
 
-    drift.setValue({
-      x: minX + Math.random() * (maxX - minX),
-      y: minY + Math.random() * (maxY - minY),
-    });
+    /**
+     * Un punto al azar donde la criatura entre en pantalla.
+     *
+     * Se calcula en cada tramo y no una vez al empezar, porque su tamaño cambia
+     * con la distancia. Y cuando es más ancha que la pantalla —los huevos lo
+     * son a propósito, para que se lean cerca— no hay margen donde sortear
+     * nada: en ese eje va centrada. Sin ese caso, el rango queda invertido y
+     * todos los puntos caen fuera de cuadro por la izquierda.
+     */
+    const puntoAlAzar = () => {
+      const w = tamanoRef.current.width * (LEJOS + (1 - LEJOS) * cercaniaRef.current);
+      const h = tamanoRef.current.height * (LEJOS + (1 - LEJOS) * cercaniaRef.current);
+
+      const entre = (libre: number, desde: number) =>
+        desde + (libre <= 0 ? libre / 2 : Math.random() * libre);
+
+      return {
+        x: entre(width - w, 0),
+        y: entre(height * 0.75 - h, height * 0.08),
+      };
+    };
+
+    drift.setValue(puntoAlAzar());
     setReady(true);
 
     const vagar = () => {
       if (cancelled) return;
       Animated.timing(drift, {
-        toValue: {
-          x: minX + Math.random() * (maxX - minX),
-          y: minY + Math.random() * (maxY - minY),
-        },
+        toValue: puntoAlAzar(),
         duration: 2800 + Math.random() * 1600,
         easing: Easing.inOut(Easing.quad),
         useNativeDriver: true,
@@ -222,11 +429,28 @@ export function SearchScreen({ onBack, onSaved }: Props) {
 
     vagar();
 
+    // Sin sensores no hay nada que el jugador pueda hacer para llamarla, así
+    // que acá la distancia va y viene sola. Se acerca lo suficiente como para
+    // que valga la pena esperarla.
+    let destino = 0.8;
+    const profundidad = setInterval(() => {
+      if (Math.abs(cercaniaRef.current - destino) < 0.04) {
+        destino = 0.25 + Math.random() * 0.75;
+      }
+      const paso = (destino - cercaniaRef.current) * 0.04;
+      cercaniaRef.current = Math.max(0, Math.min(1, cercaniaRef.current + paso));
+      setCercania(cercaniaRef.current);
+    }, 90);
+
     return () => {
       cancelled = true;
+      clearInterval(profundidad);
       drift.stopAnimation();
     };
-  }, [engine, width, height, cw, drift]);
+    // El tamaño no va acá: cambia con la distancia varias veces por segundo, y
+    // tenerlo como dependencia reiniciaba el recorrido —y teletransportaba a la
+    // criatura— todo el tiempo. Se lee de una referencia cuando hace falta.
+  }, [engine, width, height, drift]);
 
   // La tangente se dispara cerca de los 90°, así que se acota antes de
   // proyectar: más allá de ese ángulo ya está fuera de pantalla y solo importa
@@ -236,8 +460,12 @@ export function SearchScreen({ onBack, onSaved }: Props) {
   const posX = width / 2 + YAW_SIGN * Math.tan(acotar(offset.dYaw)) * focal - cw / 2;
   const posY = height / 2 - Math.tan(acotar(offset.dPitch)) * focal - ch / 2;
 
+  // Se mide contra la pantalla, igual que el acercamiento, para que el cartel
+  // diga lo mismo que está pasando.
   const centrada =
-    ready && Math.abs(offset.dYaw) < CENTRADO && Math.abs(offset.dPitch) < CENTRADO;
+    ready &&
+    Math.abs(posX + cw / 2 - width / 2) / width < 0.28 &&
+    Math.abs(posY + ch / 2 - height / 2) / height < 0.24;
 
   /**
    * Se la ve cuando de verdad entra en la pantalla, no cuando el ángulo es
@@ -253,8 +481,46 @@ export function SearchScreen({ onBack, onSaved }: Props) {
     posY + ch * asomo < height &&
     posY + ch * (1 - asomo) > 0;
 
+  function cambiarFase(f: Fase) {
+    faseRef.current = f;
+    setFase(f);
+  }
+
   async function tocar() {
-    if (!criatura || reclamada.current) return;
+    if (!criatura) return;
+
+    // Durante la eclosión no se toca nada: está pasando algo y hay que mirarlo.
+    if (fase === 'eclosion') return;
+
+    // Durante un intento fallido tampoco: hay que esperar a que termine.
+    if (fase === 'falla') return;
+
+    if (fase === 'huevo' && criatura.eclosion) {
+      // Cada toque es un intento. Los primeros no lo logran; el jugador no sabe
+      // cuántos le van a tocar, y esa incertidumbre es la mitad de la gracia.
+      const rompe = fallosRestantes.current <= 0 || !criatura.falla;
+
+      await Haptics.impactAsync(
+        rompe ? Haptics.ImpactFeedbackStyle.Heavy : Haptics.ImpactFeedbackStyle.Light
+      );
+
+      const paso: Fase = rompe ? 'eclosion' : 'falla';
+      const animacion = rompe ? criatura.eclosion : criatura.falla!;
+      if (!rompe) fallosRestantes.current -= 1;
+      setIntentos((n) => n + 1);
+
+      cambiarFase(paso);
+
+      // La única forma de saber que una animación terminó es saber cuánto dura:
+      // el componente de imagen no avisa nada. Ese número lo produce el script
+      // de conversión, así que es exacto y no una estimación.
+      setTimeout(() => {
+        if (faseRef.current === paso) cambiarFase(rompe ? 'volando' : 'huevo');
+      }, animacion.duracion);
+      return;
+    }
+
+    if (reclamada.current) return;
     reclamada.current = true;
 
     const segundos = Math.round((Date.now() - startedAt.current) / 1000);
@@ -275,10 +541,16 @@ export function SearchScreen({ onBack, onSaved }: Props) {
 
   async function seguir() {
     const hallazgos = await cargar();
-    setCriatura(criaturaNueva(especies(hallazgos)));
+    const elegida = criaturaNueva(especies(hallazgos));
+    setCriatura(elegida);
+    cambiarFase(elegida.huevo ? 'huevo' : 'volando');
+    fallosRestantes.current = elegida.falla ? fallosAntesDeRomper() : 0;
     calibrated.current = false;
     reclamada.current = false;
+    cercaniaRef.current = 0;
     startedAt.current = Date.now();
+    setIntentos(0);
+    setCercania(0);
     setHallada(null);
     setReady(engine === 'deriva');
   }
@@ -299,7 +571,7 @@ export function SearchScreen({ onBack, onSaved }: Props) {
     <View style={styles.root}>
       <CameraView style={StyleSheet.absoluteFill} facing="back" />
 
-      {criatura && !hallada ? (
+      {criatura && pieza && !hallada ? (
         engine === 'deriva' ? (
           <Animated.View
             style={[
@@ -309,7 +581,14 @@ export function SearchScreen({ onBack, onSaved }: Props) {
             ]}
           >
             <Pressable onPress={tocar} hitSlop={16}>
-              <CriaturaView size={size} criatura={criatura} />
+              <CriaturaView
+                size={sizeVisible}
+                pieza={pieza}
+                siguiente={siguiente}
+                nombre={criatura.nombre}
+                elemento={criatura.elemento}
+                onFallo={(m) => setDiagnostico(`arte falló: ${m}`)}
+              />
             </Pressable>
           </Animated.View>
         ) : (
@@ -322,7 +601,14 @@ export function SearchScreen({ onBack, onSaved }: Props) {
             style={[styles.criatura, { left: posX, top: posY, opacity: ready ? 1 : 0 }]}
             hitSlop={16}
           >
-            <CriaturaView size={size} criatura={criatura} />
+            <CriaturaView
+              size={sizeVisible}
+              pieza={pieza}
+              siguiente={siguiente}
+              nombre={criatura.nombre}
+              elemento={criatura.elemento}
+              onFallo={(m) => setDiagnostico(`arte falló: ${m}`)}
+            />
           </Pressable>
         )
       ) : null}
@@ -334,7 +620,21 @@ export function SearchScreen({ onBack, onSaved }: Props) {
         </View>
 
         <Text style={styles.hint}>
-          {pista(engine, ready, aLaVista, centrada, offset.dYaw)}
+          {pista(
+            engine,
+            fase,
+            ready,
+            aLaVista,
+            centrada,
+            cercania,
+            cercania > 0.02 && porcionVisible < A_LA_VISTA_MIN,
+            intentos,
+            offset.dYaw
+          )}
+        </Text>
+
+        <Text style={styles.diagnostico}>
+          {`motor ${engine} · fase ${fase} · toques ${intentos} · ${criatura ? criatura.id : 'sin criatura'} · ${Math.round(cw)}x${Math.round(ch)} en (${Math.round(posX)}, ${Math.round(posY)}) · pantalla ${Math.round(width)}x${Math.round(height)} · cercanía ${Math.round(cercania * 100)}% · a la vista ${Math.round(porcionVisible * 100)}%${diagnostico ? ` · ${diagnostico}` : ''}`}
         </Text>
 
         {engine === 'orientacion' && ready && !aLaVista ? (
@@ -374,19 +674,44 @@ export function SearchScreen({ onBack, onSaved }: Props) {
 
 function pista(
   engine: Engine,
+  fase: Fase,
   ready: boolean,
   aLaVista: boolean,
   centrada: boolean,
+  cercania: number,
+  alejandose: boolean,
+  /** Cuántos toques lleva dados en este huevo. */
+  intentos: number,
   dYaw: number
 ): string {
   if (engine === 'probando') return 'Preparando la búsqueda…';
-  if (engine === 'deriva') return 'Anda cerca. Tocala cuando la veas.';
+  if (fase === 'falla') return 'Algo se mueve adentro…';
+  if (fase === 'eclosion') return 'Está naciendo…';
+
+  const cerca =
+    fase === 'huevo'
+      ? intentos > 0
+        ? 'Insistí, tocalo de nuevo.'
+        : 'Ahí está. Tocá el huevo.'
+      : 'Ahí está. Tocala.';
+  const lejos = fase === 'huevo' ? 'Anda cerca, esperá que se acerque.' : 'Esperá que se acerque.';
+
+  if (engine === 'deriva') return cercania > CERCA ? cerca : lejos;
   if (!ready) return 'Levantá el teléfono y movelo despacio…';
-  if (centrada) return 'Ahí está. Tocala.';
+
+  if (centrada) {
+    // La mecánica se enseña sola: si el aviso dice que se está acercando
+    // mientras la criatura crece, no hace falta explicar nada.
+    if (cercania > CERCA) return cerca;
+    return 'No lo pierdas de vista, se está acercando…';
+  }
+
+  if (alejandose) return 'Se te está yendo… traela al centro';
+
   // Entre "no se ve" y "está en el centro" hace falta un escalón: si el aviso
   // salta directo a "ahí está" apenas asoma por el borde, se deja de girar
   // justo cuando estaba por entrar entera.
-  if (aLaVista) return 'Ahí viene… seguí girando';
+  if (aLaVista) return 'Ahí viene… centrala';
   return dYaw * YAW_SIGN > 0 ? 'Girá hacia la derecha →' : '← Girá hacia la izquierda';
 }
 
@@ -449,6 +774,15 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   hintSmall: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },
+  diagnostico: {
+    color: colors.textFaint,
+    fontSize: 11,
+    textAlign: 'center',
+    backgroundColor: 'rgba(11, 10, 18, 0.6)',
+    paddingHorizontal: spacing.xs,
+    borderRadius: radius.sm,
+    overflow: 'hidden',
+  },
 
   bottomBar: {
     position: 'absolute',

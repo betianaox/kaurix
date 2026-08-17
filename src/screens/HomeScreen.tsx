@@ -8,10 +8,11 @@ import { colors, elements, radius, spacing } from '../theme';
 
 type Props = {
   onSearch: () => void;
+  onDetector: () => void;
   refreshKey: number;
 };
 
-export function HomeScreen({ onSearch, refreshKey }: Props) {
+export function HomeScreen({ onSearch, onDetector, refreshKey }: Props) {
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
   const [, requestPermission] = useCameraPermissions();
 
@@ -36,7 +37,7 @@ export function HomeScreen({ onSearch, refreshKey }: Props) {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Kaurix</Text>
-        <Text style={styles.subtitle}>Encontrá las criaturas</Text>
+        <Text style={styles.subtitle}>Demo — búsqueda y eclosión</Text>
       </View>
 
       <View style={styles.marcador}>
@@ -45,9 +46,9 @@ export function HomeScreen({ onSearch, refreshKey }: Props) {
           <Text style={styles.deTotal}>de {r.posibles}</Text>
           <Text style={styles.marcadorSub}>
             {completo
-              ? 'Las encontraste todas'
+              ? 'Las criaste a todas'
               : r.distintas === 0
-                ? 'Todavía no encontraste ninguna'
+                ? 'Todavía no criaste ninguna'
                 : `Te faltan ${r.posibles - r.distintas}`}
           </Text>
         </View>
@@ -55,39 +56,49 @@ export function HomeScreen({ onSearch, refreshKey }: Props) {
 
       <Pressable style={styles.boton} onPress={empezar}>
         <Text style={styles.botonTexto}>
-          {completo ? 'Buscar de nuevo' : r.distintas === 0 ? 'Empezar a buscar' : 'Seguir buscando'}
+          {completo ? 'Buscar de nuevo' : r.distintas === 0 ? 'Buscar un huevo' : 'Buscar otro huevo'}
         </Text>
       </Pressable>
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Colección</Text>
 
-        {criaturas.map((c) => {
-          const encontrada = halladas.includes(c.id);
-          const veces = hallazgos.filter((h) => h.criatura === c.id).length;
-          const el = elements[c.elemento];
+        <View style={styles.grilla}>
+          {criaturas.map((c) => {
+            const encontrada = halladas.includes(c.id);
+            const veces = hallazgos.filter((h) => h.criatura === c.id).length;
+            const el = elements[c.elemento];
 
-          return (
-            <View key={c.id} style={styles.fila}>
+            return (
               <View
+                key={c.id}
                 style={[
-                  styles.punto,
-                  { backgroundColor: encontrada ? el.color : 'transparent', borderColor: el.color },
+                  styles.casilla,
+                  encontrada
+                    ? { borderColor: el.color, backgroundColor: `${el.glow}22` }
+                    : styles.casillaVacia,
                 ]}
-              />
-              <Text style={[styles.filaNombre, !encontrada && styles.filaOculta]}>
-                {encontrada ? c.nombre : '· · ·'}
-              </Text>
-              {veces > 1 ? <Text style={styles.veces}>×{veces}</Text> : null}
-            </View>
-          );
-        })}
+              >
+                <Text
+                  style={[
+                    styles.casillaNombre,
+                    { color: encontrada ? el.color : colors.textFaint },
+                  ]}
+                  numberOfLines={2}
+                >
+                  {encontrada ? c.nombre : '· · ·'}
+                </Text>
+                {veces > 1 ? <Text style={styles.veces}>×{veces}</Text> : null}
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       {hallazgos.length > 0 ? (
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Marcas</Text>
-          <Text style={styles.dato}>{r.total} hallazgos en total</Text>
+          <Text style={styles.dato}>{r.total} criaturas nacidas en total</Text>
           {r.mejorTiempo !== null ? (
             <Text style={styles.dato}>La más rápida: {r.mejorTiempo} s</Text>
           ) : null}
@@ -103,6 +114,18 @@ export function HomeScreen({ onSearch, refreshKey }: Props) {
           </Pressable>
         </View>
       ) : null}
+
+      <Pressable style={styles.secundario} onPress={onDetector}>
+        <Text style={styles.secundarioTexto}>Probar reconocimiento de imágenes</Text>
+        <Text style={styles.secundarioNota}>
+          Banco de pruebas: apuntá a algo y mirá qué reconoce
+        </Text>
+      </Pressable>
+
+      <Text style={styles.footer}>
+        Corre en cualquier Android con cámara. Los sensores mejoran la búsqueda, pero ninguno
+        hace falta.
+      </Text>
     </ScrollView>
   );
 }
@@ -118,7 +141,7 @@ const styles = StyleSheet.create({
 
   header: { gap: spacing.xs, marginBottom: spacing.sm },
   title: { color: colors.text, fontSize: 40, letterSpacing: 3 },
-  subtitle: { color: colors.textMuted, fontSize: 16 },
+  subtitle: { color: colors.textMuted, fontSize: 16, lineHeight: 22 },
 
   marcador: {
     flexDirection: 'row',
@@ -153,13 +176,40 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: colors.textMuted, fontSize: 14, letterSpacing: 1 },
 
-  fila: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  punto: { width: 12, height: 12, borderRadius: 6, borderWidth: 1.5 },
-  filaNombre: { color: colors.text, fontSize: 16, flexShrink: 1 },
-  filaOculta: { color: colors.textFaint, letterSpacing: 3 },
-  veces: { color: colors.textFaint, fontSize: 14 },
+  grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  casilla: {
+    width: '47%',
+    flexGrow: 1,
+    minHeight: 62,
+    borderWidth: 1,
+    borderRadius: radius.md,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    justifyContent: 'center',
+    gap: 2,
+  },
+  casillaVacia: { borderColor: colors.border, borderStyle: 'dashed' },
+  casillaNombre: { fontSize: 15, lineHeight: 20 },
+  veces: { color: colors.textFaint, fontSize: 13 },
 
   dato: { color: colors.textMuted, fontSize: 15, lineHeight: 21 },
   limpiar: { alignSelf: 'flex-start', marginTop: spacing.xs, paddingVertical: spacing.xs },
   limpiarTexto: { color: colors.textFaint, fontSize: 14 },
+
+  secundario: {
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    padding: spacing.md,
+    gap: spacing.xs,
+  },
+  secundarioTexto: { color: colors.text, fontSize: 16 },
+  secundarioNota: { color: colors.textFaint, fontSize: 13, lineHeight: 19 },
+
+  footer: {
+    color: colors.textFaint,
+    fontSize: 13,
+    lineHeight: 20,
+    marginTop: spacing.sm,
+  },
 });
