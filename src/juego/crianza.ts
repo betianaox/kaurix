@@ -1,0 +1,151 @@
+import type { EnCrianza } from './guardado';
+
+/**
+ * Las reglas de la crianza: cuánto avanza la barra, cuánto baja sola, y cuándo
+ * la criatura está lista para volverse adulta.
+ *
+ * Son funciones puras sobre el estado guardado. No tocan almacenamiento ni
+ * pantallas, así que se pueden probar y ajustar sin abrir el juego.
+ */
+
+/**
+ * Cuántas criaturas se pueden criar a la vez.
+ *
+ * En desarrollo no hay tope: probar la crianza con tres criaturas cuando hay
+ * ocho para ver obliga a terminar una para mirar la siguiente. En la app
+ * instalada son tres, que es lo que evita que se junten las ocho y el juego se
+ * convierta en administrar una lista.
+ */
+export const MAX_CRIANZA = __DEV__ ? 8 : 3;
+
+/**
+ * Tramos de la barra de evolución: uno por nivel de preparación.
+ *
+ * La transición de arte es una sola —bebé a adulto—, pero si la barra se
+ * llenara con una sola comida el juego duraría dos minutos.
+ *
+ * Son tres y no cinco porque tres es lo que hay: las preparaciones tienen tres
+ * niveles, y cada tramo pide uno. Con cinco tramos la dificultad subía sin un
+ * motivo que se pudiera explicar; así, subir de tramo es literalmente pasar al
+ * nivel siguiente de cocina, y la escalera de la barra y la de las recetas son
+ * la misma cosa.
+ */
+export const TRAMOS = 3;
+
+/**
+ * Cuánto tiempo puede pasar sin atención antes de que la barra empiece a bajar.
+ *
+ * Dos días, no unas horas. Alguien que se fue el fin de semana no hizo nada
+ * malo.
+ */
+export const GRACIA_HORAS = 48;
+
+/**
+ * Cuánto se pierde por día, medido en tramos, una vez pasada la gracia.
+ *
+ * Medio tramo por día: se nota, pero volver después de una semana no significa
+ * encontrar la barra en cero.
+ */
+export const CAIDA_POR_DIA = 0.5;
+
+const HORA = 1000 * 60 * 60;
+
+/**
+ * Aplica el tiempo que pasó desde la última atención.
+ *
+ * **Nunca baja del último tramo completo.** Se pierde lo avanzado dentro del
+ * tramo actual y nada más: quien vuelve encuentra daño, pero también un lugar
+ * donde pararse. La versión sin este piso es la que hace que la gente le tenga
+ * miedo a los Tamagotchi y desinstale en vez de retomar.
+ *
+ * No modifica lo que recibe: devuelve el estado nuevo.
+ */
+export function conElTiempo(c: EnCrianza, inmune: boolean, ahora = Date.now()): EnCrianza {
+  if (inmune) return c;
+
+  const horas = (ahora - new Date(c.ultimaAtencion).getTime()) / HORA;
+  const sinAtencion = horas - GRACIA_HORAS;
+  if (!(sinAtencion > 0)) return c;
+
+  const perdido = (sinAtencion / 24) * CAIDA_POR_DIA;
+  const avance = Math.max(0, c.avance - perdido);
+  if (avance === c.avance) return c;
+
+  return { ...c, avance };
+}
+
+/**
+ * Cuánto falta para que empiece a perder, en horas. Negativo si ya está
+ * perdiendo. Es lo que ordena la lista de avisos: es lo único que tiene reloj.
+ */
+export function horasHastaPerder(c: EnCrianza, ahora = Date.now()): number {
+  const horas = (ahora - new Date(c.ultimaAtencion).getTime()) / HORA;
+  return GRACIA_HORAS - horas;
+}
+
+/** La barra entera, de 0 a 1, para dibujarla de un saque. */
+export function progreso(c: EnCrianza): number {
+  return Math.min(1, (c.tramo + c.avance) / TRAMOS);
+}
+
+/**
+ * **Los tramos se comen en orden.**
+ *
+ * Una criatura solo acepta lo que pide el tramo en curso. Puede pasar —y está
+ * bien que pase— que un tramo de más adelante ya esté cubierto mientras al de
+ * ahora le falta algo: los pedidos son independientes, y para armar una
+ * preparación de nivel 2 hay que armar antes *una* de nivel 1, no
+ * necesariamente las que este bicho pide.
+ *
+ * Eso es stock guardado, no un permiso para saltear. Si se pudiera adelantar, la
+ * escalera de tres tramos dejaría de ser una escalera.
+ */
+
+/**
+ * Le da de comer: suma avance y sube de tramo si se llenó.
+ *
+ * El sobrante **no** pasa al tramo siguiente. Cada tramo pide su propia
+ * preparación, y dejar que una comida muy buena empuje dos tramos de una haría
+ * que la receta difícil del tramo cuatro se saltee sola.
+ */
+export function alimentar(c: EnCrianza, cuanto: number, ahora = Date.now()): EnCrianza {
+  const ultimaAtencion = new Date(ahora).toISOString();
+  const lleno = c.avance + cuanto >= 1;
+
+  if (!lleno) return { ...c, avance: c.avance + cuanto, ultimaAtencion };
+
+  // El último tramo se completa pero no desborda: de ahí en adelante lo que
+  // falta es la poción, no más comida.
+  const tramo = Math.min(TRAMOS, c.tramo + 1);
+  return { ...c, tramo, avance: 0, ultimaAtencion };
+}
+
+/** Le da la poción que habilita el salto final. */
+export function darPocion(c: EnCrianza, ahora = Date.now()): EnCrianza {
+  return { ...c, pocion: true, ultimaAtencion: new Date(ahora).toISOString() };
+}
+
+/**
+ * Está listo para volverse adulto: la barra llena **y** la poción tomada.
+ *
+ * Son dos cosas distintas a propósito. La comida llena la barra; la poción es lo
+ * que abre la puerta. Si las dos hicieran lo mismo, tener dos sistemas de
+ * combinación sería el mismo sistema escrito dos veces.
+ */
+export function listoParaAdulto(c: EnCrianza): boolean {
+  return c.tramo >= TRAMOS && c.pocion;
+}
+
+/** El estado con que arranca una criatura recién salida del cascarón. */
+export function recienNacida(criatura: string, ahora = Date.now()): EnCrianza {
+  const iso = new Date(ahora).toISOString();
+  return {
+    criatura,
+    tramo: 0,
+    avance: 0,
+    entregado: {},
+    ultimaAtencion: iso,
+    pocion: false,
+    desde: iso,
+  };
+}

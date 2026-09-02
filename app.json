@@ -25,7 +25,21 @@
           "cameraPermission": "Kaurix necesita la cámara para que encuentres huevos y objetos en el mundo real."
         }
       ],
-      "./plugins/withAnimatedWebp"
-    ]
+      "./plugins/withAnimatedWebp",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "light"
+        }
+      ],
+      "expo-localization"
+    ],
+    "extra": {
+      "expo-navigation-bar": {
+        "enforceContrast": false,
+        "style": "light"
+      }
+    }
   }
 }

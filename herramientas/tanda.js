@@ -9,7 +9,7 @@
  *   eggNN   el huevo en reposo, en loop
  *   failNN  el intento de salir que no lo logra, una sola vez
  *   eclNN   la eclosión, una sola vez
- *   flyNN   el adulto volando, en loop
+ *   flyNN   el bebé flotando, en loop (lo que sale del cascarón)
  *
  * Las dos animaciones de un solo pase se generan al doble de velocidad: son
  * momentos de acción y a velocidad normal se hacen largos, además de pesar el
@@ -41,7 +41,7 @@ const PIEZAS = [
     sufijo: 'eclosion',
     opciones: ['--loops', '1', '--velocidad', '2', '--sin-seguimiento'],
   },
-  { prefijo: 'fly', sufijo: 'adulto', opciones: [] },
+  { prefijo: 'fly', sufijo: 'bebe', opciones: [] },
 ];
 
 const COMUNES = ['--ancho', '700', '--fps', '12', '--calidad', '80'];
@@ -89,14 +89,13 @@ console.log('\n\n// ---- para src/art/index.ts ----\n');
 
 for (const c of resultados) {
   const p = c.piezas;
-  if (!p.adulto) continue;
+  if (!p.bebe) continue;
 
   console.log(`  {
     id: 'criatura-${c.id}',
     nombre: 'Criatura ${c.id}',
     elemento: 'agua',
-    arte: require('../../assets/criaturas/${c.id}-adulto.webp'),
-    escala: ${p.adulto.escala},${
+    bebe: { arte: require('../../assets/criaturas/${c.id}-bebe.webp'), escala: ${p.bebe.escala} },${
       p.huevo
         ? `
     huevo: {

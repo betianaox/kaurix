@@ -92,13 +92,13 @@ export function CriaturaView({
 }
 
 /**
- * La escala de referencia: la criatura adulta más ancha del juego.
+ * La escala de referencia: el bebé más ancho del juego.
  *
- * Es la que ocupa el tamaño pedido; el resto se dibuja en proporción a lo que
- * medían en sus videos originales. Se toma de los adultos y no de todas las
+ * Es el que ocupa el tamaño pedido; el resto se dibuja en proporción a lo que
+ * medían en sus videos originales. Se toma de los bebés y no de todas las
  * piezas para que sumar un huevo grande no encoja a todas las criaturas.
  */
-const ESCALA_MAYOR = Math.max(...criaturas.map((c) => c.escala));
+const ESCALA_MAYOR = Math.max(...criaturas.map((c) => c.bebe.escala));
 
 /** Ancho y alto que va a ocupar, para poder centrarla en pantalla. */
 export function medida(size: number, pieza: Pieza) {

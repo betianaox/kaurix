@@ -27,6 +27,30 @@ export const colors = {
   accent: '#B08CD9',
 } as const;
 
+/**
+ * El material del header y el footer.
+ *
+ * La estructura viene de Oráculos —plataforma central, tres capas, borde que no
+ * se tiñe— pero el material es otro: ahí es chapa y luz fría, acá es hueso y
+ * cáscara con el brillo cálido. Es lo que evita que se lean como la misma app.
+ *
+ * El borde queda igual las ocho vueltas y solo el relleno toma el color del
+ * nivel. Sin esa separación, cambiar de color ocho veces desarma el armazón.
+ */
+export const armazon = {
+  /** Degradé del cuerpo, de arriba hacia abajo. */
+  materialAlto: '#3A3227',
+  materialMedio: '#2E271E',
+  materialBajo: '#3F3629',
+
+  /** El borde iluminado. Cálido, con el destello al centro. */
+  borde: '#E8C88A',
+  bordeDestello: '#FFF3D8',
+
+  /** Cuánto del color del nivel entra en el relleno. */
+  tinte: 0.2,
+} as const;
+
 /** Los cuatro elementos. Definen la estética del mago y de lo que encuentra. */
 export const elements = {
   aire: { label: 'Aire', color: '#9FC7E8', glow: '#5C8FB8' },
