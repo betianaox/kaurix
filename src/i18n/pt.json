@@ -52,8 +52,9 @@
     "tocaloParaQuedartelo": "Toque para ficar com ele",
     "juntar": "Pegar {ingrediente}",
     "sinCriaturas": "Não sobrou nenhuma criatura para encontrar nesta volta.",
-    "lleno": "Você está criando {maximo} criaturas, todas as que dá ao mesmo tempo. Termine alguma para que apareçam ovos de novo.",
-    "salir": "Sair"
+    "salir": "Sair",
+    "juntaste": "Você pegou: {ingrediente}",
+    "igualBusca": "Continue procurando ingredientes."
   },
   "inventario": {
     "titulo": "BOLSA",
@@ -298,5 +299,13 @@
   },
   "ajustes": {
     "idioma": "IDIOMA"
+  },
+  "ruleta": {
+    "girar": "Toque para girar. Um giro grátis por dia.",
+    "conVideo": "Assista a um vídeo para girar de novo.",
+    "cerrar": "Fechar",
+    "salio": "{bicho} cresce em dobro por 3 horas.",
+    "abrir": "Abrir a roleta",
+    "otraVez": "Gire de novo: este não conta."
   }
 }

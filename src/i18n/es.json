@@ -52,8 +52,9 @@
     "tocaloParaQuedartelo": "Tócalo para quedártelo",
     "juntar": "Recoger {ingrediente}",
     "sinCriaturas": "No queda ninguna criatura por encontrar en esta vuelta.",
-    "lleno": "Estás criando {maximo} criaturas, que son todas las que se pueden a la vez. Termina con alguna para que aparezcan huevos otra vez.",
-    "salir": "Salir"
+    "salir": "Salir",
+    "juntaste": "Juntaste: {ingrediente}",
+    "igualBusca": "Sigue buscando ingredientes igual."
   },
   "inventario": {
     "titulo": "MORRAL",
@@ -298,5 +299,13 @@
   },
   "ajustes": {
     "idioma": "IDIOMA"
+  },
+  "ruleta": {
+    "girar": "Toca para girar. Un giro gratis por día.",
+    "conVideo": "Mira un video para volver a girar.",
+    "cerrar": "Cerrar",
+    "salio": "{bicho} crece al doble por 3 horas.",
+    "abrir": "Abrir la ruleta",
+    "otraVez": "Vuelve a girar: este no cuenta."
   }
 }

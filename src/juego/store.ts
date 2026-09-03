@@ -5,6 +5,8 @@ import { NIVELES, TUTORIAL } from './datos';
 import { avanceDe, faltanDe, menuDe, pocionDe, tramoCompleto, type Pedido } from './menu';
 import { cuanto, saleDe, type Mezcla } from './caldero';
 import type { CodigoIdioma } from '../i18n/idiomas';
+import type { Region } from '../i18n/region';
+import { multiplicadorDe, nuevoImpulso, puedeGirarGratis } from './ruleta';
 import { recetaPorId, type Receta } from './recetas';
 import { ingredientePorId } from './ingredientes';
 import {
@@ -67,6 +69,26 @@ type Estado = {
    * teléfono no vuelve a opinar.
    */
   setIdioma: (idioma: CodigoIdioma) => void;
+  /**
+   * Cambia de qué región se usan los nombres.
+   *
+   * Existe porque la detección puede errar y porque hay a quien simplemente le
+   * gusta más otra forma. Elegida a mano, gana sobre cualquier señal del
+   * teléfono y no se vuelve a preguntar.
+   */
+  setRegion: (region: Region) => void;
+  /**
+   * Gira la ruleta y deja impulsada a la criatura que salga.
+   *
+   * Quien llama decide en qué cae —la animación tiene que terminar donde el
+   * dibujo se detuvo, no donde el store hubiera sorteado por su cuenta— y acá
+   * solo se anota el resultado.
+   *
+   * `gratis` distingue el giro diario del que se paga con un video: el diario
+   * consume el del día, el del video no. Sin esa distinción, mirar un anuncio
+   * te gastaría el giro gratis de mañana.
+   */
+  girar: (criatura: string, gratis: boolean) => void;
 
   /** Suma lo encontrado con la cámara. */
   sumarIngrediente: (id: string, cantidad?: number) => void;
@@ -161,7 +183,13 @@ export const useJuego = create<Estado>((set, get) => {
         const bolsa = esPocion ? j.inventario.pociones : j.inventario.comidas;
         if ((bolsa[receta] ?? 0) <= 0) return j;
 
-        const entregado = { ...c.entregado, [receta]: (c.entregado[receta] ?? 0) + 1 };
+        // EL IMPULSO DE LA RULETA ENTRA ACA. Una entrega cuenta por dos
+        // mientras dura, así que el tramo que pedía cuatro preparaciones se
+        // llena con dos. Multiplicar lo entregado y no el avance es lo que hace
+        // que se propague solo: `avanceDe` y `tramoCompleto` leen esto mismo,
+        // y la pantalla muestra el salto sin enterarse de que hubo un impulso.
+        const cuenta = multiplicadorDe(j.impulso, criatura);
+        const entregado = { ...c.entregado, [receta]: (c.entregado[receta] ?? 0) + cuenta };
         const completo = tramoCompleto(pedidos, entregado);
         const ahora = new Date().toISOString();
 
@@ -268,6 +296,24 @@ export const useJuego = create<Estado>((set, get) => {
       return sale;
     },
 
+    setRegion(region) {
+      aplicar((j) => ({ ...j, region }));
+    },
+    girar(criatura, gratis) {
+      aplicar((j) => {
+        // El giro gratis solo si de verdad queda uno: la pantalla ya lo
+        // controla, pero el store no puede confiar en que se lo pregunten.
+        if (gratis && !puedeGirarGratis(j.ultimoGiro)) return j;
+        const ahora = Date.now();
+        return {
+          ...j,
+          // UN IMPULSO PISA AL OTRO. Si se sumaran, diez videos dejarían a los
+          // bichos al doble para siempre y el sistema dejaría de significar algo.
+          impulso: nuevoImpulso(criatura, ahora),
+          ultimoGiro: gratis ? new Date(ahora).toISOString() : j.ultimoGiro,
+        };
+      });
+    },
     setIdioma(idioma) {
       aplicar((j) => ({ ...j, idioma }));
     },

@@ -5,6 +5,8 @@ import {
   idiomaDelDispositivo,
   type CodigoIdioma,
 } from '../i18n/idiomas';
+import { esRegionSoportada, regionDelDispositivo, type Region } from '../i18n/region';
+import type { Impulso } from './ruleta';
 
 /**
  * Todo lo que el juego recuerda, en un solo objeto.
@@ -76,6 +78,26 @@ export type Guardado = {
    * cada arranque.
    */
   idioma: CodigoIdioma;
+  /**
+   * De qué región se usan los nombres: palta o aguacate, choclo o elote.
+   *
+   * Se guarda por el mismo motivo que el idioma, y además por uno propio: la
+   * detección es una apuesta —zona horaria, región, moneda— y puede errar. Si
+   * alguien la corrige a mano, esa corrección tiene que sobrevivir al próximo
+   * arranque, o la app se la vuelve a pisar cada vez.
+   */
+  region: Region;
+  /**
+   * Cuándo se giró la ruleta por última vez, en ISO.
+   *
+   * Se guarda el momento y no un "ya giré hoy" porque un booleano habría que
+   * limpiarlo, y limpiarlo obliga a saber cuándo empieza el día: con la fecha
+   * guardada, la pregunta se contesta comparando contra hoy y no hay nada que
+   * mantener.
+   */
+  ultimoGiro: string | null;
+  /** La criatura impulsada y hasta cuándo. Hay una sola a la vez. */
+  impulso: Impulso | null;
   /** La vuelta en curso, de 1 a `NIVELES`. Define color y costos. */
   nivel: number;
   crianza: EnCrianza[];
@@ -99,6 +121,9 @@ export function partidaNueva(): Guardado {
   return {
     version: VERSION,
     idioma: idiomaDelDispositivo(),
+    region: regionDelDispositivo(),
+    ultimoGiro: null,
+    impulso: null,
     nivel: 1,
     crianza: [],
     completadas: [],
@@ -165,6 +190,13 @@ function completar(j: Guardado): Guardado {
     // Una partida anterior a los idiomas no tiene ninguno elegido, así que se
     // resuelve como si fuera la primera vez: mirando el teléfono.
     idioma: j.idioma && esIdiomaSoportado(j.idioma) ? j.idioma : idiomaDelDispositivo(),
+    // Igual que el idioma: una partida anterior a las regiones no tiene
+    // ninguna, y se resuelve como si fuera la primera vez.
+    region: j.region && esRegionSoportada(j.region) ? j.region : regionDelDispositivo(),
+    // Una partida anterior a la ruleta no tiene nada de esto, y no hace falta
+    // inventarle nada: sin giro previo, el primero es gratis.
+    ultimoGiro: j.ultimoGiro ?? null,
+    impulso: j.impulso ?? null,
     crianza: (j.crianza ?? []).map((c) => ({ ...c, entregado: c.entregado ?? {} })),
     completadas: j.completadas ?? [],
     cartas: j.cartas ?? [],

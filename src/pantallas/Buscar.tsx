@@ -20,7 +20,6 @@ import { useIngredientes } from '../buscar/useIngredientes';
 import { CriaturaView, medida } from '../components/CriaturaView';
 import { hayLugar, useJuego } from '../juego/store';
 import { colorDeNivel, criaturaABuscar, fallosAntesDeRomper } from '../juego/datos';
-import { MAX_CRIANZA } from '../juego/crianza';
 import type { Rutas } from '../navegacion/rutas';
 import { colors, radius, spacing } from '../theme';
 
@@ -52,7 +51,11 @@ type Fase = 'huevo' | 'falla' | 'eclosion' | 'nacido';
  * ingrediente chico se lee como un icono de interfaz. Grande se lee como una
  * cosa que está ahí.
  */
-const HALLAZGO = 148;
+const HALLAZGO = 160;
+
+/** Cuanto se queda el aviso de lo que juntaste, y cuanto tarda en irse. */
+const AVISO_VISIBLE_MS = 3000;
+const AVISO_FUNDIDO_MS = 600;
 
 /** Ancho de la criatura como proporción del ancho de pantalla. */
 const ANCHO = 1.0;
@@ -75,6 +78,42 @@ export function BuscarScreen({ navigation }: Props) {
   const [diagnostico, setDiagnostico] = useState('');
   /** Lo último que se juntó, para poder decirlo sin abrir el morral. */
   const [ultimo, setUltimo] = useState<string | null>(null);
+
+  /**
+   * EL AVISO DE LO QUE JUNTASTE SE VA SOLO.
+   *
+   * Antes se quedaba hasta que juntabas otra cosa, y eso lo volvia un cartel
+   * fijo: a los dos minutos decia algo que habias agarrado hace rato y ya no
+   * mirabas. Un aviso que no se va deja de ser un aviso.
+   *
+   * Tres segundos alcanzan para leer un nombre y confirmar que el toque hizo
+   * algo, que es todo lo que tiene que hacer. Despues se desvanece.
+   *
+   * Se apaga con opacidad y no desmontando el texto: si desapareciera de golpe,
+   * el pie de pantalla daria un salto. Por eso `ultimo` sigue en su lugar
+   * mientras el aviso se apaga, y solo se limpia al final.
+   */
+  const avisoOpacidad = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!ultimo) return;
+
+    avisoOpacidad.setValue(1);
+    const animacion = Animated.timing(avisoOpacidad, {
+      toValue: 0,
+      duration: AVISO_FUNDIDO_MS,
+      delay: AVISO_VISIBLE_MS,
+      useNativeDriver: true,
+    });
+    animacion.start(({ finished }) => {
+      if (finished) setUltimo(null);
+    });
+
+    // Si juntas otra cosa antes de que termine, esta animacion se corta y
+    // arranca la nueva desde opacidad 1. Sin esto, la de antes seguiria
+    // corriendo y apagaria el aviso recien aparecido.
+    return () => animacion.stop();
+  }, [ultimo, avisoOpacidad]);
 
   const lleno = !hayLugar(juego);
   const tinte = colorDeNivel(juego.nivel);
@@ -262,10 +301,16 @@ export function BuscarScreen({ navigation }: Props) {
           // lector de pantalla para saber qué hay ahí.
           accessibilityLabel={t('buscar.juntar', { ingrediente: t(`ingredientes.${h.ingrediente.id}`) })}
         >
-          {/* La sombra de contacto: es lo que hace que la cosa se lea apoyada
-              sobre lo que haya abajo en vez de pegada sobre la imagen. */}
+          {/* LA SOMBRA DE CONTACTO: es lo que hace que la cosa se lea apoyada
+              sobre lo que haya abajo en vez de pegada sobre la imagen.
+
+              Es angosta y suave a proposito. Antes era mas ancha (72% del
+              objeto) y mas oscura, y a ese tamaño no se leia como sombra sino
+              como una mancha gris debajo. Una sombra de contacto real es mas
+              chica que el objeto y se desvanece rapido: lo que la vende es que
+              este pegada al punto donde algo toca el piso, no que sea grande. */}
           <View style={estilos.apoyo} pointerEvents="none">
-            <Apoyo ancho={HALLAZGO * 0.72 * h.escala} />
+            <Apoyo ancho={HALLAZGO * 0.54 * h.escala} fuerza={0.2} />
           </View>
 
           <Image
@@ -286,21 +331,50 @@ export function BuscarScreen({ navigation }: Props) {
           <Text style={estilos.salirTexto}>{t('buscar.salir')}</Text>
         </Pressable>
 
+        {/* EL PIE TIENE EL ALTO RESERVADO, no el que necesite en cada momento.
+            La pista de arriba —"se siente algo cerca"— es lo que se mira mientras
+            se busca, y si el renglón de abajo aparece y desaparece, la pista sube
+            y baja con él. Un texto que se mueve solo mientras lo estás leyendo se
+            lee peor que uno mal escrito.
+
+            Por eso los dos renglones de abajo ocupan su lugar SIEMPRE, con o sin
+            texto adentro. Cuesta unos píxeles de pantalla y a cambio nada se
+            mueve nunca. */}
         <View style={estilos.pie}>
-          <Text style={estilos.pista}>
+          <Text style={estilos.pista} numberOfLines={2}>
             {criatura
               ? pista(fase, aparicion.aLaVista, aparicion.centrada, t)
-              : lleno
-                ? t('buscar.lleno', { maximo: MAX_CRIANZA })
+              : // ESTAR AL TOPE NO SE ANUNCIA. Antes decia "estas criando 8
+                // criaturas, que son todas las que se pueden a la vez", y eso
+                // convierte un limite del juego en un problema de la persona:
+                // le pide que vaya a resolver algo a otra pantalla justo cuando
+                // vino a buscar. Que no aparezcan huevos alcanza, y abajo sigue
+                // la invitacion a juntar ingredientes, que es lo que si puede
+                // hacer ahora.
+                //
+                // El limite en si no cambia: `lleno` sigue frenando la
+                // aparicion mas arriba. Lo que se saca es el cartel.
+                lleno
+                ? ''
                 : t('buscar.sinCriaturas')}
           </Text>
-          {!criatura ? (
-            <Text style={estilos.aparte}>Seguí buscando ingredientes igual.</Text>
-          ) : null}
-          {/* Lo último que juntaste, para no tener que abrir el morral a
-              confirmar que el toque hizo algo. */}
-          {ultimo ? <Text style={estilos.aparte}>Juntaste: {ultimo}</Text> : null}
-          {diagnostico ? <Text style={estilos.diagnostico}>{diagnostico}</Text> : null}
+
+          {/* El renglón de lo que juntaste. Reservado aunque esté vacío: ese es
+              el punto. Se va solo a los tres segundos (ver `avisoOpacidad`). */}
+          <View style={estilos.renglon}>
+            {ultimo ? (
+              <Animated.Text style={[estilos.aparte, { opacity: avisoOpacidad }]}>
+                {t('buscar.juntaste', { ingrediente: ultimo })}
+              </Animated.Text>
+            ) : null}
+          </View>
+
+          {/* Y el de la aclaración de cuando no hay criatura, igual de reservado:
+              si no, aparecer o desaparecer movería todo lo de arriba. */}
+          <View style={estilos.renglon}>
+            {!criatura ? <Text style={estilos.aparte}>{t('buscar.igualBusca')}</Text> : null}
+            {diagnostico ? <Text style={estilos.diagnostico}>{diagnostico}</Text> : null}
+          </View>
         </View>
       </View>
     </View>
@@ -374,9 +448,22 @@ const estilos = StyleSheet.create({
   salirTexto: { color: colors.text, fontSize: 15 },
 
   pie: { alignItems: 'center', gap: 6, paddingBottom: spacing.lg },
+  /**
+   * Un renglón de alto fijo, tenga texto o no.
+   *
+   * Es lo que impide que la pista de arriba se mueva cuando aparece o se va el
+   * aviso de lo que juntaste. 18 es lo que ocupa una línea de `aparte` (13 de
+   * cuerpo) con su interlineado.
+   */
+  renglon: { height: 18, justifyContent: 'center' },
   pista: {
     color: colors.text,
     fontSize: 15,
+    // Dos renglones fijos: la pista cambia de largo según lo que esté pasando,
+    // y si creciera de uno a dos empujaría todo lo de abajo.
+    height: 46,
+    lineHeight: 19,
+    textAlignVertical: 'center',
     textAlign: 'center',
     backgroundColor: 'rgba(0,0,0,0.45)',
     paddingHorizontal: spacing.md,

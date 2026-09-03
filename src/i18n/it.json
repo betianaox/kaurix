@@ -52,8 +52,9 @@
     "tocaloParaQuedartelo": "Toccalo per tenerlo",
     "juntar": "Raccogli {ingrediente}",
     "sinCriaturas": "Non è rimasta nessuna creatura da trovare in questo giro.",
-    "lleno": "Stai allevando {maximo} creature, tutte quelle possibili insieme. Finiscine una e torneranno a comparire le uova.",
-    "salir": "Esci"
+    "salir": "Esci",
+    "juntaste": "Hai raccolto: {ingrediente}",
+    "igualBusca": "Continua a cercare ingredienti."
   },
   "inventario": {
     "titulo": "SACCA",
@@ -298,5 +299,13 @@
   },
   "ajustes": {
     "idioma": "LINGUA"
+  },
+  "ruleta": {
+    "girar": "Tocca per girare. Un giro gratis al giorno.",
+    "conVideo": "Guarda un video per girare di nuovo.",
+    "cerrar": "Chiudi",
+    "salio": "{bicho} cresce il doppio per 3 ore.",
+    "abrir": "Apri la ruota",
+    "otraVez": "Gira di nuovo: questo non conta."
   }
 }

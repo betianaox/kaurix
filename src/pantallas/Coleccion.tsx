@@ -1,11 +1,28 @@
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
+import {
+  Contador,
+  GAJOS,
+  GAJO_LIBRE,
+  RuletaChica,
+  RuletaGrande,
+  bichoDelGajo,
+} from '../coleccion/Ruleta';
 import { useT } from '../i18n';
 import { criaturas } from '../art';
 import { progreso } from '../juego/crianza';
 import { COLOR_NIVEL, colorDeNivel } from '../juego/datos';
+import { comoReloj, impulsoVigente, puedeGirarGratis, restanteMs } from '../juego/ruleta';
 import { useJuego } from '../juego/store';
 import type { Rutas } from '../navegacion/rutas';
 import { Pantalla } from '../shell/Pantalla';
@@ -27,10 +44,98 @@ type Props = NativeStackScreenProps<Rutas, 'Coleccion'>;
 
 type EstadoBicho = 'sombra' | 'crianza' | 'completa';
 
+/**
+ * TRES POR TRES, CON EL CENTRO LIBRE.
+ *
+ * Eran dos columnas, y ocho criaturas en dos columnas son cuatro renglones:
+ * entraban seis y las dos últimas quedaban abajo del borde. Una colección que
+ * no se ve entera deja de sentirse como una colección — la gracia es mirar los
+ * huecos y saber cuánto falta, y para eso hay que verlas todas juntas.
+ *
+ * Ocho no llenan una grilla de tres por tres, y en vez de dejar el hueco al
+ * final va **en el medio**. Dos motivos: un renglón último de dos se lee como
+ * que falta algo, y el centro reservado es la misma forma que tiene la hoja del
+ * álbum, donde el del medio es la legendaria. La grilla se lee como un marco.
+ */
+const COLUMNAS = 3;
+
+/** Dónde va el hueco: el centro de la grilla de nueve. */
+const CENTRO = 4;
+
 export function ColeccionScreen({ navigation }: Props) {
+  const { width } = useWindowDimensions();
+  /**
+   * El ancho se calcula y no va en porcentaje.
+   *
+   * Con porcentajes y `space-between`, un renglón incompleto manda las fichas a
+   * los costados y deja un agujero donde no va. Con el ancho exacto y `gap`, cada
+   * casilla cae donde tiene que caer.
+   */
+  const lado = Math.floor((width - spacing.md * 2 - spacing.sm * (COLUMNAS - 1)) / COLUMNAS);
+
+  /**
+   * Las nueve casillas: las ocho criaturas y el hueco del medio.
+   *
+   * Si algún día son más o menos de ocho, la grilla sigue funcionando sin
+   * hueco: es una cuadrícula que se llena sola, no un dibujo a mano.
+   */
+  const casillas =
+    criaturas.length === COLUMNAS * COLUMNAS - 1
+      ? [...criaturas.slice(0, CENTRO), null, ...criaturas.slice(CENTRO)]
+      : criaturas;
+
   const juego = useJuego((e) => e.juego);
+  const girar = useJuego((e) => e.girar);
   const t = useT();
   const tinte = colorDeNivel(juego.nivel);
+
+  /**
+   * Dónde va a frenar la ruleta, y si ese giro gasta el del día.
+   *
+   * **Se sortea antes de girar, no al frenar.** La animación tiene que terminar
+   * donde el resultado ya está decidido; al revés, un redondeo puede dejar la
+   * aguja sobre un gajo y el impulso en otro, y ahí la ruleta miente.
+   */
+  const [tirada, setTirada] = useState<{ indice: number; gratis: boolean } | null>(null);
+  /** La ruleta abierta en grande. En el hueco solo vive la chiquita. */
+  const [abierta, setAbierta] = useState(false);
+
+  const gratis = puedeGirarGratis(juego.ultimoGiro);
+  const impulso = impulsoVigente(juego.impulso);
+
+  /**
+   * El reloj del impulso.
+   *
+   * Se redibuja cada segundo solo mientras hay uno vigente. Un intervalo
+   * corriendo siempre haría trabajar a la pantalla las veintitrés horas en que
+   * no hay nada que contar.
+   */
+  const [, refrescar] = useState(0);
+  useEffect(() => {
+    if (!impulso) return;
+    const id = setInterval(() => refrescar((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [impulso]);
+
+  function tirar() {
+    if (tirada) return;
+    // Mientras no haya anuncios, el regiro es directo. Cuando entre AdMob, el
+    // video se pide acá y el sorteo pasa a ser lo que se hace al terminarlo.
+    // Se sortea sobre los GAJOS del dibujo, no sobre las criaturas: el último
+    // no tiene ninguna y también puede salir.
+    setTirada({ indice: Math.floor(Math.random() * GAJOS), gratis });
+  }
+
+  function frenó() {
+    if (!tirada) return;
+    // El gajo libre no se anota en ningún lado: no da impulso y **no gasta el
+    // giro del día**, así que el botón sigue siendo el de girar gratis y se
+    // puede tirar de nuevo sin video.
+    if (tirada.indice !== GAJO_LIBRE) {
+      girar(criaturas[bichoDelGajo(tirada.indice)].id, tirada.gratis);
+    }
+    setTirada(null);
+  }
 
   return (
     <Pantalla marca seccion="coleccion">
@@ -38,7 +143,24 @@ export function ColeccionScreen({ navigation }: Props) {
         <Vueltas actual={juego.nivel} />
 
         <View style={estilos.grilla}>
-          {criaturas.map((c) => {
+          {casillas.map((c, i) => {
+            // El hueco del medio: ocupa su lugar y no dibuja nada.
+            if (!c) {
+              // La casilla se estira al alto del renglón y centra su contenido,
+              // así la ruleta queda a la altura de los dibujos de al lado y no
+              // pegada arriba, que es donde la dejaba el borde de la grilla.
+              return (
+                <View key="centro" style={[estilos.centro, { width: lado }]}>
+                  <RuletaChica
+                    lado={lado}
+                    hayGiro={gratis}
+                    onAbrir={() => setAbierta(true)}
+                    etiqueta={t('ruleta.abrir')}
+                  />
+                </View>
+              );
+            }
+
             const crianza = juego.crianza.find((x) => x.criatura === c.id);
             const estado: EstadoBicho = juego.completadas.includes(c.id)
               ? 'completa'
@@ -49,7 +171,7 @@ export function ColeccionScreen({ navigation }: Props) {
             return (
               <Pressable
                 key={c.id}
-                style={({ pressed }) => [estilos.celda, pressed && { opacity: 0.7 }]}
+                style={({ pressed }) => [estilos.celda, { width: lado }, pressed && { opacity: 0.7 }]}
                 disabled={estado !== 'crianza'}
                 onPress={() => navigation.navigate('Bicho', { criatura: c.id })}
                 accessibilityRole="button"
@@ -64,6 +186,13 @@ export function ColeccionScreen({ navigation }: Props) {
                     resizeMode="contain"
                     fadeDuration={0}
                   />
+
+                  {/* El reloj del impulso, sobre la criatura que lo tiene. Va
+                      en la ficha y no al lado de la ruleta porque lo que hay que
+                      saber no es "queda tiempo" sino "a quién le queda". */}
+                  {impulso?.criatura === c.id ? (
+                    <Contador texto={comoReloj(restanteMs(impulso))} color={tinte} />
+                  ) : null}
 
                   {estado === 'completa' ? (
                     <View style={[estilos.sello, { backgroundColor: tinte }]}>
@@ -91,6 +220,32 @@ export function ColeccionScreen({ navigation }: Props) {
           })}
         </View>
       </ScrollView>
+
+      <RuletaGrande
+        visible={abierta}
+        bichos={criaturas.map((b) => ({
+          id: b.id,
+          nombre: t(`criaturas.${b.id}`),
+          arte: juego.completadas.includes(b.id) || juego.crianza.some((x) => x.criatura === b.id)
+            ? b.quieto
+            : b.sombra,
+          tiene:
+            juego.completadas.includes(b.id) || juego.crianza.some((x) => x.criatura === b.id),
+        }))}
+        destino={tirada ? tirada.indice : null}
+        gratis={gratis}
+        tinte={tinte}
+        textos={{
+          girar: t('ruleta.girar'),
+          conVideo: t('ruleta.conVideo'),
+          cerrar: t('ruleta.cerrar'),
+          salio: t('ruleta.salio'),
+          otraVez: t('ruleta.otraVez'),
+        }}
+        onGirar={tirar}
+        onFin={frenó}
+        onCerrar={() => setAbierta(false)}
+      />
     </Pantalla>
   );
 }
@@ -130,7 +285,24 @@ function Vueltas({ actual }: { actual: number }) {
 }
 
 const estilos = StyleSheet.create({
-  hoja: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
+  /**
+   * LA GRILLA VA CENTRADA, no pegada arriba.
+   *
+   * Desde que las ocho entran sin scrollear, el contenido es mas corto que la
+   * pantalla y sobraba todo el espacio abajo. `flexGrow` hace que el contenedor
+   * ocupe el alto entero aunque su contenido no lo llene, y ahi el
+   * `justifyContent` puede repartir lo que sobra arriba y abajo por igual.
+   *
+   * Sin el `flexGrow`, el contenedor mide lo que miden las fichas y centrar no
+   * cambia nada: no hay espacio sobrante que repartir.
+   */
+  hoja: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: spacing.md,
+    paddingBottom: spacing.xl,
+    gap: spacing.md,
+  },
 
   vueltas: {
     flexDirection: 'row',
@@ -148,11 +320,20 @@ const estilos = StyleSheet.create({
     borderColor: colors.text,
   },
 
-  grilla: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  celda: { width: '48%', marginBottom: spacing.md, gap: 6 },
+  centro: { alignItems: 'center', justifyContent: 'center' },
+  grilla: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    gap: spacing.sm,
+  },
+  celda: { gap: 6 },
 
   marco: {
-    aspectRatio: 1,
+    // Mas alta que ancha. Al pasar a tres columnas la ficha cuadrada quedo
+    // chica, y como sobra alto —las tres filas entran holgadas— se lo devuelve
+    // por aca: la criatura se ve mas grande sin que la grilla deje de entrar.
+    aspectRatio: 0.85,
     borderWidth: 1,
     borderRadius: radius.md,
     backgroundColor: colors.surface,

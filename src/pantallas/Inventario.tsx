@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import { useT } from '../i18n';
+import { useT, useBuscador } from '../i18n';
 import { Caja } from '../inventario/Caja';
 import { DondeSeEncuentra } from '../inventario/DondeSeEncuentra';
 import { Receta } from '../inventario/Receta';
@@ -73,6 +73,7 @@ const COLUMNAS = 4;
 export function InventarioScreen() {
   const juego = useJuego((e) => e.juego);
   const t = useT();
+  const buscar = useBuscador();
   const tinte = colorDeNivel(juego.nivel);
   const { width } = useWindowDimensions();
 
@@ -93,16 +94,19 @@ export function InventarioScreen() {
 
   const lado = Math.floor((width - spacing.md * 2 - spacing.sm * (COLUMNAS - 1)) / COLUMNAS);
 
+  // LA BUSQUEDA ACEPTA TODOS LOS NOMBRES, no solo el que se muestra. Quien
+  // creció diciendo aguacate va a escribir "aguacate" aunque la etiqueta diga
+  // palta, y no encontrarlo parece que la cosa no existe. Ver `nombresPosibles`.
   const filtrados = useMemo(() => {
-    const q = normalizar(busqueda.trim());
+    const q = busqueda.trim();
     if (!q) return INGREDIENTES;
-    return INGREDIENTES.filter((i) => normalizar(t(`ingredientes.${i.id}`)).includes(q));
+    return INGREDIENTES.filter((i) => buscar(`ingredientes.${i.id}`, q));
   }, [busqueda]);
 
   const comidas = useMemo(() => {
-    const q = normalizar(busqueda.trim());
+    const q = busqueda.trim();
     if (!q) return COMIDAS_COMO_RECETA;
-    return COMIDAS_COMO_RECETA.filter((r) => normalizar(t(claveDe(r))).includes(q));
+    return COMIDAS_COMO_RECETA.filter((r) => buscar(claveDe(r), q));
   }, [busqueda]);
 
   /** Las pociones son pocas y se ven todas juntas: ahí no hace falta buscar. */

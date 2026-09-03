@@ -18,7 +18,7 @@ import { MINIMO, agregar, cuanto, puedenSalir, quitar, saleDe, type Mezcla } fro
 import { colorDeNivel } from '../juego/datos';
 import { INGREDIENTES, familiaDe, normalizar } from '../juego/ingredientes';
 import { RECETAS, claveDe, deClase, type Receta as TReceta } from '../juego/recetas';
-import { useT } from '../i18n';
+import { useT, useBuscador } from '../i18n';
 import { useJuego } from '../juego/store';
 import { Pantalla } from '../shell/Pantalla';
 import { colors, radius, spacing } from '../theme';
@@ -51,6 +51,7 @@ export function CocinaScreen() {
   const juego = useJuego((e) => e.juego);
   const cocinar = useJuego((e) => e.cocinar);
   const t = useT();
+  const buscar = useBuscador();
   const tinte = colorDeNivel(juego.nivel);
   const { width } = useWindowDimensions();
 
@@ -119,6 +120,7 @@ export function CocinaScreen() {
         (x, y) => Number(familiaDe(x.lugar) === 'campo') - Number(familiaDe(y.lugar) === 'campo')
       ).map((i) => ({
         id: i.id,
+        clave: `ingredientes.${i.id}`,
         nombre: t(`ingredientes.${i.id}`),
         arte: i.arte,
         nota: t('cocina.esIngrediente'),
@@ -129,13 +131,16 @@ export function CocinaScreen() {
       // segundas obliga a pasar de largo las pociones cada vez.
       ...[...deClase('comida'), ...deClase('pocion')].map((r) => ({
         id: r.id,
+        clave: claveDe(r),
         nombre: t(claveDe(r)),
         arte: r.arte,
         nota: t(r.clase === 'pocion' ? 'cocina.esPocion' : 'cocina.esComida', { nivel: r.nivel }),
       })),
     ].filter((c) => enElMorral(c.id) > 0);
 
-    return q ? cosas.filter((c) => normalizar(c.nombre).includes(q)) : cosas;
+    // Igual que en el morral: se busca por todos los nombres, no por el que
+    // esta a la vista.
+    return q ? cosas.filter((c) => buscar(c.clave, busqueda.trim())) : cosas;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [busqueda, juego.inventario]);
 

@@ -52,8 +52,9 @@
     "tocaloParaQuedartelo": "Tap it to keep it",
     "juntar": "Pick up {ingrediente}",
     "sinCriaturas": "There are no creatures left to find this round.",
-    "lleno": "You're raising {maximo} creatures, all you can have at once. Finish one and eggs will start appearing again.",
-    "salir": "Exit"
+    "salir": "Exit",
+    "juntaste": "Picked up: {ingrediente}",
+    "igualBusca": "Keep looking for ingredients anyway."
   },
   "inventario": {
     "titulo": "SATCHEL",
@@ -298,5 +299,13 @@
   },
   "ajustes": {
     "idioma": "LANGUAGE"
+  },
+  "ruleta": {
+    "girar": "Tap to spin. One free spin a day.",
+    "conVideo": "Watch a video to spin again.",
+    "cerrar": "Close",
+    "salio": "{bicho} grows twice as fast for 3 hours.",
+    "abrir": "Open the wheel",
+    "otraVez": "Spin again: this one doesn’t count."
   }
 }

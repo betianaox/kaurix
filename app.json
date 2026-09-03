@@ -1,7 +1,8 @@
 {
   "expo": {
     "name": "Kaurix",
-    "slug": "Kaurix",
+    "slug": "kaurix",
+    "owner": "imagostack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -9,14 +10,18 @@
     "backgroundColor": "#0B0A12",
     "newArchEnabled": true,
     "android": {
-      "package": "com.imago.kaurix",
+      "package": "com.imagostack.kaurix",
       "adaptiveIcon": {
         "backgroundColor": "#0B0A12",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "plugins": [
       [
@@ -33,12 +38,21 @@
           "style": "light"
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-5829308591228932~8823020495"
+        }
+      ]
     ],
     "extra": {
       "expo-navigation-bar": {
         "enforceContrast": false,
         "style": "light"
+      },
+      "eas": {
+        "projectId": "4d2be47e-1e02-4340-a6eb-ad8449ceb0c3"
       }
     }
   }
