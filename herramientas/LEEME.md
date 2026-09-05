@@ -90,3 +90,42 @@ personaje de colores nuevos. Son treinta segundos y evita rehacer el trabajo.
 
 El contador, la colección y la búsqueda salen de esa lista, así que el total se
 actualiza solo.
+
+## bichos.js
+
+```sh
+node herramientas/bichos.js
+```
+
+Separa las dos láminas de criaturas en las piezas fijas del juego, en el mismo
+orden que `src/art/index.ts`:
+
+| lámina | sale |
+|---|---|
+| `assets/bichos.png` | `NN-quieto.webp` y `NN-sombra.webp` |
+| `assets/bichos2.png` | `NN-crecido.webp` |
+
+La sombra sale del **mismo recorte** que la pose a color, que es lo que hace que
+al encontrar la criatura el color entre sin que se mueva un pixel.
+
+Las ocho de cada lámina se igualan por *tamaño visual* —ni por caja ni por
+mancha; ver `tamanoVisual` en `poses.js` para el porqué—, así que en la grilla
+se ven todas del mismo porte aunque una tenga las alas abiertas y otra no.
+
+Si el corte no da ocho piezas, se planta: seguir con siete escribiría los
+archivos corridos de criatura y eso no se ve hasta el teléfono.
+
+**Es distinto de `poses.js`**, que saca la pose de un cuadro del video. El
+cuadro de un video comprimido tiene el borde sucio y la resolución del video;
+estas láminas son el mismo personaje dibujado aparte y con alfa limpio. La pieza
+fija sale de acá, la animación sigue saliendo del video.
+
+## botones.js
+
+```sh
+node herramientas/botones.js
+```
+
+Corta `assets/boton central.png` en los cinco botones de la barra de abajo y los
+deja en `assets/ui/`. El orden de la lámina es el de la barra, de izquierda a
+derecha. El de buscar sale al doble de lado porque se dibuja al doble de tamaño.

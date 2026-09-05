@@ -5,7 +5,7 @@ import { RECETAS, porIngrediente, type Receta } from './recetas';
  *
  * Son funciones puras sobre un objeto plano: no tocan el guardado ni la
  * pantalla. La mezcla vive en la pantalla mientras se arma y **no se guarda**;
- * recién al cocinar se descuenta del morral, que es lo que hace que probar sea
+ * recién al cocinar se descuenta del bolso, que es lo que hace que probar sea
  * gratis.
  *
  * ## Por qué se tira adentro en vez de elegir la receta
@@ -13,7 +13,7 @@ import { RECETAS, porIngrediente, type Receta } from './recetas';
  * Elegir la receta primero y que se llene sola es un botón con forma de olla: la
  * decisión ya está tomada antes de tocar nada. Tirando, la decisión es el juego.
  *
- * Y no es adivinar: el morral lista las cincuenta y una recetas con lo que lleva
+ * Y no es adivinar: el bolso lista las cincuenta y una recetas con lo que lleva
  * cada una. El catálogo está para consultarlo; acá se ejecuta.
  */
 
@@ -50,6 +50,25 @@ const vacia = (m: Mezcla) => !Object.keys(m).some((k) => m[k] > 0);
  * día entra una receta de dos, esto se entera solo.
  */
 export const MINIMO = Math.min(
+  ...RECETAS.map((r) => Object.values(requisitosDe(r)).reduce((s, n) => s + n, 0))
+);
+
+/**
+ * Cuánto entra en el caldero. Más que esto no se puede tirar.
+ *
+ * **No es tres.** Tres es el `MINIMO`, y de ahí salen los lugares vacíos que
+ * muestra la cocina: lo que falta para que prender el fuego tenga sentido. El
+ * tope es otra cosa: la receta más cara del catálogo. Las pociones llevan dos
+ * unidades de cada ingrediente más una base, así que piden bastante más que
+ * tres, y un tope de tres las volvería imposibles de armar.
+ *
+ * Sale de la misma cuenta que el mínimo, con `max` en lugar de `min`: si mañana
+ * entra una receta más cara, el caldero se agranda solo.
+ *
+ * Existe para que no se pueda llenar la olla con veinte cosas: pasado el tope no
+ * hay ninguna receta que pueda salir, así que tirar más es tirar al vacío.
+ */
+export const TOPE = Math.max(
   ...RECETAS.map((r) => Object.values(requisitosDe(r)).reduce((s, n) => s + n, 0))
 );
 

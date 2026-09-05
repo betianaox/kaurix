@@ -1,9 +1,9 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '../i18n';
+import { Canto } from './Canto';
 import { armazon, colors, radius } from '../theme';
 
 /**
@@ -15,8 +15,8 @@ import { armazon, colors, radius } from '../theme';
  * que uno decide ir. Mezclar las dos cosas hace que ninguna se lea bien.
  *
  * Es una placa apoyada contra el borde de arriba, con las esquinas de afuera
- * redondeadas. Nada de siluetas ni degradés: la forma tiene que ser simple para
- * que lo que se mire sean las criaturas.
+ * redondeadas. La placa es lisa a propósito —lo que se mira son las criaturas—;
+ * el volumen está en las tres fichas, que son las mismas de la barra de abajo.
  */
 
 /**
@@ -48,50 +48,87 @@ type Props = {
    */
   pendientes: number;
   onPendientes: () => void;
-  /** El color de la vuelta en curso. Tiñe el relleno, nunca el borde. */
-  tinte: string;
+  /**
+   * Muestra la campana de avisos.
+   *
+   * En las hojas que se abren encima —la ayuda, los avisos mismos, la ficha de
+   * un bicho— no va: ahí lo único que se puede hacer es salir, y una segunda
+   * salida hacia otro lado la contradice. La campana vive en las secciones,
+   * que es de donde se sale a mirar un aviso.
+   */
+  avisos?: boolean;
 };
 
-/** El logo, para la pantalla de casa. Es blanco sobre transparencia. */
+/**
+ * El logo, para la pantalla de casa.
+ *
+ * El archivo es una silueta blanca sobre transparencia: sobre el papel claro
+ * desaparecería, así que se pinta con `tintColor` del color de la tinta. Si
+ * algún día el logo pasa a tener colores propios, hay que sacar el tinte.
+ */
 const LOGO = require('../../assets/logo.png');
 
-const ALTO = 52;
-const BOTON = 44;
+/**
+ * Las tres fichas del header, del mismo juego que las de la barra de abajo.
+ *
+ * Son dibujos y no íconos de línea por lo mismo que abajo: al lado de las
+ * criaturas, un ícono de sistema se lee como el control de otra app pegado
+ * arriba.
+ */
+const AVISOS = require('../../assets/ui/avisos.webp');
+const CERRAR = require('../../assets/ui/cerrar.webp');
+const AYUDA = require('../../assets/ui/ayuda.webp');
 
-export function Header({ titulo, marca, accion, onAccion, pendientes, onPendientes, tinte }: Props) {
+const ALTO = 74;
+const BOTON = 50;
+
+/** Diámetro de la ficha adentro del botón. */
+const FICHA = 42;
+
+export function Header({
+  titulo,
+  marca,
+  accion,
+  onAccion,
+  pendientes,
+  onPendientes,
+  avisos = true,
+}: Props) {
   const insets = useSafeAreaInsets();
   const t = useT();
 
   return (
     <View style={[estilos.placa, { paddingTop: insets.top, height: ALTO + insets.top }]}>
-      <View style={[estilos.tinte, { backgroundColor: tinte }]} pointerEvents="none" />
+      <Canto lado="arriba" />
 
       <View style={estilos.fila}>
-        <Pressable
-          onPress={onPendientes}
-          hitSlop={10}
-          style={({ pressed }) => [estilos.boton, pressed && estilos.presionado]}
-          accessibilityRole="button"
-          accessibilityLabel={
-            pendientes ? t('header.avisosPendientes', { cantidad: pendientes }) : t('header.avisos')
-          }
-        >
-          <Ionicons
-            name={pendientes ? 'notifications' : 'notifications-outline'}
-            size={22}
-            color={pendientes ? armazon.borde : colors.text}
-          />
-          {pendientes ? (
-            <View style={estilos.globo}>
-              <Text style={estilos.globoTexto}>{pendientes > 9 ? '9+' : pendientes}</Text>
-            </View>
-          ) : null}
-        </Pressable>
+        {avisos ? (
+          <Pressable
+            onPress={onPendientes}
+            hitSlop={10}
+            style={({ pressed }) => [estilos.boton, pressed && estilos.presionado]}
+            accessibilityRole="button"
+            accessibilityLabel={
+              pendientes ? t('header.avisosPendientes', { cantidad: pendientes }) : t('header.avisos')
+            }
+          >
+            <Image source={AVISOS} style={estilos.ficha} resizeMode="contain" fadeDuration={0} />
+            {pendientes ? (
+              <View style={estilos.globo}>
+                <Text style={estilos.globoTexto}>{pendientes > 9 ? '9+' : pendientes}</Text>
+              </View>
+            ) : null}
+          </Pressable>
+        ) : (
+          // El hueco de la campana, para que el título siga centrado.
+          <View style={estilos.boton} />
+        )}
 
         {marca ? (
           <Image
             source={LOGO}
             style={estilos.logo}
+            tintColor={colors.text}
             resizeMode="contain"
             accessibilityLabel={t('header.logo')}
           />
@@ -110,10 +147,11 @@ export function Header({ titulo, marca, accion, onAccion, pendientes, onPendient
           accessibilityRole="button"
           accessibilityLabel={t(accion === 'ayuda' ? 'header.ayuda' : 'header.cerrar')}
         >
-          <Ionicons
-            name={accion === 'ayuda' ? 'help-circle-outline' : 'close'}
-            size={accion === 'ayuda' ? 25 : 26}
-            color={colors.text}
+          <Image
+            source={accion === 'ayuda' ? AYUDA : CERRAR}
+            style={estilos.ficha}
+            resizeMode="contain"
+            fadeDuration={0}
           />
         </Pressable>
       </View>
@@ -122,17 +160,13 @@ export function Header({ titulo, marca, accion, onAccion, pendientes, onPendient
 }
 
 const estilos = StyleSheet.create({
+  /** El mismo plano gris que la barra de abajo. Ver `Footer` para el porqué. */
   placa: {
-    backgroundColor: colors.surface,
+    backgroundColor: armazon.plano,
     // Las esquinas de afuera: las que dan al borde de la pantalla.
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: `${armazon.borde}44`,
-    overflow: 'hidden',
   },
-  /** El color de la vuelta, muy diluido. El borde nunca se tiñe. */
-  tinte: { ...StyleSheet.absoluteFill, opacity: 0.1 },
 
   fila: {
     height: ALTO,
@@ -148,7 +182,9 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  presionado: { backgroundColor: colors.surfaceAlt },
+  presionado: { opacity: 0.55 },
+
+  ficha: { width: FICHA, height: FICHA },
 
   globo: {
     position: 'absolute',
@@ -162,11 +198,11 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  globoTexto: { color: '#2A2114', fontSize: 11, fontWeight: '700' },
+  globoTexto: { color: armazon.sobreBorde, fontSize: 11, fontWeight: '700' },
   hueco: { flex: 1 },
 
   /** Alto fijo y ancho libre: el logo es apaisado y se centra solo. */
-  logo: { flex: 1, height: 34 },
+  logo: { flex: 1, height: 42 },
 
   titulo: {
     flex: 1,

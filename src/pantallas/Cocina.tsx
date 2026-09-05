@@ -14,7 +14,16 @@ import {
 import { Caldero } from '../cocina/Caldero';
 import { otroQuemado, type Quemado } from '../cocina/quemados';
 import { Caja } from '../inventario/Caja';
-import { MINIMO, agregar, cuanto, puedenSalir, quitar, saleDe, type Mezcla } from '../juego/caldero';
+import {
+  MINIMO,
+  TOPE,
+  agregar,
+  cuanto,
+  puedenSalir,
+  quitar,
+  saleDe,
+  type Mezcla,
+} from '../juego/caldero';
 import { colorDeNivel } from '../juego/datos';
 import { INGREDIENTES, familiaDe, normalizar } from '../juego/ingredientes';
 import { RECETAS, claveDe, deClase, type Receta as TReceta } from '../juego/recetas';
@@ -28,7 +37,7 @@ import { colors, radius, spacing } from '../theme';
  *
  * ## Por qué no es una lista de recetas
  *
- * El morral ya es el catálogo: contesta **qué existe**, muestra las cincuenta y
+ * El bolso ya es el catálogo: contesta **qué existe**, muestra las cincuenta y
  * una tengas o no cada cosa, y ordena por nivel para que se vea la escalera. Una
  * cocina que liste lo que se puede armar es ese mismo mueble con otro orden, y
  * entonces no hace falta como sección.
@@ -39,7 +48,7 @@ import { colors, radius, spacing } from '../theme';
  *
  * ## Cargar es gratis, cocinar se cobra
  *
- * Meter y sacar del caldero no toca el morral: es la mesa, no la olla. Recién al
+ * Meter y sacar del caldero no toca el bolso: es la mesa, no la olla. Recién al
  * prender el fuego se gasta **todo lo que hay adentro, salga algo o no**.
  *
  * Por eso la pantalla dice antes lo que sabe —cuántas recetas siguen en carrera,
@@ -84,6 +93,15 @@ export function CocinaScreen() {
   const alcanza = cuantas >= MINIMO;
 
   /**
+   * El caldero está lleno: no entra nada más.
+   *
+   * Pasado el tope no hay receta que pueda salir, así que seguir tirando es
+   * tirar al vacío. Se frena acá y no al cocinar: enterarse de que sobraba
+   * medio bolso recién cuando ya se gastó es la peor manera de contarlo.
+   */
+  const lleno = cuantas >= TOPE;
+
+  /**
    * La olla terminó y todavía no se limpió.
    *
    * Es un estado propio y no un rato muerto entre dos: mientras dure, lo que
@@ -97,7 +115,7 @@ export function CocinaScreen() {
   const lado = Math.floor((width - spacing.md * 2 - spacing.sm * 3) / 4);
 
   /** Cuánto tenés de algo, sea ingrediente o preparación. */
-  const enElMorral = (id: string) =>
+  const enElBolso = (id: string) =>
     juego.inventario.ingredientes[id] ??
     juego.inventario.comidas[id] ??
     juego.inventario.pociones[id] ??
@@ -106,13 +124,13 @@ export function CocinaScreen() {
   /**
    * La despensa: **solo lo que tenés**.
    *
-   * Un cajón con las setenta y tres cosas que existen es el morral otra vez. Acá
+   * Un cajón con las setenta y tres cosas que existen es el bolso otra vez. Acá
    * lo único que sirve es lo que se puede levantar y tirar adentro.
    */
   const despensa = useMemo(() => {
     const q = normalizar(busqueda.trim());
     const cosas = [
-      // LOS DE COCINA PRIMERO, igual que en el morral. La lista de datos arranca
+      // LOS DE COCINA PRIMERO, igual que en el bolso. La lista de datos arranca
       // por el campo, asi que sin esto la despensa abria con hierbas y flores
       // aunque lo que se este por cocinar sea una comida. El orden adentro de
       // cada familia se mantiene: solo se adelanta un bloque entero.
@@ -136,9 +154,9 @@ export function CocinaScreen() {
         arte: r.arte,
         nota: t(r.clase === 'pocion' ? 'cocina.esPocion' : 'cocina.esComida', { nivel: r.nivel }),
       })),
-    ].filter((c) => enElMorral(c.id) > 0);
+    ].filter((c) => enElBolso(c.id) > 0);
 
-    // Igual que en el morral: se busca por todos los nombres, no por el que
+    // Igual que en el bolso: se busca por todos los nombres, no por el que
     // esta a la vista.
     return q ? cosas.filter((c) => buscar(c.clave, busqueda.trim())) : cosas;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -171,6 +189,24 @@ export function CocinaScreen() {
   /** Los renglones de adentro de la olla, uno por cosa distinta. */
   const adentro = Object.keys(mezcla).filter((id) => mezcla[id] > 0);
 
+  /**
+   * Los lugares vacíos que faltan para llegar al mínimo.
+   *
+   * El espacio de la mesa está reservado siempre —si apareciera al tirar la
+   * primera cosa, empujaría la despensa y el segundo toque caería sobre otro
+   * ingrediente—, y reservado y liso era un rectángulo de fondo vacío en el
+   * medio de la pantalla. Con los casilleros, ese mismo espacio pasa a decir
+   * algo: cuántas cosas faltan como mínimo para que prender el fuego tenga
+   * sentido.
+   *
+   * Cuenta unidades y no ingredientes distintos, igual que `MINIMO`: tres
+   * manzanas llenan la mesa tanto como tres cosas diferentes.
+   *
+   * Con algo ya salido no van: ahí la mesa muestra en qué se convirtió todo, y
+   * unos casilleros al lado leerían como que falta algo más.
+   */
+  const huecos = salio ? 0 : Math.max(0, MINIMO - cuantas);
+
   return (
     <Pantalla titulo={t('cocina.titulo')} seccion="cocina">
       <ScrollView contentContainerStyle={estilos.hoja}>
@@ -192,7 +228,7 @@ export function CocinaScreen() {
 
               Sin recuadro y sin nombre. El recuadro lo convertía en una ficha de
               inventario más, y el nombre repetía lo que el dibujo ya dice. Donde
-              importa el nombre igual está: en el morral, adonde fue a parar, y en
+              importa el nombre igual está: en el bolso, adonde fue a parar, y en
               la etiqueta que lee un lector de pantalla. */}
           {salio ? (
             <Image
@@ -225,6 +261,18 @@ export function CocinaScreen() {
               </View>
             </Pressable>
           ))}
+
+          {/* Los lugares que faltan. No son tocables: no hay nada que sacar de
+              un hueco, y hacerlos tocables invitaría a llenarlos desde acá
+              cuando lo que se toca es la despensa de abajo. */}
+          {Array.from({ length: huecos }, (_, i) => (
+            <View
+              key={`hueco-${i}`}
+              style={[estilos.hueco, { borderColor: `${tinte}55` }]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            />
+          ))}
         </View>
 
         {/* El estado del caldero, en una sola línea. */}
@@ -241,7 +289,9 @@ export function CocinaScreen() {
                 // no el anuncio de un hecho. Lo que pasó ya se ve.
                 t(claveDe(salio.receta))
               : t('cocina.quemado')
-            : !hayAlgo
+            : lleno
+              ? t('cocina.lleno')
+              : !hayAlgo
               ? t('cocina.vacia')
               : !alcanza
                 ? // Se dice qué hacer, no qué no se puede. La regla es la misma,
@@ -301,7 +351,7 @@ export function CocinaScreen() {
             <Text
               style={[
                 estilos.prenderTexto,
-                { color: sale ? '#14110C' : alcanza ? QUEMA : colors.textMuted },
+                { color: sale ? colors.sobreTinte : alcanza ? QUEMA : colors.textMuted },
               ]}
             >
               {/* Siempre "Cocinar". Lo que cambia es el color: naranja cuando no
@@ -328,12 +378,13 @@ export function CocinaScreen() {
 
         <View style={estilos.separador} />
 
-        {/* Apagada mientras se muestra el resultado, y no solo sorda: una
-            despensa que se ve igual pero no responde parece rota. Apagada se lee
-            como "ahora no", que es lo que es. */}
+        {/* Apagada mientras se muestra el resultado —y también con el caldero
+            lleno—, y no solo sorda: una despensa que se ve igual pero no
+            responde parece rota. Apagada se lee como "ahora no", que es lo que
+            es. Sacar sigue disponible: las fichas de la mesa, arriba. */}
         <View
-          pointerEvents={enResultado ? 'none' : 'auto'}
-          style={enResultado ? estilos.dormida : null}
+          pointerEvents={enResultado || lleno ? 'none' : 'auto'}
+          style={enResultado || lleno ? estilos.dormida : null}
         >
         <View style={estilos.buscador}>
           <Ionicons name="search" size={16} color={colors.textFaint} />
@@ -361,10 +412,10 @@ export function CocinaScreen() {
         {despensa.length ? (
           <View style={estilos.grilla}>
             {despensa.map((c) => {
-              // Lo que queda para agarrar: lo del morral menos lo que ya está en
+              // Lo que queda para agarrar: lo del bolso menos lo que ya está en
               // la olla. Sin restar, se puede tirar cinco veces algo que tenés
               // una sola vez y recién falla al cocinar.
-              const queda = enElMorral(c.id) - (mezcla[c.id] ?? 0);
+              const queda = enElBolso(c.id) - (mezcla[c.id] ?? 0);
               return (
                 <Caja
                   key={c.id}
@@ -374,7 +425,9 @@ export function CocinaScreen() {
                   cuantos={queda}
                   nota={c.nota}
                   lado={lado}
-                  onPress={queda > 0 ? () => setMezcla((m) => agregar(m, c.id)) : undefined}
+                  onPress={
+                    queda > 0 && !lleno ? () => setMezcla((m) => agregar(m, c.id)) : undefined
+                  }
                 />
               );
             })}
@@ -411,6 +464,17 @@ const estilos = StyleSheet.create({
     // alta y para el quemado, que es lo más grande que puede aparecer acá.
     height: 80,
   },
+  /**
+   * Un lugar vacío de la mesa. Punteado y sin relleno: se lee como un sitio
+   * donde va a ir algo, no como una ficha apagada.
+   */
+  hueco: {
+    width: 62,
+    height: 62,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+  },
   ficha: {
     width: 62,
     alignItems: 'center',
@@ -431,7 +495,7 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 4,
   },
-  fichaCuentaTexto: { color: '#14110C', fontSize: 10, fontWeight: '700' },
+  fichaCuentaTexto: { color: colors.sobreTinte, fontSize: 10, fontWeight: '700' },
 
   // Suelto y grande: es lo único que hay para ver, y la fila ya tiene el alto
   // reservado para él, así que nada de abajo se mueve.

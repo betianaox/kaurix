@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useRef, useState } from 'react';
 import { Animated, Easing, PanResponder, StyleSheet, View } from 'react-native';
+import { colors } from '../theme';
 
 /**
  * El pase de hoja.
@@ -210,6 +211,6 @@ export function Libro({ total, indice, onCambio, ancho, alto, hoja }: Props) {
 
 const estilos = StyleSheet.create({
   capa: { ...StyleSheet.absoluteFill },
-  apagon: { backgroundColor: '#000' },
+  apagon: { backgroundColor: colors.bg },
   canto: { position: 'absolute', left: -AIRE, top: 0, bottom: 0, width: AIRE },
 });

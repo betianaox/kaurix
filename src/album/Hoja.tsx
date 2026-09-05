@@ -24,8 +24,14 @@ type Props = {
   onCarta?: (casilla: Casilla, ganada: boolean) => void;
 };
 
-/** Separación entre cartas, en puntos. */
-const AIRE = 8;
+/**
+ * Separación entre cartas, en puntos.
+ *
+ * Generoso a propósito: las cartas son ilustraciones saturadas y de marco
+ * dorado, y pegadas entre sí se leen como una sola mancha de color. El aire es
+ * lo que las devuelve a ser nueve cosas distintas.
+ */
+const AIRE = 14;
 
 export function Hoja({ nivel, ganadas, ancho, alto, onCarta }: Props) {
   const t = useT();
@@ -48,7 +54,13 @@ export function Hoja({ nivel, ganadas, ancho, alto, onCarta }: Props) {
       {/* La grilla ocupa todo lo que sobra y va centrada: así la hoja queda
           equilibrada sea cual sea el alto de la pantalla. */}
       <View style={estilos.centro}>
-        <View style={[estilos.grilla, { gap: AIRE }]}>
+        {/* El ancho va calculado y no librado al `wrap`: con cartas angostas
+            —las nuevas son más altas que las del mock— en una fila entraban
+            cuatro y la hoja dejaba de ser una grilla de tres por tres, que es
+            lo que hace que la dorada caiga justo en el centro. */}
+        <View
+          style={[estilos.grilla, { gap: AIRE, width: anchoCarta * 3 + AIRE * 2 }]}
+        >
           {casillas.map((casilla) => {
             const ganada = ganadas.includes(casilla.llave);
             return (
@@ -57,7 +69,13 @@ export function Hoja({ nivel, ganadas, ancho, alto, onCarta }: Props) {
                 onPress={() => onCarta?.(casilla, ganada)}
                 style={({ pressed }) => pressed && { opacity: 0.7 }}
               >
-                <Carta casilla={casilla} nivel={nivel} ganada={ganada} ancho={anchoCarta} />
+                <Carta
+                  casilla={casilla}
+                  nivel={nivel}
+                  ganada={ganada}
+                  ancho={anchoCarta}
+                  lupa={ganada}
+                />
               </Pressable>
             );
           })}

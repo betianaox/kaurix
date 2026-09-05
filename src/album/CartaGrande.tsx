@@ -22,7 +22,10 @@ type Props = {
 export function CartaGrande({ abierta, onCerrar }: Props) {
   const t = useT();
   const { width, height } = useWindowDimensions();
-  const ancho = Math.floor(Math.min(width * 0.8, (height * 0.78) / RATIO));
+  // Lo más grande que entre dejando un respiro alrededor: la carta abierta es
+  // el momento de mirarla, y con márgenes anchos se veía apenas más grande que
+  // en la hoja, que es como no haberla abierto.
+  const ancho = Math.floor(Math.min(width * 0.92, (height * 0.88) / RATIO));
 
   return (
     <Modal
@@ -54,7 +57,7 @@ export function CartaGrande({ abierta, onCerrar }: Props) {
 const estilos = StyleSheet.create({
   fondo: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.92)',
+    backgroundColor: colors.velo,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.md,

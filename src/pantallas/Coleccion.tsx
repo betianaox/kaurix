@@ -1,5 +1,6 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Image,
   Pressable,
@@ -10,19 +11,19 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-import {
-  Contador,
-  GAJOS,
-  GAJO_LIBRE,
-  RuletaChica,
-  RuletaGrande,
-  bichoDelGajo,
-} from '../coleccion/Ruleta';
+import { Contador, GAJOS, RuletaChica, RuletaGrande } from '../coleccion/Ruleta';
 import { useT } from '../i18n';
 import { criaturas } from '../art';
 import { progreso } from '../juego/crianza';
 import { COLOR_NIVEL, colorDeNivel } from '../juego/datos';
-import { comoReloj, impulsoVigente, puedeGirarGratis, restanteMs } from '../juego/ruleta';
+import { INGREDIENTES, ingredientePorId } from '../juego/ingredientes';
+import {
+  comoReloj,
+  contenidoDeLaRuleta,
+  impulsoVigente,
+  puedeGirarGratis,
+  restanteMs,
+} from '../juego/ruleta';
 import { useJuego } from '../juego/store';
 import type { Rutas } from '../navegacion/rutas';
 import { Pantalla } from '../shell/Pantalla';
@@ -62,6 +63,10 @@ const COLUMNAS = 3;
 /** Dónde va el hueco: el centro de la grilla de nueve. */
 const CENTRO = 4;
 
+/** El aire entre ficha y ficha. Va acá porque el ancho de la ficha se calcula
+ *  con él: si los dos números se separan, la última columna se sale. */
+const HUECO = 8;
+
 export function ColeccionScreen({ navigation }: Props) {
   const { width } = useWindowDimensions();
   /**
@@ -71,7 +76,7 @@ export function ColeccionScreen({ navigation }: Props) {
    * los costados y deja un agujero donde no va. Con el ancho exacto y `gap`, cada
    * casilla cae donde tiene que caer.
    */
-  const lado = Math.floor((width - spacing.md * 2 - spacing.sm * (COLUMNAS - 1)) / COLUMNAS);
+  const lado = Math.floor((width - spacing.sm * 2 - HUECO * (COLUMNAS - 1)) / COLUMNAS);
 
   /**
    * Las nueve casillas: las ocho criaturas y el hueco del medio.
@@ -100,8 +105,31 @@ export function ColeccionScreen({ navigation }: Props) {
   /** La ruleta abierta en grande. En el hueco solo vive la chiquita. */
   const [abierta, setAbierta] = useState(false);
 
+  const cambiarRuleta = useJuego((e) => e.cambiarRuleta);
   const gratis = puedeGirarGratis(juego.ultimoGiro);
   const impulso = impulsoVigente(juego.impulso);
+
+  /**
+   * Qué hay en cada gajo hoy.
+   *
+   * Las criaturas que estás criando —hasta cuatro— y regalos en el resto. Nunca
+   * las que no encontraste todavía: un gajo con una sombra no da nada, y una
+   * rueda con cinco casillas que no dan nada no es una ruleta.
+   *
+   * Se recalcula cuando cambia el día, cuando cambia lo que estás criando o
+   * cuando pedís cambiarlo. No sale del guardado: sale de la cuenta.
+   */
+  const casillasRuleta = useMemo(
+    () =>
+      contenidoDeLaRuleta(
+        juego.crianza.map((c) => c.criatura),
+        INGREDIENTES,
+        GAJOS,
+        new Date().toDateString(),
+        juego.cambiosDeRuleta
+      ),
+    [juego.crianza, juego.cambiosDeRuleta]
+  );
 
   /**
    * El reloj del impulso.
@@ -121,19 +149,12 @@ export function ColeccionScreen({ navigation }: Props) {
     if (tirada) return;
     // Mientras no haya anuncios, el regiro es directo. Cuando entre AdMob, el
     // video se pide acá y el sorteo pasa a ser lo que se hace al terminarlo.
-    // Se sortea sobre los GAJOS del dibujo, no sobre las criaturas: el último
-    // no tiene ninguna y también puede salir.
     setTirada({ indice: Math.floor(Math.random() * GAJOS), gratis });
   }
 
   function frenó() {
     if (!tirada) return;
-    // El gajo libre no se anota en ningún lado: no da impulso y **no gasta el
-    // giro del día**, así que el botón sigue siendo el de girar gratis y se
-    // puede tirar de nuevo sin video.
-    if (tirada.indice !== GAJO_LIBRE) {
-      girar(criaturas[bichoDelGajo(tirada.indice)].id, tirada.gratis);
-    }
+    girar(casillasRuleta[tirada.indice], tirada.gratis);
     setTirada(null);
   }
 
@@ -144,19 +165,29 @@ export function ColeccionScreen({ navigation }: Props) {
 
         <View style={estilos.grilla}>
           {casillas.map((c, i) => {
-            // El hueco del medio: ocupa su lugar y no dibuja nada.
+            /**
+             * El centro de la grilla: la ruleta.
+             *
+             * Va **adentro de la misma ficha que las criaturas** —mismo marco,
+             * mismo fondo, mismo borde teñido— y no suelta sobre el papel. Antes
+             * era un disco de colores flotando en el medio de ocho fichas
+             * marfil, y se leía como algo pegado encima de la pantalla en vez de
+             * como parte de la colección.
+             *
+             * Es la misma idea que la hoja del álbum, donde el centro también es
+             * la casilla distinta: comparte la forma con sus ocho vecinas y se
+             * diferencia por lo que tiene adentro.
+             */
             if (!c) {
-              // La casilla se estira al alto del renglón y centra su contenido,
-              // así la ruleta queda a la altura de los dibujos de al lado y no
-              // pegada arriba, que es donde la dejaba el borde de la grilla.
               return (
-                <View key="centro" style={[estilos.centro, { width: lado }]}>
-                  <RuletaChica
-                    lado={lado}
-                    hayGiro={gratis}
-                    onAbrir={() => setAbierta(true)}
-                    etiqueta={t('ruleta.abrir')}
-                  />
+                <View key="centro" style={[estilos.celda, { width: lado }]}>
+                  <View style={[estilos.marco, { borderColor: `${tinte}55` }]}>
+                    <RuletaChica
+                      lado={Math.round(lado * 0.78)}
+                      onAbrir={() => setAbierta(true)}
+                      etiqueta={t('ruleta.abrir')}
+                    />
+                  </View>
                 </View>
               );
             }
@@ -172,7 +203,10 @@ export function ColeccionScreen({ navigation }: Props) {
               <Pressable
                 key={c.id}
                 style={({ pressed }) => [estilos.celda, { width: lado }, pressed && { opacity: 0.7 }]}
-                disabled={estado !== 'crianza'}
+                // La que ya está criada también abre: su ficha muestra las tres
+                // etapas. Solo la sombra no lleva a ningún lado, porque de esa
+                // todavía no hay nada que contar.
+                disabled={estado === 'sombra'}
                 onPress={() => navigation.navigate('Bicho', { criatura: c.id })}
                 accessibilityRole="button"
                 accessibilityLabel={estado === 'sombra' ? t('coleccion.sinDescubrir') : t(`criaturas.${c.id}`)}
@@ -181,8 +215,17 @@ export function ColeccionScreen({ navigation }: Props) {
                   <Image
                     // La sombra y la pose a color son el mismo cuadro, así que
                     // al encontrarla el color entra sin que nada se mueva.
-                    source={estado === 'sombra' ? c.sombra : c.quieto}
-                    style={estilos.arte}
+                    //
+                    // Y la que terminó de criarse muestra el crecido: la grilla
+                    // pasa a ser el registro de en qué se convirtió cada una, no
+                    // ocho bebés con una tilde encima.
+                    source={
+                      estado === 'sombra' ? c.sombra : estado === 'completa' ? c.crecido : c.quieto
+                    }
+                    // La sombra es negra plena: sobre el papel claro se lee
+                    // como una mancha y nueve manchas tapan a la única que ya
+                    // consiguió color. Apagada, deja adivinar la forma.
+                    style={[estilos.arte, estado === 'sombra' && estilos.apenas]}
                     resizeMode="contain"
                     fadeDuration={0}
                   />
@@ -194,25 +237,55 @@ export function ColeccionScreen({ navigation }: Props) {
                     <Contador texto={comoReloj(restanteMs(impulso))} color={tinte} />
                   ) : null}
 
+                  {/* La gema de la que ya está criada.
+
+                      Era una tilde, y una tilde es lo que se le pone a un
+                      trámite hecho: dice "listo", no "conseguiste algo". Una
+                      gema es la misma que llevan las cartas del álbum en las
+                      esquinas del marco: la criatura terminada y su figurita
+                      hablan el mismo idioma.
+
+                      Chica, y **al revés que el resto de lo que se apoya sobre
+                      una ficha**: el disco va claro y la gema encima, no un
+                      disco teñido con algo blanco adentro. Lleno de color era
+                      una mancha sobre el dibujo; vacío es una marca al margen,
+                      que es lo que tiene que ser — lo que hay que mirar es la
+                      criatura crecida, que ya ocupa la casilla entera.
+
+                      Y verde, no del color de la vuelta: ver `logrado` en el
+                      tema. */}
                   {estado === 'completa' ? (
-                    <View style={[estilos.sello, { backgroundColor: tinte }]}>
-                      <Text style={estilos.selloTexto}>✓</Text>
+                    <View style={estilos.sello}>
+                      <Ionicons name="diamond" size={16} color={colors.logrado} />
                     </View>
                   ) : null}
-                </View>
 
-                <Text style={estilos.nombre} numberOfLines={1}>
-                  {estado === 'sombra' ? t('coleccion.oculta') : t(`criaturas.${c.id}`)}
-                </Text>
+                  {/* La barra de crianza, **apoyada en el borde de abajo de la
+                      ficha**. Afuera era un renglón más por casilla: sumaba
+                      alto, obligaba a achicar el dibujo y dejaba la del medio
+                      descalzada respecto de sus vecinas. Adentro no ocupa nada
+                      propio, y el marco de la ficha le hace de riel.
 
-                <View style={estilos.barra}>
-                  {crianza ? (
-                    <View
-                      style={[
-                        estilos.barraLlena,
-                        { width: `${Math.round(progreso(crianza) * 100)}%`, backgroundColor: tinte },
-                      ]}
-                    />
+                      La muestran la que estás criando y **la que ya creció**,
+                      esa llena: una criatura terminada es una barra que llegó
+                      hasta el final, y dejarla sin barra la hacía ver como si
+                      hubiera salteado el camino. La sombra no lleva: sin nada
+                      que contar, una barra vacía es un renglón que dice cero. */}
+                  {crianza || estado === 'completa' ? (
+                    <View style={estilos.barra}>
+                      <View
+                        style={[
+                          estilos.barraLlena,
+                          {
+                            width: `${crianza ? Math.round(progreso(crianza) * 100) : 100}%`,
+                            // A media tinta, igual que la barra de la ficha: en
+                            // una grilla de ocho, tres barras a full color se
+                            // leen antes que las criaturas.
+                            backgroundColor: `${tinte}80`,
+                          },
+                        ]}
+                      />
+                    </View>
                   ) : null}
                 </View>
               </Pressable>
@@ -223,15 +296,21 @@ export function ColeccionScreen({ navigation }: Props) {
 
       <RuletaGrande
         visible={abierta}
-        bichos={criaturas.map((b) => ({
-          id: b.id,
-          nombre: t(`criaturas.${b.id}`),
-          arte: juego.completadas.includes(b.id) || juego.crianza.some((x) => x.criatura === b.id)
-            ? b.quieto
-            : b.sombra,
-          tiene:
-            juego.completadas.includes(b.id) || juego.crianza.some((x) => x.criatura === b.id),
-        }))}
+        casillas={casillasRuleta.map((c) =>
+          c.tipo === 'bicho'
+            ? {
+                clave: c.criatura,
+                nombre: t(`criaturas.${c.criatura}`),
+                arte: criaturas.find((b) => b.id === c.criatura)!.quieto,
+                cantidad: null,
+              }
+            : {
+                clave: c.ingrediente,
+                nombre: t(`ingredientes.${c.ingrediente}`),
+                arte: ingredientePorId(c.ingrediente)!.arte,
+                cantidad: c.cantidad,
+              }
+        )}
         destino={tirada ? tirada.indice : null}
         gratis={gratis}
         tinte={tinte}
@@ -239,11 +318,14 @@ export function ColeccionScreen({ navigation }: Props) {
           girar: t('ruleta.girar'),
           conVideo: t('ruleta.conVideo'),
           cerrar: t('ruleta.cerrar'),
-          salio: t('ruleta.salio'),
-          otraVez: t('ruleta.otraVez'),
+          cambiar: t('ruleta.cambiar'),
+          ganasteIngrediente: t('ruleta.ganasteIngrediente'),
+          ganasteBicho: t('ruleta.ganasteBicho'),
+          seguir: t('ruleta.seguir'),
         }}
         onGirar={tirar}
         onFin={frenó}
+        onCambiar={cambiarRuleta}
         onCerrar={() => setAbierta(false)}
       />
     </Pantalla>
@@ -257,29 +339,29 @@ export function ColeccionScreen({ navigation }: Props) {
  * mismo que un "vuelta 1 de 8" pero de un vistazo, y de paso adelanta que los
  * colores que vienen son otros: eso solo ya da ganas de llegar.
  */
+/**
+ * En qué vuelta estás.
+ *
+ * **No son puntos.** Eran ocho, uno por vuelta, y son exactamente el mismo
+ * dibujo que el paginador del álbum —que ahí sí pasa hojas—. Dos componentes
+ * idénticos que hacen cosas distintas enseñan mal: el de acá invitaba a tocarlo
+ * para cambiar de vuelta, que es lo único que no se puede hacer.
+ *
+ * Ahora es una pastilla con el color de la vuelta y el número escrito. Dice lo
+ * mismo, no se parece a nada tocable, y el color hace el trabajo que hacía el
+ * punto encendido.
+ */
 function Vueltas({ actual }: { actual: number }) {
   const t = useT();
+  const color = colorDeNivel(actual);
+  const texto = t('coleccion.vuelta', { actual, total: COLOR_NIVEL.length });
 
   return (
-    <View style={estilos.vueltas} accessibilityLabel={t('coleccion.vuelta', { actual, total: COLOR_NIVEL.length })}>
-      {COLOR_NIVEL.map((color, i) => {
-        const nivel = i + 1;
-        const esta = nivel === actual;
-        const pasada = nivel < actual;
-        return (
-          <View
-            key={nivel}
-            style={[
-              estilos.punto,
-              { backgroundColor: color },
-              esta && estilos.puntoActual,
-              // Las que faltan se ven apagadas: están ahí, pero todavía no son
-              // tuyas.
-              !esta && !pasada && { opacity: 0.28 },
-            ]}
-          />
-        );
-      })}
+    <View style={estilos.vueltas}>
+      <View style={[estilos.vuelta, { backgroundColor: `${color}22`, borderColor: `${color}55` }]}>
+        <View style={[estilos.vueltaPunto, { backgroundColor: color }]} />
+        <Text style={[estilos.vueltaTexto, { color }]}>{texto.toUpperCase()}</Text>
+      </View>
     </View>
   );
 }
@@ -299,41 +381,44 @@ const estilos = StyleSheet.create({
   hoja: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: spacing.md,
+    // Márgenes chicos a los costados: cada punto que se le saca al aire se lo
+    // gana la criatura, que es lo único que hay que mirar acá.
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.md,
     paddingBottom: spacing.xl,
     gap: spacing.md,
   },
 
-  vueltas: {
+  vueltas: { alignItems: 'center', justifyContent: 'center' },
+  /** La pastilla de la vuelta: teñida, con borde y el color adentro. */
+  vuelta: {
     flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 10,
-    height: 20,
+    gap: 7,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
   },
-  punto: { width: 9, height: 9, borderRadius: 5 },
-  puntoActual: {
-    width: 15,
-    height: 15,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: colors.text,
-  },
+  vueltaPunto: { width: 9, height: 9, borderRadius: 5 },
+  vueltaTexto: { fontSize: 11, letterSpacing: 1.6, fontWeight: '600' },
 
-  centro: { alignItems: 'center', justifyContent: 'center' },
   grilla: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-start',
-    gap: spacing.sm,
+    gap: HUECO,
   },
-  celda: { gap: 6 },
+  celda: {},
 
   marco: {
     // Mas alta que ancha. Al pasar a tres columnas la ficha cuadrada quedo
     // chica, y como sobra alto —las tres filas entran holgadas— se lo devuelve
     // por aca: la criatura se ve mas grande sin que la grilla deje de entrar.
-    aspectRatio: 0.85,
+    //
+    // Y desde que la barra de crianza vive adentro, el alto que ocupaba ese
+    // renglón vuelve al dibujo.
+    aspectRatio: 0.72,
     borderWidth: 1,
     borderRadius: radius.md,
     backgroundColor: colors.surface,
@@ -341,27 +426,47 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  arte: { width: '90%', height: '90%' },
+  /** Casi toda la caja: las piezas ya vienen con su propio aire adentro. */
+  arte: { width: '100%', height: '100%' },
+  /** Lo que todavía no encontraste: se insinúa, no se impone. */
+  apenas: { opacity: 0.24 },
 
+  /**
+   * El disco de la gema. Claro, del tamaño que tenía la tilde.
+   *
+   * Sin borde y sin sombra: probado con filo dorado y sombra propia, se
+   * despegaba de la ficha y quedaba flotando por encima del dibujo, que es
+   * exactamente lo que no tiene que hacer una marca al margen. Lo único que se
+   * ve es la gema; el disco está para que no se le pierda encima del bicho.
+   */
   sello: {
     position: 'absolute',
     top: 8,
     right: 8,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.sobreTinte,
   },
-  selloTexto: { color: '#14110C', fontSize: 13, fontWeight: '700' },
 
-  nombre: { color: colors.text, fontSize: 13, textAlign: 'center' },
-
+  /**
+   * El riel de la barra: una pastilla apoyada adentro de la ficha.
+   *
+   * Con márgenes y las puntas redondeadas, no de lado a lado contra el borde:
+   * pegada al canto se leía como una raya de la ficha misma —parte del marco— y
+   * no como algo que se llena.
+   */
   barra: {
-    height: 4,
-    borderRadius: 2,
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 8,
+    height: 7,
+    borderRadius: 4,
     backgroundColor: colors.surfaceAlt,
     overflow: 'hidden',
   },
-  barraLlena: { height: 4, borderRadius: 2 },
+  barraLlena: { height: 7, borderRadius: 4 },
 });

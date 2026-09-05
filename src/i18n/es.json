@@ -1,7 +1,7 @@
 {
   "secciones": {
     "coleccion": "Bichos",
-    "inventario": "Morral",
+    "inventario": "Bolso",
     "cocina": "Cocina",
     "album": "Álbum",
     "ayuda": "Ayuda",
@@ -20,24 +20,32 @@
   "coleccion": {
     "sinDescubrir": "Criatura sin descubrir",
     "oculta": "· · ·",
-    "vuelta": "Vuelta {actual} de {total}"
+    "vuelta": "Ciclo {actual} de {total}"
   },
   "bicho": {
     "paraCrecer": "PARA CRECER",
     "notaPocion": "Llenar la barra no alcanza: el salto a adulto lo abre la poción.",
-    "deDondeSalio": "De dónde salió",
+    "deDondeSalio": "ORIGEN",
     "volver": "Volver",
-    "queCrezca": "¡Que crezca!",
+    "queCrezca": "Crecer",
+    "yaPuedeCrecer": "¡{nombre} ya puede crecer!",
+    "ahoraNo": "ahora no",
     "dar": "Dar",
     "darA": "Dar {receta}",
     "tenes": "tienes {cantidad}",
     "entrega": "{receta}, le diste {dadas} de {piden}, tienes {guardadas}",
     "listo": "listo",
-    "podesTerminarlo": "puedes terminarlo",
     "yaLoTenes": "ya lo tienes",
-    "tramo": "Tramo {actual} de {total}",
+    "tramo": "Tramo {actual} de {total} · {porcentaje}%",
     "sinTitulo": "—",
-    "yaNoEsta": "Esta criatura ya no está en crianza."
+    "yaNoEsta": "Esta criatura ya no está en crianza.",
+    "yaCriada": "Ya creció. Ganaste una carta.",
+    "comoCrecio": "EVOLUCIÓN",
+    "etapaHuevo": "Huevo",
+    "etapaBebe": "Bebé",
+    "etapaCrecido": "Adulto",
+    "noTenes": "no tienes",
+    "verReceta": "ver receta"
   },
   "buscar": {
     "permisos": "Consultando permisos…",
@@ -51,13 +59,13 @@
     "rompiendo": "Está rompiendo el cascarón",
     "tocaloParaQuedartelo": "Tócalo para quedártelo",
     "juntar": "Recoger {ingrediente}",
-    "sinCriaturas": "No queda ninguna criatura por encontrar en esta vuelta.",
+    "sinCriaturas": "No queda ninguna criatura por encontrar en este ciclo.",
     "salir": "Salir",
     "juntaste": "Juntaste: {ingrediente}",
     "igualBusca": "Sigue buscando ingredientes igual."
   },
   "inventario": {
-    "titulo": "MORRAL",
+    "titulo": "BOLSO",
     "ingredientes": "Ingredientes",
     "comidas": "Comidas",
     "pociones": "Pociones",
@@ -95,7 +103,8 @@
     "sinResultado": "No tienes nada que se llame así.",
     "esIngrediente": "ingrediente",
     "esComida": "comida · nivel {nivel}",
-    "esPocion": "poción · nivel {nivel}"
+    "esPocion": "poción · nivel {nivel}",
+    "lleno": "El caldero está lleno. Cocina o saca algo."
   },
   "receta": {
     "lleva": "LLEVA",
@@ -304,8 +313,10 @@
     "girar": "Toca para girar. Un giro gratis por día.",
     "conVideo": "Mira un video para volver a girar.",
     "cerrar": "Cerrar",
-    "salio": "{bicho} crece al doble por 3 horas.",
     "abrir": "Abrir la ruleta",
-    "otraVez": "Vuelve a girar: este no cuenta."
+    "cambiar": "Cambiar premios",
+    "ganasteIngrediente": "¡Ganaste {cantidad} {cosa}!",
+    "ganasteBicho": "{bicho} crece {factor}x más rápido durante {horas} horas.",
+    "seguir": "Seguir"
   }
 }

@@ -20,24 +20,32 @@
   "coleccion": {
     "sinDescubrir": "Undiscovered creature",
     "oculta": "· · ·",
-    "vuelta": "Round {actual} of {total}"
+    "vuelta": "Cycle {actual} of {total}"
   },
   "bicho": {
     "paraCrecer": "TO GROW UP",
     "notaPocion": "Filling the bar isn't enough: the potion is what opens the way to adulthood.",
-    "deDondeSalio": "Where it came from",
+    "deDondeSalio": "ORIGIN",
     "volver": "Back",
-    "queCrezca": "Grow up!",
+    "queCrezca": "Grow",
+    "yaPuedeCrecer": "{nombre} is ready to grow!",
+    "ahoraNo": "not now",
     "dar": "Give",
     "darA": "Give {receta}",
     "tenes": "you have {cantidad}",
     "entrega": "{receta}, you gave {dadas} of {piden}, you have {guardadas}",
     "listo": "done",
-    "podesTerminarlo": "you can finish it",
     "yaLoTenes": "already have it",
-    "tramo": "Stage {actual} of {total}",
+    "tramo": "Stage {actual} of {total} · {porcentaje}%",
     "sinTitulo": "—",
-    "yaNoEsta": "This creature isn't being raised any more."
+    "yaNoEsta": "This creature isn't being raised any more.",
+    "yaCriada": "All grown up. You earned a card.",
+    "comoCrecio": "EVOLUTION",
+    "etapaHuevo": "Egg",
+    "etapaBebe": "Baby",
+    "etapaCrecido": "Adult",
+    "noTenes": "you have none",
+    "verReceta": "see recipe"
   },
   "buscar": {
     "permisos": "Checking permissions…",
@@ -95,7 +103,8 @@
     "sinResultado": "You don't have anything by that name.",
     "esIngrediente": "ingredient",
     "esComida": "food · level {nivel}",
-    "esPocion": "potion · level {nivel}"
+    "esPocion": "potion · level {nivel}",
+    "lleno": "The cauldron is full. Cook it or take something out."
   },
   "receta": {
     "lleva": "TAKES",
@@ -304,8 +313,10 @@
     "girar": "Tap to spin. One free spin a day.",
     "conVideo": "Watch a video to spin again.",
     "cerrar": "Close",
-    "salio": "{bicho} grows twice as fast for 3 hours.",
     "abrir": "Open the wheel",
-    "otraVez": "Spin again: this one doesn’t count."
+    "cambiar": "Change prizes",
+    "ganasteIngrediente": "You won {cantidad} {cosa}!",
+    "ganasteBicho": "{bicho} grows {factor}x faster for {horas} hours.",
+    "seguir": "Continue"
   }
 }

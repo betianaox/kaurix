@@ -6,8 +6,8 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#0B0A12",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F4EDDF",
     "newArchEnabled": true,
     "android": {
       "package": "com.imagostack.kaurix",
@@ -35,7 +35,7 @@
         "expo-navigation-bar",
         {
           "enforceContrast": false,
-          "style": "light"
+          "style": "dark"
         }
       ],
       "expo-localization",
@@ -49,7 +49,7 @@
     "extra": {
       "expo-navigation-bar": {
         "enforceContrast": false,
-        "style": "light"
+        "style": "dark"
       },
       "eas": {
         "projectId": "4d2be47e-1e02-4340-a6eb-ad8449ceb0c3"

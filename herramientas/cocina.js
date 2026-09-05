@@ -102,6 +102,80 @@ const POSTRES = [
   { id: 'pastelito-jardin', nombre: 'Pastelito del jardín', pieza: 'f07c7' },
 ];
 
+/**
+ * Borra los huecos blancos que quedaron encerrados en el dibujo.
+ *
+ * Algunas piezas traen, adentro del contorno, un pedacito del fondo de la
+ * lámina: el más claro es el triángulo entre el tallo y la hoja de la uva. Con
+ * el fondo oscuro de antes no se notaba; sobre el papel claro —y sobre todo
+ * sobre la cámara, donde atrás puede haber cualquier cosa— se lee como una
+ * mancha blanca pegada al dibujo.
+ *
+ * Se van solo los blancos **casi puros y encerrados en una mancha chica**. Esos
+ * tres requisitos juntos son lo que distingue un pedazo de fondo de un brillo
+ * pintado: un brillo tiene el tinte de lo que ilumina, degrada hacia el color
+ * de al lado, y rara vez llega a 250 pleno en un área conexa.
+ *
+ * Devuelve cuántos píxeles borró, para poder mirar de una si se comió algo que
+ * no debía.
+ */
+async function sinHuecosBlancos(buffer) {
+  const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const { width, height, channels } = info;
+
+  /** Blanco casi puro y sin tinte. */
+  const esFondo = (p) => {
+    const i = p * channels;
+    if (data[i + 3] < 120) return false;
+    const r = data[i], g = data[i + 1], b = data[i + 2];
+    return r >= 240 && g >= 240 && b >= 235 && Math.max(r, g, b) - Math.min(r, g, b) <= 20;
+  };
+
+  /** Una mancha más grande que esto es parte del dibujo, no un hueco. */
+  const TOPE = Math.round(width * height * 0.004);
+
+  const visto = new Uint8Array(width * height);
+  let borrados = 0;
+
+  for (let p = 0; p < width * height; p++) {
+    if (visto[p] || !esFondo(p)) continue;
+
+    // La mancha entera, a lo ancho: sin recursión, que con piezas grandes
+    // desborda la pila.
+    const mancha = [];
+    const cola = [p];
+    visto[p] = 1;
+    while (cola.length) {
+      const q = cola.pop();
+      mancha.push(q);
+      const x = q % width;
+      const y = (q / width) | 0;
+      const vecinos = [];
+      if (x > 0) vecinos.push(q - 1);
+      if (x < width - 1) vecinos.push(q + 1);
+      if (y > 0) vecinos.push(q - width);
+      if (y < height - 1) vecinos.push(q + width);
+      for (const v of vecinos) {
+        if (!visto[v] && esFondo(v)) {
+          visto[v] = 1;
+          cola.push(v);
+        }
+      }
+    }
+
+    if (mancha.length > TOPE) continue;
+    for (const q of mancha) {
+      data[q * channels + 3] = 0;
+      borrados++;
+    }
+  }
+
+  return {
+    borrados,
+    buffer: await sharp(data, { raw: { width, height, channels } }).png().toBuffer(),
+  };
+}
+
 async function medir(archivo) {
   const { data, info } = await sharp(archivo).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   let opacos = 0;
@@ -160,7 +234,9 @@ function pieza(id, lamina) {
 
   for (const it of medidos) {
     const lado = Math.min(Math.round(tamanoVisual(it.medida) * factor), Math.round(LADO * TOPE));
-    const ajustado = await sharp(it.archivo)
+    const limpio = await sinHuecosBlancos(fs.readFileSync(it.archivo));
+    if (limpio.borrados) console.log(`  ${it.id}: ${limpio.borrados} px de fondo encerrado`);
+    const ajustado = await sharp(limpio.buffer)
       .ensureAlpha()
       .resize(lado, lado, { fit: 'inside', background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .toBuffer();
@@ -168,7 +244,9 @@ function pieza(id, lamina) {
   }
 
   for (const it of POSTRES) {
-    const ajustado = await sharp(pieza(it.pieza))
+    const limpio = await sinHuecosBlancos(fs.readFileSync(pieza(it.pieza)));
+    if (limpio.borrados) console.log(`  ${it.id}: ${limpio.borrados} px de fondo encerrado`);
+    const ajustado = await sharp(limpio.buffer)
       .ensureAlpha()
       .resize(Math.round(LADO * 0.92), Math.round(LADO * 0.92), {
         fit: 'inside',

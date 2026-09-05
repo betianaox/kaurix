@@ -11,12 +11,16 @@ import type { EnCrianza } from './guardado';
 /**
  * Cuántas criaturas se pueden criar a la vez.
  *
- * En desarrollo no hay tope: probar la crianza con tres criaturas cuando hay
+ * En desarrollo no hay tope: probar la crianza con pocas criaturas cuando hay
  * ocho para ver obliga a terminar una para mirar la siguiente. En la app
- * instalada son tres, que es lo que evita que se junten las ocho y el juego se
- * convierta en administrar una lista.
+ * instalada son **cuatro**, que es lo que evita que se junten las ocho y el
+ * juego se convierta en administrar una lista.
+ *
+ * Cuatro y no tres porque es lo que entra en la ruleta: la rueda tiene ocho
+ * gajos y les da la mitad a las criaturas, así que el tope de acá y el de allá
+ * son el mismo número. Ver `MAX_BICHOS_EN_RULETA`.
  */
-export const MAX_CRIANZA = __DEV__ ? 8 : 3;
+export const MAX_CRIANZA = __DEV__ ? 8 : 4;
 
 /**
  * Tramos de la barra de evolución: uno por nivel de preparación.

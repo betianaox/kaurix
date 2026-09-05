@@ -135,7 +135,7 @@ export const POCIONES: Receta[] = [
  * Las comidas, tomadas de su archivo y con la forma de receta.
  *
  * Viven aparte porque son cuarenta y con dos láminas detrás; acá se adaptan al
- * mismo tipo que las pociones para que la ayuda, el morral y el crafteo no
+ * mismo tipo que las pociones para que la ayuda, el bolso y el crafteo no
  * tengan que saber de cuál de las dos se trata.
  */
 export const COMIDAS_COMO_RECETA: Receta[] = COMIDAS.map((c) => ({

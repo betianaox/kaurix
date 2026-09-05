@@ -1,29 +1,61 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 
 import { porId } from '../art';
 import { colorDeNivel } from '../juego/datos';
 import { useT } from '../i18n';
 import { colors } from '../theme';
-import type { Casilla } from './casillas';
+import { cardDe, RADIO, RATIO as RATIO_CARD } from './cards';
+import type { Accion, Casilla } from './casillas';
+
+/**
+ * El icono de cada acción, para la carta que todavía no conseguiste.
+ *
+ * Van todos acá y no armados con el nombre porque `require` necesita la ruta
+ * literal: el empaquetador resuelve los assets al compilar y no sabe leer una
+ * ruta armada en tiempo de ejecución.
+ */
+const ICONO: Record<Accion, ImageSourcePropType> = {
+  dormir: require('../../assets/album/dormir.webp'),
+  nadar: require('../../assets/album/nadar.webp'),
+  comer: require('../../assets/album/comer.webp'),
+  cantar: require('../../assets/album/cantar.webp'),
+  buscar: require('../../assets/album/buscar.webp'),
+  estrella: require('../../assets/album/estrella.webp'),
+  construir: require('../../assets/album/construir.webp'),
+  volar: require('../../assets/album/volar.webp'),
+};
 
 /**
  * Una figurita del álbum.
  *
- * **Mockeada por código hasta que llegue el arte.** Se dibuja con la pose fija
- * de la criatura, el color de la vuelta y un marco: alcanza para que el álbum,
- * el pase de hoja y el visor queden terminados y probados antes de que exista
- * una sola carta dibujada. Cuando lleguen, esto pasa a ser una imagen y nada
- * más cambia.
+ * **Cuando hay arte, la carta es el arte y nada más**: se dibuja a sangre,
+ * sin marco ni fondo teñido, porque la carta ya trae su propio marco dorado
+ * dibujado.
  *
- * La que falta no se dibuja como un hueco vacío: se muestra la silueta y el
- * marco apagado. Ver la forma de lo que falta es lo que da ganas de salir a
- * buscarlo; un rectángulo gris no dice nada.
+ * Cuando no lo hay —una serie que todavía no se dibujó, o una carta que no
+ * conseguiste— va el icono de su acción, apagado. **Nunca la pose de la
+ * criatura**: una carta no es el bicho recortado sobre un fondo de color, y
+ * mostrarlo así daba por buena una carta que no existe. El hueco tiene que
+ * verse como un hueco.
+ *
+ * **Sin banda de nombre.** Las cards dibujadas no lo llevan —el nombre está en
+ * el dibujo o no está—, y una banda con puntos suspensivos abajo de cada hueco
+ * eran nueve renglones que no decían nada. El nombre sigue donde hace falta: en
+ * la etiqueta que lee un lector de pantalla.
+ *
+ * El icono no deja el hueco mudo: dice **qué** falta conseguir. La silueta del
+ * bicho no servía para eso, porque con una carta por acción es la misma en las
+ * ocho; un rectángulo gris, tampoco.
  */
 
-/** Proporción de una carta, tipo naipe. */
-export const RATIO = 1.4;
+/**
+ * Proporción de una carta. Sale del arte —500 × 762— y no de un número elegido:
+ * si las cartas se redibujan con otra forma, cambia allá y acá se entera.
+ */
+export const RATIO = RATIO_CARD;
 
 type Props = {
   casilla: Casilla;
@@ -31,24 +63,68 @@ type Props = {
   ganada: boolean;
   /** Ancho en puntos. El alto sale del ratio. */
   ancho: number;
+  /**
+   * Muestra la lupa que avisa que se puede abrir.
+   *
+   * La pone la hoja y no la carta sola, porque la carta no sabe si quien la
+   * dibuja la hizo tocable: abierta en grande es la misma carta y ahí la lupa
+   * no va.
+   */
+  lupa?: boolean;
 };
 
-export function Carta({ casilla, nivel, ganada, ancho }: Props) {
+export function Carta({ casilla, nivel, ganada, ancho, lupa = false }: Props) {
   const t = useT();
   const color = colorDeNivel(nivel);
   const alto = Math.round(ancho * RATIO);
+  // La esquina, en puntos. Se calcula una vez y la usan el arte y el hueco: son
+  // la misma carta vista de los dos lados y tienen que recortar igual.
+  const esquina = Math.round(ancho * RADIO);
 
   const criatura = casilla.tipo === 'criatura' ? porId(casilla.criatura) : null;
   const nombre = casilla.tipo === 'legendaria' ? t('album.legendaria') : (criatura?.nombre ?? '');
+
+  /** El arte de esta carta, si la serie está dibujada y ya la conseguiste. */
+  const arte = ganada ? cardDe(nivel, casilla.indice) : null;
+
+  if (arte) {
+    return (
+      <View accessibilityLabel={`${nombre}, ciclo ${nivel}`}>
+        <Image
+          source={arte}
+          style={{ width: ancho, height: alto, borderRadius: esquina }}
+          resizeMode="contain"
+          fadeDuration={0}
+        />
+        {/* La lupa avisa que la carta se puede abrir. Va solo acá —en la que
+            conseguiste— porque es la única que se abre; sobre un hueco sería
+            prometer algo que no pasa.
+
+            En la esquina y no al centro, que es donde la pone Oráculos: allá la
+            pieza es un naipe casi liso y acá es una ilustración con la criatura
+            en el medio, así que centrada le taparía la cara. */}
+        {lupa ? (
+          <View style={estilos.lupa}>
+            <MaterialCommunityIcons name="magnify-plus-outline" size={16} color="#fff" />
+          </View>
+        ) : null}
+      </View>
+    );
+  }
 
   return (
     <View
       style={[
         estilos.carta,
-        { width: ancho, height: alto, borderColor: ganada ? color : `${color}33` },
+        {
+          width: ancho,
+          height: alto,
+          borderRadius: esquina,
+          borderColor: ganada ? color : `${color}33`,
+        },
         !ganada && estilos.falta,
       ]}
-      accessibilityLabel={ganada ? `${nombre}, vuelta ${nivel}` : `${nombre}, sin conseguir`}
+      accessibilityLabel={ganada ? `${nombre}, ciclo ${nivel}` : `${nombre}, sin conseguir`}
     >
       <View style={[estilos.fondo, { backgroundColor: color, opacity: ganada ? 0.16 : 0.05 }]} />
 
@@ -59,32 +135,48 @@ export function Carta({ casilla, nivel, ganada, ancho }: Props) {
             size={Math.round(ancho * 0.42)}
             color={ganada ? color : `${color}44`}
           />
-        ) : criatura ? (
+        ) : (
           <Image
-            source={ganada ? criatura.quieto : criatura.sombra}
-            style={[estilos.arte, !ganada && estilos.apenas]}
+            source={ICONO[casilla.accion]}
+            // Alto y ancho explícitos, no `aspectRatio`: los iconos vienen en un
+            // cuadrado de 128 y sin las dos medidas la imagen se dibuja a su
+            // tamaño natural, que en una carta de esta escala la desborda.
+            style={[
+              estilos.icono,
+              { width: Math.round(ancho * 0.38), height: Math.round(ancho * 0.38) },
+            ]}
             resizeMode="contain"
             fadeDuration={0}
           />
-        ) : null}
+        )}
       </View>
 
-      <View style={[estilos.banda, { borderTopColor: ganada ? `${color}66` : `${color}22` }]}>
-        <Text
-          style={[estilos.nombre, { fontSize: Math.max(7, Math.round(ancho * 0.11)) }]}
-          numberOfLines={1}
-        >
-          {ganada ? nombre : '· · ·'}
-        </Text>
-      </View>
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
+  /** El disco de la lupa, abajo a la derecha de la carta. */
+  lupa: {
+    position: 'absolute',
+    right: 6,
+    bottom: 6,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: 'rgba(0,0,0,0.42)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /**
+   * El hueco. **Sin `borderRadius` acá**: la esquina la pone quien dibuja, con
+   * la medida del arte —ver `RADIO` en `cards.ts`— y en puntos, porque un
+   * radio fijo se veía cuadrado al lado del arte en la hoja y romo al lado de
+   * la carta abierta a pantalla completa.
+   */
   carta: {
     borderWidth: 1.5,
-    borderRadius: 7,
     backgroundColor: colors.surface,
     overflow: 'hidden',
   },
@@ -96,19 +188,15 @@ const estilos = StyleSheet.create({
   ventana: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 4 },
   arte: { width: '100%', height: '100%' },
   /**
-   * La silueta de la que falta, apenas insinuada.
+   * El icono de la que falta: gris y chico.
    *
-   * Tiene que dejar adivinar la forma sin competir con las que ya conseguiste:
-   * en una hoja de nueve, ocho siluetas marcadas le ganan a la única a color y
+   * Tiene que decir qué falta sin competir con las que ya conseguiste: en una
+   * hoja de nueve, ocho iconos marcados le ganan a la única carta de verdad y
    * el álbum se lee vacío en vez de empezado.
+   *
+   * Cuadrado —la medida la pone quien lo dibuja— porque los ocho vienen
+   * normalizados al mismo cuadro y así ninguno pesa más que otro.
    */
-  apenas: { opacity: 0.4 },
+  icono: { opacity: 0.3, tintColor: colors.textFaint },
 
-  banda: {
-    borderTopWidth: 1,
-    paddingVertical: 3,
-    paddingHorizontal: 3,
-    alignItems: 'center',
-  },
-  nombre: { color: colors.text, letterSpacing: 0.2 },
 });

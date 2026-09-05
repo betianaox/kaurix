@@ -47,8 +47,21 @@ const PARTES = [
       // recorta y el centro del dibujo cae en el centro del archivo.
       const caja = Math.max(width, height);
       const fondo = { r: 0, g: 0, b: 0, alpha: 0 };
-      await sharp({ create: { width: caja, height: caja, channels: 4, background: fondo } })
+
+      // DOS PASADAS, Y NO UNA. En sharp el `resize` se aplica ANTES que el
+      // `composite`, sin importar el orden en que se escriban: encadenados, el
+      // lienzo se agranda primero y el dibujo se pega después a su tamaño
+      // original, centrado pero chico. Quedaba ocupando el 79% del archivo, y
+      // eso se ve como una rueda más chica de lo pedido y descentrada al
+      // compensarlo por afuera. Componer primero y escalar después lo arregla.
+      const compuesta = await sharp({
+        create: { width: caja, height: caja, channels: 4, background: fondo },
+      })
         .composite([{ input: await img.toBuffer(), gravity: 'center' }])
+        .png()
+        .toBuffer();
+
+      await sharp(compuesta)
         .resize(p.lado, p.lado)
         .webp({ quality: 92 })
         .toFile(path.join(DESTINO, `${p.id}.webp`));

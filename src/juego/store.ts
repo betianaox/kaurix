@@ -6,7 +6,7 @@ import { avanceDe, faltanDe, menuDe, pocionDe, tramoCompleto, type Pedido } from
 import { cuanto, saleDe, type Mezcla } from './caldero';
 import type { CodigoIdioma } from '../i18n/idiomas';
 import type { Region } from '../i18n/region';
-import { multiplicadorDe, nuevoImpulso, puedeGirarGratis } from './ruleta';
+import { multiplicadorDe, nuevoImpulso, puedeGirarGratis, type Casilla } from './ruleta';
 import { recetaPorId, type Receta } from './recetas';
 import { ingredientePorId } from './ingredientes';
 import {
@@ -18,6 +18,7 @@ import {
   type Guardado,
 } from './guardado';
 import { criaturas } from '../art';
+import { estaVacia, partidaDemo, PRECARGA } from './demo';
 
 /**
  * El estado del juego en memoria, y lo único que puede modificarlo.
@@ -40,7 +41,7 @@ type Estado = {
   /**
    * Le da una preparación de las que pide el tramo en curso.
    *
-   * Es una sola operación y no varias sueltas —descontar del morral, anotar la
+   * Es una sola operación y no varias sueltas —descontar del bolso, anotar la
    * entrega, mover la barra— porque las tres tienen que pasar juntas o ninguna.
    * Si se pudieran llamar por separado, un toque a destiempo dejaría una comida
    * descontada sin haber avanzado nada.
@@ -88,7 +89,22 @@ type Estado = {
    * consume el del día, el del video no. Sin esa distinción, mirar un anuncio
    * te gastaría el giro gratis de mañana.
    */
-  girar: (criatura: string, gratis: boolean) => void;
+  /**
+   * Deja el resultado de un giro.
+   *
+   * `premio` es lo que salió: una criatura para impulsar, o un ingrediente que
+   * se regala. La rueda muestra las dos cosas, así que el store tiene que saber
+   * resolver las dos.
+   */
+  girar: (premio: Casilla, gratis: boolean) => void;
+
+  /**
+   * Cambia lo que muestra la ruleta.
+   *
+   * Sin esto, el contenido queda igual todo el día: sale del día y de este
+   * contador, así que subirlo es lo que lo vuelve a sortear.
+   */
+  cambiarRuleta: () => void;
 
   /** Suma lo encontrado con la cámara. */
   sumarIngrediente: (id: string, cantidad?: number) => void;
@@ -134,6 +150,12 @@ export const useJuego = create<Estado>((set, get) => {
         guardado = partidaNueva();
       }
 
+      // La partida de demostración, si esto es un build de mostrar y no hay
+      // nada guardado. Va acá y no adentro de `cargar` a propósito: `guardado`
+      // es el disco y tiene que poder decir la verdad —que está vacío—; qué
+      // hacer con un disco vacío es una decisión del juego. Ver `demo.ts`.
+      if (PRECARGA && estaVacia(guardado)) guardado = partidaDemo(guardado);
+
       // El tiempo que pasó con la app cerrada se cobra acá, una sola vez, al
       // abrir. Es lo que hace que la barra baje sin ningún temporizador
       // corriendo.
@@ -161,7 +183,7 @@ export const useJuego = create<Estado>((set, get) => {
      * Solo acepta lo que pide **el tramo en curso**: tener cubierto un tramo de
      * más adelante es stock guardado, no un permiso para saltear.
      *
-     * Y descuenta del morral, porque la misma preparación puede servirle a otro
+     * Y descuenta del bolso, porque la misma preparación puede servirle a otro
      * bicho o ser la base de una receta más cara. Darla es elegir gastarla acá y
      * no allá; si la barra subiera sola al cocinar, esa decisión no existiría.
      */
@@ -299,20 +321,41 @@ export const useJuego = create<Estado>((set, get) => {
     setRegion(region) {
       aplicar((j) => ({ ...j, region }));
     },
-    girar(criatura, gratis) {
+    girar(premio, gratis) {
       aplicar((j) => {
         // El giro gratis solo si de verdad queda uno: la pantalla ya lo
         // controla, pero el store no puede confiar en que se lo pregunten.
         if (gratis && !puedeGirarGratis(j.ultimoGiro)) return j;
         const ahora = Date.now();
+        const gastado = gratis ? new Date(ahora).toISOString() : j.ultimoGiro;
+
+        if (premio.tipo === 'ingrediente') {
+          return {
+            ...j,
+            inventario: {
+              ...j.inventario,
+              ingredientes: {
+                ...j.inventario.ingredientes,
+                [premio.ingrediente]:
+                  (j.inventario.ingredientes[premio.ingrediente] ?? 0) + premio.cantidad,
+              },
+            },
+            ultimoGiro: gastado,
+          };
+        }
+
         return {
           ...j,
           // UN IMPULSO PISA AL OTRO. Si se sumaran, diez videos dejarían a los
           // bichos al doble para siempre y el sistema dejaría de significar algo.
-          impulso: nuevoImpulso(criatura, ahora),
-          ultimoGiro: gratis ? new Date(ahora).toISOString() : j.ultimoGiro,
+          impulso: nuevoImpulso(premio.criatura, ahora),
+          ultimoGiro: gastado,
         };
       });
+    },
+
+    cambiarRuleta() {
+      aplicar((j) => ({ ...j, cambiosDeRuleta: j.cambiosDeRuleta + 1 }));
     },
     setIdioma(idioma) {
       aplicar((j) => ({ ...j, idioma }));

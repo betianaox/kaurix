@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -6,6 +5,7 @@ import { useT } from '../i18n';
 import { LUGARES, type Ingrediente } from '../juego/ingredientes';
 import { RECETAS, claveDe, type Receta } from '../juego/recetas';
 import { colors, radius, spacing } from '../theme';
+import { Cerrar } from '../shell/Cerrar';
 
 /**
  * Dónde se consigue un ingrediente, y para qué sirve.
@@ -13,7 +13,7 @@ import { colors, radius, spacing } from '../theme';
  * Es la contraparte de la ayuda de una receta: aquella se lee de arriba hacia
  * abajo —qué necesito para esto— y esta al revés —esto que tengo, ¿para qué
  * me sirve y dónde consigo más—. Entre las dos se puede recorrer el sistema de
- * combinación en los dos sentidos sin salir del morral.
+ * combinación en los dos sentidos sin salir del bolso.
  *
  * Lo que importa que se lea primero es **dónde buscarlo**, porque es lo único
  * accionable: el resto es información, eso es una instrucción.
@@ -63,7 +63,7 @@ export function DondeSeEncuentra({ ingrediente, cuantos, tinte, onCerrar }: Prop
         <Pressable style={estilos.tarjeta} onPress={() => {}}>
           {/* La X pegada arriba a la derecha, como en cualquier caja. */}
           <Pressable onPress={onCerrar} hitSlop={14} style={estilos.cerrar}>
-            <Ionicons name="close" size={22} color={colors.textMuted} />
+            <Cerrar />
           </Pressable>
 
           <View style={estilos.encabezado}>
@@ -110,7 +110,7 @@ export function DondeSeEncuentra({ ingrediente, cuantos, tinte, onCerrar }: Prop
 const estilos = StyleSheet.create({
   fondo: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: colors.veloTenue,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.md,
@@ -126,7 +126,7 @@ const estilos = StyleSheet.create({
     gap: spacing.sm,
   },
 
-  cerrar: { position: 'absolute', top: 8, right: 8, padding: 6, zIndex: 1 },
+  cerrar: { position: 'absolute', top: 6, right: 6, padding: 2, zIndex: 1 },
 
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingRight: 30 },
   retrato: { width: 62, height: 62 },

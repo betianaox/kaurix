@@ -21,6 +21,7 @@ import { CriaturaView, medida } from '../components/CriaturaView';
 import { hayLugar, useJuego } from '../juego/store';
 import { colorDeNivel, criaturaABuscar, fallosAntesDeRomper } from '../juego/datos';
 import type { Rutas } from '../navegacion/rutas';
+import { Cerrar } from '../shell/Cerrar';
 import { colors, radius, spacing } from '../theme';
 
 /**
@@ -47,11 +48,23 @@ type Fase = 'huevo' | 'falla' | 'eclosion' | 'nacido';
 /**
  * Lado del ingrediente en la cámara, en puntos.
  *
- * Grande a propósito: recortado sobre la imagen real, sin marco ni cartel, un
- * ingrediente chico se lee como un icono de interfaz. Grande se lee como una
- * cosa que está ahí.
+ * Grande, pero **más chico que una criatura**. Recortado sobre la imagen real,
+ * sin marco ni cartel, un ingrediente chico se lee como un icono de interfaz;
+ * uno del tamaño del bicho rompe la escena al revés, porque un tomate no puede
+ * medir lo mismo que un dragón.
+ *
+ * El número sale de una cuenta, no del ojo. En una pantalla de 411 puntos, una
+ * criatura ocupa unos 210 de ancho **visibles** —su archivo trae mucho aire
+ * alrededor, así que lo dibujado es bastante menos que la caja—. El ingrediente
+ * llena su archivo casi entero, un 86%, y se dibuja con una escala al azar de
+ * entre 0,85 y 1,20. Con 112, lo visible queda en unos 98 puntos: **algo menos
+ * de la mitad de la criatura**, que es la relación que hace que las dos cosas
+ * parezcan estar en el mismo mundo.
+ *
+ * Con los 160 de antes quedaba en 140 y se leía casi igual de grande que el
+ * bicho.
  */
-const HALLAZGO = 160;
+const HALLAZGO = 112;
 
 /** Cuanto se queda el aviso de lo que juntaste, y cuanto tarda en irse. */
 const AVISO_VISIBLE_MS = 3000;
@@ -76,7 +89,7 @@ export function BuscarScreen({ navigation }: Props) {
   const fallosRestantes = useRef(0);
   const reclamada = useRef(false);
   const [diagnostico, setDiagnostico] = useState('');
-  /** Lo último que se juntó, para poder decirlo sin abrir el morral. */
+  /** Lo último que se juntó, para poder decirlo sin abrir el bolso. */
   const [ultimo, setUltimo] = useState<string | null>(null);
 
   /**
@@ -327,8 +340,14 @@ export function BuscarScreen({ navigation }: Props) {
       ))}
 
       <View style={estilos.hud} pointerEvents="box-none">
-        <Pressable onPress={() => navigation.goBack()} style={estilos.salir} hitSlop={12}>
-          <Text style={estilos.salirTexto}>{t('buscar.salir')}</Text>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={estilos.salir}
+          hitSlop={12}
+          accessibilityRole="button"
+          accessibilityLabel={t('buscar.salir')}
+        >
+          <Cerrar lado={42} />
         </Pressable>
 
         {/* EL PIE TIENE EL ALTO RESERVADO, no el que necesite en cada momento.
@@ -427,6 +446,22 @@ function Aviso({
   );
 }
 
+/**
+ * Lo que va sobre la cámara **no sigue al tema**.
+ *
+ * Detrás no hay una pantalla de la app: hay lo que la cámara esté viendo, que
+ * puede ser cualquier cosa y no se elige. Con la tinta oscura del tema claro,
+ * el HUD desaparecía sobre cualquier imagen que no fuera muy clara. Acá el
+ * texto es blanco y va apoyado sobre una pastilla oscura, que es lo único que
+ * se lee siempre.
+ *
+ * La pantalla completa —cuando no hay permiso de cámara, o no hay lugar para
+ * más criaturas— sí es de la app, y esa sigue el tema como todo lo demás.
+ */
+const SOBRE_CAMARA = '#FFFFFF';
+const SOBRE_CAMARA_TENUE = 'rgba(255,255,255,0.78)';
+const SOBRE_CAMARA_APENAS = 'rgba(255,255,255,0.55)';
+
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: '#000' },
   criatura: { position: 'absolute' },
@@ -444,8 +479,7 @@ const estilos = StyleSheet.create({
     justifyContent: 'space-between',
     padding: spacing.md,
   },
-  salir: { alignSelf: 'flex-end', padding: spacing.sm },
-  salirTexto: { color: colors.text, fontSize: 15 },
+  salir: { alignSelf: 'flex-end', padding: 4 },
 
   pie: { alignItems: 'center', gap: 6, paddingBottom: spacing.lg },
   /**
@@ -457,7 +491,7 @@ const estilos = StyleSheet.create({
    */
   renglon: { height: 18, justifyContent: 'center' },
   pista: {
-    color: colors.text,
+    color: SOBRE_CAMARA,
     fontSize: 15,
     // Dos renglones fijos: la pista cambia de largo según lo que esté pasando,
     // y si creciera de uno a dos empujaría todo lo de abajo.
@@ -465,14 +499,14 @@ const estilos = StyleSheet.create({
     lineHeight: 19,
     textAlignVertical: 'center',
     textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(0,0,0,0.55)',
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.xs,
     borderRadius: radius.lg,
     overflow: 'hidden',
   },
-  aparte: { color: colors.textMuted, fontSize: 13, textAlign: 'center' },
-  diagnostico: { color: colors.textFaint, fontSize: 11, textAlign: 'center' },
+  aparte: { color: SOBRE_CAMARA_TENUE, fontSize: 13, textAlign: 'center' },
+  diagnostico: { color: SOBRE_CAMARA_APENAS, fontSize: 11, textAlign: 'center' },
 
   centro: {
     flex: 1,

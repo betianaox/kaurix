@@ -20,24 +20,32 @@
   "coleccion": {
     "sinDescubrir": "Criatura não descoberta",
     "oculta": "· · ·",
-    "vuelta": "Volta {actual} de {total}"
+    "vuelta": "Ciclo {actual} de {total}"
   },
   "bicho": {
     "paraCrecer": "PARA CRESCER",
     "notaPocion": "Encher a barra não basta: quem abre o salto para adulto é a poção.",
-    "deDondeSalio": "De onde saiu",
+    "deDondeSalio": "ORIGEM",
     "volver": "Voltar",
-    "queCrezca": "Que cresça!",
+    "queCrezca": "Crescer",
+    "yaPuedeCrecer": "{nombre} já pode crescer!",
+    "ahoraNo": "agora não",
     "dar": "Dar",
     "darA": "Dar {receta}",
     "tenes": "você tem {cantidad}",
     "entrega": "{receta}, você deu {dadas} de {piden}, tem {guardadas}",
     "listo": "pronto",
-    "podesTerminarlo": "você pode terminar",
     "yaLoTenes": "você já tem",
-    "tramo": "Etapa {actual} de {total}",
+    "tramo": "Etapa {actual} de {total} · {porcentaje}%",
     "sinTitulo": "—",
-    "yaNoEsta": "Esta criatura já não está sendo criada."
+    "yaNoEsta": "Esta criatura já não está sendo criada.",
+    "yaCriada": "Já cresceu. Você ganhou uma carta.",
+    "comoCrecio": "EVOLUÇÃO",
+    "etapaHuevo": "Ovo",
+    "etapaBebe": "Bebê",
+    "etapaCrecido": "Adulto",
+    "noTenes": "você não tem",
+    "verReceta": "ver receita"
   },
   "buscar": {
     "permisos": "Verificando permissões…",
@@ -95,7 +103,8 @@
     "sinResultado": "Você não tem nada com esse nome.",
     "esIngrediente": "ingrediente",
     "esComida": "comida · nível {nivel}",
-    "esPocion": "poção · nível {nivel}"
+    "esPocion": "poção · nível {nivel}",
+    "lleno": "O caldeirão está cheio. Cozinhe ou tire alguma coisa."
   },
   "receta": {
     "lleva": "LEVA",
@@ -304,8 +313,10 @@
     "girar": "Toque para girar. Um giro grátis por dia.",
     "conVideo": "Assista a um vídeo para girar de novo.",
     "cerrar": "Fechar",
-    "salio": "{bicho} cresce em dobro por 3 horas.",
     "abrir": "Abrir a roleta",
-    "otraVez": "Gire de novo: este não conta."
+    "cambiar": "Trocar prêmios",
+    "ganasteIngrediente": "Você ganhou {cantidad} {cosa}!",
+    "ganasteBicho": "{bicho} cresce {factor}x mais rápido por {horas} horas.",
+    "seguir": "Continuar"
   }
 }

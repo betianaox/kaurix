@@ -100,7 +100,7 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cuentaTexto: { color: '#14110C', fontSize: 11, fontWeight: '700' },
+  cuentaTexto: { color: colors.sobreTinte, fontSize: 11, fontWeight: '700' },
 
   nombre: { color: colors.text, fontSize: 11.5, textAlign: 'center', marginTop: 4 },
   nombreVacio: { color: colors.textFaint },

@@ -115,7 +115,7 @@ export function pocionDe(criatura: string, vuelta: number): Pedido | null {
 /**
  * Cuánto falta de un pedido.
  *
- * Se mide contra lo **entregado**, no contra lo que hay en el morral: tener la
+ * Se mide contra lo **entregado**, no contra lo que hay en el bolso: tener la
  * comida guardada no es habérsela dado.
  */
 export const faltanDe = (p: Pedido, entregado: Record<string, number>) =>

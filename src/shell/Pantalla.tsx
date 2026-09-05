@@ -71,7 +71,8 @@ export function Pantalla({ titulo, marca, seccion = null, encima = false, childr
         // miente diciendo que hay algo.
         pendientes={0}
         onPendientes={() => nav.navigate('Pendientes')}
-        tinte={tinte}
+        // En una hoja que se abre encima, la única acción del header es salir.
+        avisos={!encima}
       />
 
       <View style={estilos.cuerpo}>{children}</View>
@@ -91,7 +92,7 @@ export function Pantalla({ titulo, marca, seccion = null, encima = false, childr
 /**
  * Cambiar de sección reemplaza, no apila.
  *
- * Con `navigate` a secas, ir de bichos a morral a álbum deja las tres una
+ * Con `navigate` a secas, ir de bichos a bolso a álbum deja las tres una
  * encima de la otra y el botón de atrás las va destapando de a una. No es lo
  * que nadie espera de una barra de secciones: ahí se cambia de lugar, no se
  * entra más adentro.

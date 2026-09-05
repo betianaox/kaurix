@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { DURACION_HORAS, FACTOR } from '../juego/ruleta';
+import { Cerrar } from '../shell/Cerrar';
 import { colors, radius, spacing } from '../theme';
 
 /**
@@ -20,14 +22,26 @@ import { colors, radius, spacing } from '../theme';
  *
  * Son dos piezas: una **chiquita** en el hueco del medio de la grilla, que es
  * solo la rueda y no hace nada más que abrir; y una **grande** que se abre al
- * tocarla, con un muñeco por gajo y el botón para girar.
+ * tocarla, con un premio por gajo y el botón para girar.
+ *
+ * ## Esta pieza no sabe qué se está sorteando
+ *
+ * Recibe las casillas ya resueltas a dibujo y cantidad. Quién decide qué va en
+ * cada gajo —criaturas en crianza, ingredientes de regalo— vive en
+ * `juego/ruleta.ts`, y cambia con el día. Acá solo se dibuja y se gira.
  *
  * ## La aguja y el botón no giran
  *
- * Van dibujados aparte de la rueda a propósito, y no son parte de la imagen:
- * la aguja es el punto fijo contra el que se lee el resultado —si girara, no
+ * Van dibujados aparte de la rueda a propósito, y no son parte de la imagen: la
+ * aguja es el punto fijo contra el que se lee el resultado —si girara, no
  * marcaría nada— y el botón tiene que quedar tocable y derecho todo el tiempo.
  * Por eso la lámina trae cuatro piezas sueltas y no una sola.
+ *
+ * ## Todo lo que va encima se posiciona con la cuenta escrita
+ *
+ * Nada de apoyarse en la alineación del contenedor para centrar un absoluto: eso
+ * ya nos dejó el botón corrido unos píxeles y costó encontrarlo. `left` y `top`
+ * salen de `lado`, y el centro es el centro.
  *
  * ## El cuadro de la rueda es cuadrado y centrado
  *
@@ -37,9 +51,9 @@ import { colors, radius, spacing } from '../theme';
  *
  * ## La animación termina donde el resultado ya está decidido
  *
- * Quien llama sortea **antes** y pasa el índice: la rueda frena exactamente
- * ahí. Al revés —sortear al frenar— un redondeo puede dejar la aguja sobre un
- * gajo y el impulso en otro, que es lo único que una ruleta no puede hacer.
+ * Quien llama sortea **antes** y pasa el índice: la rueda frena exactamente ahí.
+ * Al revés —sortear al frenar— un redondeo puede dejar la aguja sobre un gajo y
+ * el premio en otro, que es lo único que una ruleta no puede hacer.
  */
 
 const RUEDA = require('../../assets/ruleta/rueda.webp');
@@ -50,65 +64,43 @@ const BOTON_VIDEO = require('../../assets/ruleta/boton-video.webp');
 /**
  * Cuántos gajos tiene el dibujo.
  *
- * **Son nueve y las criaturas son ocho.** Está medido sobre la lámina: los
- * cortes de color caen cada 40°, con un gajo centrado justo arriba. El noveno
- * queda sin criatura y por eso vale como *volvés a girar*, que es una casilla
- * normal en cualquier ruleta y no obliga a rehacer el arte.
- *
- * Si algún día el dibujo trae ocho, alcanza con cambiar este número: las
- * posiciones de los muñecos y el frenado salen todos de acá.
+ * Está medido sobre la lámina: los cortes de color caen cada 45°, con un gajo
+ * centrado justo arriba. Si cambia el dibujo, alcanza con cambiar este número:
+ * las posiciones y el frenado salen todos de acá.
  */
-export const GAJOS = 9;
-
-/**
- * En qué gajo va cada criatura, **elegido por contraste**.
- *
- * No es el orden natural: sale de medir el color medio de cada bicho y el color
- * de cada gajo, y quedarse con el reparto que maximiza el contraste **del peor
- * caso**. Se maximiza el peor y no el promedio porque un promedio alto con un
- * bicho ilegible sigue teniendo un bicho ilegible.
- *
- * Con el orden natural, el dragón de musgo caía sobre el verde y el fénix sobre
- * el rojo: dos bichos que desaparecían adentro de su propio gajo.
- *
- * Si cambia el arte de la rueda o de las criaturas, se vuelve a calcular en vez
- * de acomodarlo a ojo.
- */
-const ORDEN = [8, 0, 4, 1, 2, 3, 5, 6];
-
-/**
- * El gajo que queda sin criatura, el que sobra del reparto.
- *
- * Hoy vale **volvés a girar**: no da impulso pero tampoco gasta el giro del día.
- * Es lo que evita que caer ahí se sienta un castigo por girar, que es lo que
- * pasaría si te comiera el giro y no te diera nada.
- *
- * Va a ser un comodín. Cuando lo sea, el cambio es acá y en `frenó`.
- */
-export const GAJO_LIBRE = [...Array(GAJOS).keys()].find((g) => !ORDEN.includes(g))!;
-
-/** De gajo a criatura. Es `ORDEN` leído al revés. */
-export const bichoDelGajo = (gajo: number) => ORDEN.indexOf(gajo);
+export const GAJOS = 8;
 
 /** Vueltas enteras antes de frenar. Suficientes para que se sienta un giro. */
 const VUELTAS = 4;
 const MS = 2800;
 
 /**
- * A qué distancia del centro van los muñecos, en fracción del lado.
+ * A qué distancia del centro va cada cosa, en fracción del lado.
  *
- * Bien adentro: hacia el borde el gajo se ensancha y el bicho queda flotando
- * contra el aro gris, que no contrasta con nada. Más cerca del centro el color
- * del gajo lo rodea por los cuatro lados y se lee como que está **en** ese gajo.
+ * Hacia afuera hay más lugar: cerca del centro el gajo se angosta —termina en
+ * punta contra la perilla— y lo ancho se sale por los costados.
+ *
+ * Las criaturas van **un poco más adentro que los ingredientes**, y no por
+ * capricho: son las que importan, y adentro quedan más cerca del ojo cuando la
+ * rueda frena. Como además son más altas que anchas, entran ahí sin tocar los
+ * bordes del gajo.
  */
-const RADIO_MUNECO = 0.24;
+const RADIO_BICHO = 0.30;
+const RADIO_INGREDIENTE = 0.315;
 
-export type BichoEnRuleta = {
-  id: string;
+/**
+ * Un gajo, ya resuelto a dibujo.
+ *
+ * La rueda no sabe si es una criatura o un ingrediente: recibe qué dibujar y,
+ * si es un regalo, cuántos.
+ */
+export type CasillaEnRuleta = {
+  clave: string;
+  /** Cómo se llama, ya traducido. Solo se usa al anunciar el premio. */
   nombre: string;
   arte: ImageSourcePropType;
-  /** Ya apareció: se dibuja a color. Si no, en sombra. */
-  tiene: boolean;
+  /** Cuántos se regalan. `null` en las criaturas, que no se regalan. */
+  cantidad: number | null;
 };
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -116,18 +108,20 @@ export type BichoEnRuleta = {
 /**
  * La chiquita del hueco de la grilla: **solo la rueda**.
  *
- * Sin aguja y sin botón, como el dibujo. No gira: es la puerta. Lo único que
- * agrega es el punto del giro del día — sin eso, cerrada no se distingue de un
- * adorno y nadie la toca el primer día.
+ * Sin aguja y sin botón, como el dibujo. No gira: es la puerta.
+ *
+ * Y **sin nada encima**. Tuvo un punto en el medio para avisar que quedaba el
+ * giro del día, pero cae justo sobre la perilla del dibujo y se lee como una
+ * mancha, no como un aviso. El giro disponible hay que contarlo de otra manera
+ * —el marco, un halo— o no contarlo: una marca que se confunde con un defecto
+ * del arte es peor que no tener marca.
  */
 export function RuletaChica({
   lado,
-  hayGiro,
   onAbrir,
   etiqueta,
 }: {
   lado: number;
-  hayGiro: boolean;
   onAbrir: () => void;
   etiqueta: string;
 }) {
@@ -136,13 +130,12 @@ export function RuletaChica({
       onPress={onAbrir}
       style={({ pressed }) => [
         { width: lado, height: lado, alignItems: 'center', justifyContent: 'center' },
-        pressed && { transform: [{ scale: 0.94 }] },
+        pressed && { opacity: 0.8 },
       ]}
       accessibilityRole="button"
       accessibilityLabel={etiqueta}
     >
       <Image source={RUEDA} style={{ width: lado, height: lado }} resizeMode="contain" fadeDuration={0} />
-      {hayGiro ? <View style={estilos.punto} /> : null}
     </Pressable>
   );
 }
@@ -151,17 +144,18 @@ export function RuletaChica({
 
 export function RuletaGrande({
   visible,
-  bichos,
+  casillas,
   destino,
   gratis,
   tinte,
   textos,
   onGirar,
   onFin,
+  onCambiar,
   onCerrar,
 }: {
   visible: boolean;
-  bichos: BichoEnRuleta[];
+  casillas: CasillaEnRuleta[];
   /** Índice de gajo donde tiene que frenar. `null` mientras no se gira. */
   destino: number | null;
   gratis: boolean;
@@ -170,11 +164,15 @@ export function RuletaGrande({
     girar: string;
     conVideo: string;
     cerrar: string;
-    salio: string;
-    otraVez: string;
+    cambiar: string;
+    ganasteIngrediente: string;
+    ganasteBicho: string;
+    seguir: string;
   };
   onGirar: () => void;
   onFin: () => void;
+  /** Vuelve a sortear lo que muestra la rueda. */
+  onCambiar: () => void;
   onCerrar: () => void;
 }) {
   const { width, height } = useWindowDimensions();
@@ -182,12 +180,36 @@ export function RuletaGrande({
   /** En qué ángulo quedó, para que el próximo giro siga desde ahí. */
   const acumulado = useRef(0);
   const [girando, setGirando] = useState(false);
-  /** El gajo que salió, para poder contarlo cuando la rueda ya frenó. */
-  const [salio, setSalio] = useState<number | null>(null);
+  /** El premio recién ganado, mientras se lo anuncia. */
+  const [premio, setPremio] = useState<CasillaEnRuleta | null>(null);
+  const entrada = useRef(new Animated.Value(0)).current;
 
   const lado = Math.floor(Math.min(width * 0.9, height * 0.52));
-  const boton = Math.round(lado * 0.22);
-  const aguja = Math.round(lado * 0.13);
+
+  /**
+   * El botón del centro, apenas más grande que la perilla que trae la rueda.
+   *
+   * El `0.31` está medido sobre el archivo: la perilla llega a 117 px de un
+   * radio de 384, o sea el 30,5% del diámetro. Se le da un pelo más para que la
+   * tape entera y no le asome un aro de otro color por un lado.
+   */
+  const boton = Math.round(lado * 0.31);
+
+  /** La aguja conserva la proporción de su archivo, 133×159. */
+  const agujaAncho = Math.round(lado * 0.1);
+  const agujaAlto = Math.round(agujaAncho * (159 / 133));
+
+  const dibujo = Math.round(lado * 0.21);
+
+  /**
+   * Los ingredientes van más chicos que las criaturas.
+   *
+   * No es capricho de tamaño: sus dibujos llenan el cuadro de punta a punta
+   * —una bolsa de harina, un tomate— mientras que una criatura deja aire
+   * alrededor por la pose. Al mismo lado, el ingrediente pesa mucho más en el
+   * gajo y la rueda se ve despareja.
+   */
+  const dibujoIngrediente = Math.round(dibujo * 0.72);
 
   useEffect(() => {
     if (destino === null) return;
@@ -199,7 +221,6 @@ export function RuletaGrande({
     const desde = acumulado.current % 360;
     const hasta = acumulado.current + VUELTAS * 360 + ((360 - centro - desde) % 360);
 
-    setSalio(null);
     setGirando(true);
     Animated.timing(giro, {
       toValue: hasta,
@@ -213,23 +234,22 @@ export function RuletaGrande({
       acumulado.current = hasta % 360;
       giro.setValue(acumulado.current);
       setGirando(false);
-      setSalio(destino);
+      // Se anuncia recién cuando la rueda frenó. Mostrarlo antes le saca a la
+      // ruleta lo único que tiene: el rato en que todavía no sabés qué salió.
+      setPremio(casillas[destino] ?? null);
+      entrada.setValue(0);
+      Animated.spring(entrada, {
+        toValue: 1,
+        friction: 6,
+        tension: 90,
+        useNativeDriver: true,
+      }).start();
       onFin();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [destino]);
 
   const rota = giro.interpolate({ inputRange: [0, 360], outputRange: ['0deg', '360deg'] });
-  const ladoMuneco = Math.round(lado * 0.19);
-
-  const pie =
-    salio === null
-      ? gratis
-        ? textos.girar
-        : textos.conVideo
-      : salio === GAJO_LIBRE
-        ? textos.otraVez
-        : textos.salio.replace('{bicho}', bichos[bichoDelGajo(salio)]?.nombre ?? '');
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCerrar} statusBarTranslucent>
@@ -241,39 +261,53 @@ export function RuletaGrande({
           accessibilityRole="button"
           accessibilityLabel={textos.cerrar}
         >
-          <Ionicons name="close" size={26} color={colors.textMuted} />
+          <Cerrar lado={42} />
         </Pressable>
 
-        <View style={{ width: lado, height: lado, alignItems: 'center', justifyContent: 'center' }}>
-          <Animated.View style={{ transform: [{ rotate: rota }] }}>
+        <View style={{ width: lado, height: lado }}>
+          <Animated.View style={{ width: lado, height: lado, transform: [{ rotate: rota }] }}>
             <Image source={RUEDA} style={{ width: lado, height: lado }} resizeMode="contain" fadeDuration={0} />
 
-            {/* Los muñecos van adentro del contenedor que rota, uno por gajo, y
-                girados hacia afuera como en cualquier rueda de premios: derechos
-                se pisarían entre ellos en los gajos de abajo. */}
-            {bichos.map((b, i) => {
-              const grados = (360 / GAJOS) * ORDEN[i];
+            {/* Los premios van adentro del contenedor que rota, uno por gajo, y
+                girados hacia afuera como en cualquier rueda: derechos se
+                pisarían entre ellos en los gajos de abajo. */}
+            {casillas.map((c, i) => {
+              const grados = (360 / GAJOS) * i;
               const rad = (grados - 90) * (Math.PI / 180);
+              const esRegalo = c.cantidad !== null;
+              const tam = esRegalo ? dibujoIngrediente : dibujo;
+              const radio = lado * (esRegalo ? RADIO_INGREDIENTE : RADIO_BICHO);
               return (
-                <Image
-                  key={b.id}
-                  source={b.arte}
-                  resizeMode="contain"
-                  fadeDuration={0}
-                  style={[
-                    {
-                      position: 'absolute',
-                      width: ladoMuneco,
-                      height: ladoMuneco,
-                      left: lado / 2 - ladoMuneco / 2 + lado * RADIO_MUNECO * Math.cos(rad),
-                      top: lado / 2 - ladoMuneco / 2 + lado * RADIO_MUNECO * Math.sin(rad),
-                      transform: [{ rotate: `${grados}deg` }],
-                    },
-                    // Los que todavía no aparecieron van apagados, no ausentes:
-                    // ver lo que te podría tocar es la mitad de la gracia.
-                    !b.tiene && { opacity: 0.5 },
-                  ]}
-                />
+                <View
+                  key={c.clave + i}
+                  style={{
+                    position: 'absolute',
+                    left: lado / 2 - tam / 2 + radio * Math.cos(rad),
+                    top: lado / 2 - tam / 2 + radio * Math.sin(rad),
+                    width: tam,
+                    height: tam,
+                    transform: [{ rotate: `${grados}deg` }],
+                  }}
+                >
+                  <Image
+                    source={c.arte}
+                    style={{ width: tam, height: tam }}
+                    resizeMode="contain"
+                    fadeDuration={0}
+                  />
+                  {/* Cuántos te llevás. Va pegado al dibujo y gira con él: es
+                      parte del premio, no un cartel de la pantalla.
+
+                      Se escribe `×2` y no `2x`: acá es una cantidad —dos
+                      tomates— mientras que el `2x` de la ficha del bicho es una
+                      velocidad. Son dos cosas distintas y se escriben distinto a
+                      propósito. */}
+                  {c.cantidad !== null ? (
+                    <View style={[estilos.cuanto, { backgroundColor: tinte }]}>
+                      <Text style={estilos.cuantoTexto}>×{c.cantidad}</Text>
+                    </View>
+                  ) : null}
+                </View>
               );
             })}
           </Animated.View>
@@ -282,21 +316,33 @@ export function RuletaGrande({
               resultado. Va encima del borde, mordiendo la rueda. */}
           <Image
             source={AGUJA}
-            style={{ position: 'absolute', top: -aguja * 0.35, width: aguja, height: aguja * 1.2 }}
+            style={{
+              position: 'absolute',
+              left: (lado - agujaAncho) / 2,
+              // Cuatro píxeles más abajo de donde daba la cuenta: así la punta
+              // muerde el borde de la rueda en vez de quedar flotando encima.
+              top: -agujaAlto * 0.3 + 4,
+              width: agujaAncho,
+              height: agujaAlto,
+            }}
             resizeMode="contain"
             fadeDuration={0}
           />
 
-          {/* El botón tampoco gira: tiene que quedar derecho y tocable. Cambia
-              solo — girar mientras queda el del día, video después. */}
+          {/* NI SE MUEVE NI SE TRANSPARENTA AL TOCARLO. Es una pieza de la
+              ruleta, no un botón de interfaz: si se encoge o se aclara, se
+              despega del dibujo y se nota que está pegado encima. Lo que
+              responde al toque es la rueda, que se pone a girar. */}
           <Pressable
             onPress={onGirar}
             disabled={girando}
-            style={({ pressed }) => [
-              { position: 'absolute', width: boton, height: boton },
-              pressed && !girando && { transform: [{ scale: 0.94 }] },
-              girando && { opacity: 0.5 },
-            ]}
+            style={{
+              position: 'absolute',
+              left: (lado - boton) / 2,
+              top: (lado - boton) / 2,
+              width: boton,
+              height: boton,
+            }}
             accessibilityRole="button"
             accessibilityLabel={gratis ? textos.girar : textos.conVideo}
           >
@@ -309,13 +355,121 @@ export function RuletaGrande({
           </Pressable>
         </View>
 
-        {/* Una sola línea, con el alto reservado: si apareciera al frenar,
-            empujaría la rueda hacia arriba justo en el momento de mirarla. */}
-        <Text style={[estilos.pie, salio !== null ? { color: tinte } : null]} numberOfLines={2}>
-          {pie}
-        </Text>
+        {/* Cambiar los premios. Sin esto, lo que hay en la rueda es lo mismo
+            todo el día: si no te sirve nada de lo que hay, no queda nada por
+            hacer más que esperar a mañana.
+
+            Lleva el icono de video porque **se va a pagar con uno**. El icono va
+            desde ahora aunque el video todavía no esté enganchado: cambiarlo
+            después, cuando la gente ya se acostumbró a que era gratis, se lee
+            como que le sacaron algo. */}
+        <Pressable
+          onPress={onCambiar}
+          disabled={girando}
+          style={({ pressed }) => [
+            estilos.cambiar,
+            { borderColor: `${tinte}88` },
+            pressed && { opacity: 0.6 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={textos.cambiar}
+        >
+          <Ionicons name="videocam" size={18} color={tinte} />
+          <Text style={estilos.cambiarTexto}>{textos.cambiar}</Text>
+        </Pressable>
+
+        {/* El anuncio va **último**, después de la pastilla de cambiar premios.
+            Tapa la pantalla entera, y puesto antes quedaba por debajo de la
+            pastilla: el botón de seguir aparecía cortado por un botón de la
+            capa de atrás. En una fila de hermanos el que se dibuja último es el
+            que queda arriba, y este tiene que quedar arriba de todo. */}
+        {premio ? (
+          <Anuncio
+            premio={premio}
+            entrada={entrada}
+            tinte={tinte}
+            textos={textos}
+            onSeguir={() => setPremio(null)}
+          />
+        ) : null}
       </View>
     </Modal>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Lo que ganaste, anunciado.
+ *
+ * Va encima de la rueda y tapa todo: es el momento del premio y no tiene que
+ * competir con nada. Entra con un rebote —no con un desvanecido— porque un
+ * premio que aparece despacio no se siente como un premio.
+ *
+ * Se cierra a mano y no solo. Cerrarlo por tiempo obliga a mirar rápido, y la
+ * mitad de la gracia es quedarse viendo qué te tocó.
+ */
+function Anuncio({
+  premio,
+  entrada,
+  tinte,
+  textos,
+  onSeguir,
+}: {
+  premio: CasillaEnRuleta;
+  entrada: Animated.Value;
+  tinte: string;
+  textos: { ganasteIngrediente: string; ganasteBicho: string; seguir: string };
+  onSeguir: () => void;
+}) {
+  const esRegalo = premio.cantidad !== null;
+  const texto = esRegalo
+    ? textos.ganasteIngrediente
+        .replace('{cantidad}', String(premio.cantidad))
+        .replace('{cosa}', premio.nombre)
+    : textos.ganasteBicho
+        .replace('{bicho}', premio.nombre)
+        .replace('{factor}', String(FACTOR))
+        .replace('{horas}', String(DURACION_HORAS));
+
+  return (
+    <Animated.View
+      style={[
+        estilos.anuncio,
+        {
+          opacity: entrada,
+          transform: [
+            { scale: entrada.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) },
+          ],
+        },
+      ]}
+    >
+      {/* El resplandor detrás del dibujo: es lo que hace que se lea como algo
+          que se ganó y no como una ficha más del inventario.
+
+          Va adentro de la misma caja que el dibujo y no suelto sobre la
+          pantalla. Suelto quedaba centrado en la pantalla y no en el premio, y
+          como además era mucho más grande que el dibujo, se leía como un fondo
+          de la hoja entera en vez de como un halo. */}
+      <View style={estilos.retrato}>
+        <View style={[estilos.resplandor, { backgroundColor: `${tinte}33` }]} />
+        <Image source={premio.arte} style={estilos.premio} resizeMode="contain" fadeDuration={0} />
+      </View>
+
+      <Text style={[estilos.anuncioTexto, { color: tinte }]}>{texto}</Text>
+
+      <Pressable
+        onPress={onSeguir}
+        style={({ pressed }) => [
+          estilos.seguir,
+          { backgroundColor: tinte },
+          pressed && { opacity: 0.75 },
+        ]}
+        accessibilityRole="button"
+      >
+        <Text style={estilos.seguirTexto}>{textos.seguir}</Text>
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -328,31 +482,83 @@ export const Contador = ({ texto, color }: { texto: string; color: string }) => 
 );
 
 const estilos = StyleSheet.create({
-  punto: {
-    position: 'absolute',
-    width: 9,
-    height: 9,
-    borderRadius: 5,
-    backgroundColor: colors.text,
-  },
-
   fondo: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.9)',
+    backgroundColor: colors.velo,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.md,
+    gap: spacing.lg,
     padding: spacing.md,
   },
-  cerrar: { position: 'absolute', top: 44, right: 16, padding: 8 },
+  cerrar: { position: 'absolute', top: 44, right: 16, padding: 4 },
 
-  pie: {
-    color: colors.textMuted,
-    fontSize: 15,
-    textAlign: 'center',
-    minHeight: 40,
-    paddingHorizontal: spacing.md,
+  /**
+   * La pastilla de la cantidad, del color de la vuelta.
+   *
+   * Empezó siendo un gris fijo —el negro, sobre gajos muy saturados, se lee
+   * como un agujero en la rueda— pero un gris propio es un color más en una
+   * pantalla que ya tiene ocho. Con el tinte, las ocho pastillas son la misma
+   * cosa que el reloj del impulso y el sello de completada: todo lo que el
+   * juego pone encima de lo demás tiene el color de la vuelta en curso.
+   */
+  cuanto: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    minWidth: 26,
+    height: 22,
+    paddingHorizontal: 8,
+    borderRadius: 11,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
+  cuantoTexto: { color: colors.sobreTinte, fontSize: 10.5, fontWeight: '700' },
+
+  // Pastilla, y con peso. Es la única otra cosa que se puede hacer acá además
+  // de girar: en gris tenue sobre fondo negro se leía como una nota al pie y no
+  // como un botón.
+  cambiar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    paddingVertical: 12,
+    paddingHorizontal: 22,
+    borderRadius: 999,
+    borderWidth: 1,
+    backgroundColor: colors.surfaceAlt,
+  },
+  cambiarTexto: { color: colors.text, fontSize: 15.5, fontWeight: '600' },
+
+  anuncio: {
+    ...StyleSheet.absoluteFill,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.lg,
+    paddingHorizontal: spacing.xl,
+    backgroundColor: colors.velo,
+  },
+  /** La caja del premio: el halo y el dibujo, centrados uno sobre el otro. */
+  retrato: { alignItems: 'center', justifyContent: 'center' },
+  /**
+   * El halo, apenas más grande que el dibujo.
+   *
+   * La proporción es lo que importa: con el halo muy por encima del dibujo deja
+   * de leerse como el brillo de la cosa y pasa a ser una mancha de fondo.
+   */
+  resplandor: {
+    position: 'absolute',
+    width: 168,
+    height: 168,
+    borderRadius: 84,
+  },
+  premio: { width: 128, height: 128 },
+  anuncioTexto: { fontSize: 21, textAlign: 'center', lineHeight: 29, fontWeight: '600' },
+  seguir: {
+    paddingVertical: 13,
+    paddingHorizontal: 40,
+    borderRadius: 999,
+  },
+  seguirTexto: { color: colors.sobreTinte, fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
 
   contador: {
     position: 'absolute',
@@ -364,5 +570,5 @@ const estilos = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contadorTexto: { color: '#14110C', fontSize: 11, fontWeight: '700' },
+  contadorTexto: { color: colors.sobreTinte, fontSize: 11, fontWeight: '700' },
 });

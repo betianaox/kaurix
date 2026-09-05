@@ -1,22 +1,28 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useT } from '../i18n';
+import { Canto } from './Canto';
 import { armazon, colors, radius } from '../theme';
 
 /**
  * La barra de abajo: una placa apoyada contra el borde inferior, con las
- * esquinas de afuera redondeadas, y **Buscar** como botón redondo que sobresale
+ * esquinas de afuera redondeadas, y **Buscar** como ficha redonda que sobresale
  * por arriba en el medio.
  *
  * Buscar no es un item más de una fila de items iguales. Es *la* acción del
  * juego y las otras cuatro son mirar lo que tenés, así que va grande, al centro
  * y bajo el pulgar.
  *
- * Los iconos van sin etiqueta. Son cuatro, dos de cada lado, y siempre los
- * mismos: se aprenden en dos usos y el texto solo hace ruido abajo de todo.
+ * Los cinco son fichas dibujadas, no íconos de sistema. Antes eran Ionicons de
+ * línea, y al lado de las criaturas —que son volumen y color— se leían como los
+ * controles de otra app pegados abajo. Las fichas están dibujadas con el mismo
+ * material que todo lo demás, y esa continuidad es lo que hace que la barra
+ * pertenezca al juego.
+ *
+ * Van sin etiqueta. Son cuatro, dos de cada lado, y siempre los mismos: se
+ * aprenden en dos usos y el texto solo hace ruido abajo de todo.
  */
 
 export type Seccion = 'coleccion' | 'inventario' | 'cocina' | 'album';
@@ -25,19 +31,21 @@ type Props = {
   activa: Seccion | null;
   onSeccion: (s: Seccion) => void;
   onBuscar: () => void;
-  /** El color de la vuelta en curso. Tiñe el relleno, nunca el borde. */
+  /** El color de la vuelta en curso. Tiñe el relleno de la placa, nunca las fichas. */
   tinte: string;
 };
 
-const ALTO = 60;
+const ALTO = 86;
 
-/** Diámetro del botón de buscar. */
-const BUSCAR = 62;
+/** Diámetro de la ficha de buscar. */
+const BUSCAR = 90;
+
+/** Diámetro de las otras cuatro. */
+const FICHA = 52;
 
 type Item = {
   seccion: Seccion;
-  icono: keyof typeof Ionicons.glyphMap;
-  activo: keyof typeof Ionicons.glyphMap;
+  arte: ImageSourcePropType;
   /** Clave del diccionario. Solo para lectores de pantalla: en la barra no
    *  se dibuja texto. */
   clave: string;
@@ -50,14 +58,24 @@ type Item = {
  * mismo y no se entendería dónde estás parado.
  */
 const IZQUIERDA: Item[] = [
-  { seccion: 'coleccion', icono: 'paw-outline', activo: 'paw', clave: 'secciones.coleccion' },
-  { seccion: 'inventario', icono: 'bag-handle-outline', activo: 'bag-handle', clave: 'secciones.inventario' },
+  {
+    seccion: 'coleccion',
+    arte: require('../../assets/ui/coleccion.webp'),
+    clave: 'secciones.coleccion',
+  },
+  {
+    seccion: 'inventario',
+    arte: require('../../assets/ui/inventario.webp'),
+    clave: 'secciones.inventario',
+  },
 ];
 
 const DERECHA: Item[] = [
-  { seccion: 'cocina', icono: 'flame-outline', activo: 'flame', clave: 'secciones.cocina' },
-  { seccion: 'album', icono: 'book-outline', activo: 'book', clave: 'secciones.album' },
+  { seccion: 'cocina', arte: require('../../assets/ui/cocina.webp'), clave: 'secciones.cocina' },
+  { seccion: 'album', arte: require('../../assets/ui/album.webp'), clave: 'secciones.album' },
 ];
+
+const BUSCAR_ARTE = require('../../assets/ui/buscar.webp');
 
 export function Footer({ activa, onSeccion, onBuscar, tinte }: Props) {
   const t = useT();
@@ -72,12 +90,19 @@ export function Footer({ activa, onSeccion, onBuscar, tinte }: Props) {
         hitSlop={8}
         style={({ pressed }) => [estilos.item, pressed && estilos.presionado]}
         accessibilityRole="button"
+        accessibilityState={{ selected: puesta }}
         accessibilityLabel={t(it.clave)}
       >
-        <Ionicons
-          name={puesta ? it.activo : it.icono}
-          size={26}
-          color={puesta ? tinte : colors.textMuted}
+        {/* Las cinco fichas van siempre a todo color. La abierta se marca con
+            el halo del color de la vuelta y creciendo un poco: apagar las
+            otras cuatro era marcarla dos veces, y dejaba la barra entera
+            viéndose a media luz. */}
+        {puesta ? <View style={[estilos.halo, { backgroundColor: `${tinte}33` }]} /> : null}
+        <Image
+          source={it.arte}
+          style={[estilos.ficha, puesta && estilos.puesta]}
+          resizeMode="contain"
+          fadeDuration={0}
         />
       </Pressable>
     );
@@ -85,7 +110,7 @@ export function Footer({ activa, onSeccion, onBuscar, tinte }: Props) {
 
   return (
     <View style={[estilos.placa, { paddingBottom: insets.bottom, height: ALTO + insets.bottom }]}>
-      <View style={[estilos.tinte, { backgroundColor: tinte }]} pointerEvents="none" />
+      <Canto lado="abajo" />
 
       <View style={estilos.fila}>
         <View style={estilos.grupo}>
@@ -93,8 +118,8 @@ export function Footer({ activa, onSeccion, onBuscar, tinte }: Props) {
           {item(IZQUIERDA[1])}
         </View>
 
-        {/* El hueco del botón de buscar, que va absoluto y sobresale. */}
-        <View style={{ width: BUSCAR + 12 }} />
+        {/* El hueco de la ficha de buscar, que va absoluta y sobresale. */}
+        <View style={{ width: BUSCAR + 18 }} />
 
         <View style={estilos.grupo}>{DERECHA.map((d) => item(d))}</View>
       </View>
@@ -105,54 +130,82 @@ export function Footer({ activa, onSeccion, onBuscar, tinte }: Props) {
         accessibilityRole="button"
         accessibilityLabel={t('footer.buscar')}
       >
-        <View style={[estilos.buscarCara, { backgroundColor: tinte }]}>
-          <Ionicons name="footsteps-outline" size={28} color="#14110C" />
-        </View>
+        <Image source={BUSCAR_ARTE} style={estilos.buscarArte} resizeMode="contain" fadeDuration={0} />
       </Pressable>
     </View>
   );
 }
 
 const estilos = StyleSheet.create({
+  /**
+   * La placa: un plano gris y nada más.
+   *
+   * Antes llevaba encima el color de la vuelta al 10% y un filo dorado. Con las
+   * fichas puestas —que ya son color y volumen— esas dos capas competían con
+   * ellas y ensuciaban el plano. El color de la vuelta sigue estando donde se
+   * lee sin estorbar: el halo de la sección abierta.
+   *
+   * El grosor lo pone el canto, que se dibuja aparte.
+   */
   placa: {
-    backgroundColor: colors.surface,
+    backgroundColor: armazon.plano,
     // Las esquinas de afuera: las que dan al borde de la pantalla.
     borderBottomLeftRadius: radius.lg,
     borderBottomRightRadius: radius.lg,
-    borderTopWidth: 1,
-    borderTopColor: `${armazon.borde}44`,
   },
-  tinte: { ...StyleSheet.absoluteFill, opacity: 0.1 },
 
   fila: {
     height: ALTO,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    // Centrada, no repartida: las cuatro fichas y el hueco del botón de buscar
+    // forman un solo bloque en el medio de la barra. Repartidas a lo ancho, con
+    // fichas de este tamaño, quedaban dos en cada punta y la barra se leía como
+    // cuatro cosas sueltas en vez de una fila.
+    justifyContent: 'center',
   },
-  grupo: { flex: 1, flexDirection: 'row', justifyContent: 'space-evenly' },
+  /**
+   * Las dos de cada lado van juntas y centradas en su mitad.
+   *
+   * Repartidas a lo ancho quedaban una en cada punta de la barra, tan separadas
+   * que dejaban de leerse como un grupo de cuatro y parecían cuatro cosas
+   * sueltas alrededor del botón de buscar.
+   */
+  grupo: { flexDirection: 'row' },
 
-  item: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, height: ALTO },
+  item: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3, height: ALTO },
   presionado: { opacity: 0.55 },
 
+  ficha: { width: FICHA, height: FICHA },
+  /** La abierta, apenas más grande. No hay estado apagado: las otras cuatro
+   *  se ven exactamente igual de encendidas que esta. */
+  puesta: { transform: [{ scale: 1.12 }] },
+  halo: {
+    position: 'absolute',
+    width: FICHA + 10,
+    height: FICHA + 10,
+    borderRadius: (FICHA + 10) / 2,
+  },
 
   buscar: {
     position: 'absolute',
     alignSelf: 'center',
-    // Sobresale por arriba de la placa: es lo que lo separa de los otros cuatro.
-    top: -BUSCAR / 2.6,
+    // Sobresale por arriba de la placa: es lo que la separa de las otras cuatro.
+    // Cuanto más asoma, más se lee como el botón de la barra y no como uno más.
+    top: -BUSCAR / 3.6,
     width: BUSCAR,
     height: BUSCAR,
     borderRadius: BUSCAR / 2,
     alignItems: 'center',
     justifyContent: 'center',
+    /**
+     * El disco del fondo de la app detrás de la ficha.
+     *
+     * La ficha sobresale por arriba de la placa y sin esto su borde de abajo se
+     * apoya sobre la línea del armazón, que la corta. El disco la recorta del
+     * fondo y la deja entera.
+     */
     backgroundColor: colors.bg,
   },
-  buscarCara: {
-    width: BUSCAR - 8,
-    height: BUSCAR - 8,
-    borderRadius: (BUSCAR - 8) / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  buscarArte: { width: BUSCAR, height: BUSCAR },
 });

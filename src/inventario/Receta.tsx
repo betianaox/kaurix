@@ -1,4 +1,3 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
 import React from 'react';
 import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -12,6 +11,7 @@ import {
   type Receta as TReceta,
 } from '../juego/recetas';
 import { colors, radius, spacing } from '../theme';
+import { Cerrar } from '../shell/Cerrar';
 
 /**
  * La ayuda de una receta, encima de todo.
@@ -28,7 +28,7 @@ import { colors, radius, spacing } from '../theme';
  *
  * En las de nivel 2 y 3 el primer renglón es otra preparación, y se puede tocar
  * para abrir su propia receta: así se baja la escalera hasta llegar a algo que
- * se arma con lo que hay en el morral.
+ * se arma con lo que hay en el bolso.
  */
 
 type Props = {
@@ -60,7 +60,7 @@ export function Receta({ receta, ingredientes, preparadas, tinte, onVer, onCerra
           {/* La X va pegada arriba a la derecha, como en cualquier caja, y no
               alineada con el título: ahí es donde el pulgar la busca. */}
           <Pressable onPress={onCerrar} hitSlop={14} style={estilos.cerrar}>
-            <Ionicons name="close" size={22} color={colors.textMuted} />
+            <Cerrar />
           </Pressable>
 
           <View style={estilos.encabezado}>
@@ -166,7 +166,7 @@ function Renglon({
 const estilos = StyleSheet.create({
   fondo: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: colors.veloTenue,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.md,
@@ -183,7 +183,7 @@ const estilos = StyleSheet.create({
     gap: spacing.sm,
   },
 
-  cerrar: { position: 'absolute', top: 8, right: 8, padding: 6, zIndex: 1 },
+  cerrar: { position: 'absolute', top: 6, right: 6, padding: 2, zIndex: 1 },
 
   // Deja lugar a la derecha para que el título no pase por debajo de la X.
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingRight: 30 },

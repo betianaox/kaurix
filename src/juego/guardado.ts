@@ -36,7 +36,7 @@ export type EnCrianza = {
   /**
    * Cuánto se le dio ya de cada cosa que pide el tramo en curso.
    *
-   * Se cuenta lo **entregado**, no lo que tenés en el morral: tener la comida
+   * Se cuenta lo **entregado**, no lo que tenés en el bolso: tener la comida
    * guardada no es habérsela dado. Sin esto, la barra subiría sola al cocinar y
    * bajaría al usar esa comida en otra cosa.
    *
@@ -96,6 +96,15 @@ export type Guardado = {
    * mantener.
    */
   ultimoGiro: string | null;
+  /**
+   * Cuántas veces se pidió cambiar lo que muestra la ruleta.
+   *
+   * No se guarda el contenido, se guarda este número: el contenido se calcula
+   * con el día y con esto, así que se mantiene igual durante el día y cambia
+   * cuando la persona lo pide. Guardar los ocho gajos sería escribir algo que
+   * se puede volver a calcular.
+   */
+  cambiosDeRuleta: number;
   /** La criatura impulsada y hasta cuándo. Hay una sola a la vez. */
   impulso: Impulso | null;
   /** La vuelta en curso, de 1 a `NIVELES`. Define color y costos. */
@@ -123,6 +132,7 @@ export function partidaNueva(): Guardado {
     idioma: idiomaDelDispositivo(),
     region: regionDelDispositivo(),
     ultimoGiro: null,
+    cambiosDeRuleta: 0,
     impulso: null,
     nivel: 1,
     crianza: [],
@@ -196,6 +206,7 @@ function completar(j: Guardado): Guardado {
     // Una partida anterior a la ruleta no tiene nada de esto, y no hace falta
     // inventarle nada: sin giro previo, el primero es gratis.
     ultimoGiro: j.ultimoGiro ?? null,
+    cambiosDeRuleta: j.cambiosDeRuleta ?? 0,
     impulso: j.impulso ?? null,
     crianza: (j.crianza ?? []).map((c) => ({ ...c, entregado: c.entregado ?? {} })),
     completadas: j.completadas ?? [],

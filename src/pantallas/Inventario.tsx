@@ -35,7 +35,7 @@ import { Pantalla } from '../shell/Pantalla';
 import { colors, radius, spacing } from '../theme';
 
 /**
- * El morral: tres cajones.
+ * El bolso: tres cajones.
  *
  * **Ingredientes** es lo que se junta con la cámara y se muestra entero, tengas
  * o no cada cosa: saber qué existe y dónde aparece es la mitad de la
@@ -178,7 +178,7 @@ export function InventarioScreen() {
               // Agrupados por familia: lo del campo hace pociones y se junta
               // afuera; lo de la cocina hace comidas y se junta apuntando a
               // comida de verdad. Son dos salidas distintas y conviene que el
-              // morral lo diga.
+              // bolso lo diga.
               //
               // LA COCINA VA PRIMERO. Son cincuenta de los setenta y cuatro
               // ingredientes, asi que es la mitad grande y la que mas se mira;

@@ -53,18 +53,30 @@ export function AlbumScreen() {
               hoja={(i) => (
                 <Hoja
                   nivel={i + 1}
+                  /* Las que de verdad conseguiste. Estuvo un tiempo cableado a
+                     las nueve para poder mirar el arte mientras se dibujaba;
+                     con eso puesto el álbum no era un álbum, era una galería. */
                   ganadas={juego.cartas}
                   ancho={caja.ancho}
                   alto={caja.alto}
-                  onCarta={(casilla, ganada) => setAbierta({ casilla, nivel: i + 1, ganada })}
+                  // La que no conseguiste no abre nada. Agrandar un hueco para
+                  // mostrar el hueco en grande es prometer algo y no darlo: se
+                  // toca esperando ver la carta y aparece la misma nada.
+                  onCarta={(casilla, ganada) =>
+                    ganada ? setAbierta({ casilla, nivel: i + 1, ganada }) : undefined
+                  }
                 />
               )}
             />
           ) : null}
         </View>
 
-        {/* En qué hoja estás, con el color de cada vuelta. El mismo lenguaje
-            que los puntos de la colección: se leen igual en los dos lados. */}
+        {/* En qué hoja estás, con el color de cada ciclo.
+
+            Acá los puntos **sí** son un paginador: pasan hojas. En la colección
+            había unos iguales que no navegaban a ningún lado, y se sacaron
+            justamente por eso: dos componentes idénticos que hacen cosas
+            distintas enseñan a tocar donde no hay nada. */}
         <View style={estilos.puntos}>
           {COLOR_NIVEL.map((color, i) => (
             <View

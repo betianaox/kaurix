@@ -1,8 +1,9 @@
-import { DarkTheme, NavigationContainer, type Theme } from '@react-navigation/native';
+import { DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
+import { NavigationBar } from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useJuego } from './src/juego/store';
@@ -12,12 +13,16 @@ import { colors } from './src/theme';
 /**
  * En Expo 57 (edge-to-edge) la barra de navegación de Android es transparente.
  * El velo blanco que Android le pone a la barra de tres botones se saca **solo**
- * con el plugin `expo-navigation-bar` —`enforceContrast: false` y
- * `style: "light"` en `app.json`, iconos claros porque el fondo de atrás es
- * oscuro—, que actúa al compilar. El componente de runtime no se usa: no puede
- * desactivar el velo y lo empeora.
+ * con `enforceContrast: false` en el plugin `expo-navigation-bar` de
+ * `app.json`, que actúa al compilar.
  *
- * Este fondo oscuro es lo que queda detrás de la barra transparente.
+ * El **color de los botones** es otra cosa y sí se puede en tiempo de
+ * ejecución: el `<NavigationBar style="dark" />` de más abajo los pone
+ * oscuros, que es lo que hace falta ahora que el fondo de atrás es claro. En
+ * `app.json` está el mismo valor, pero ese solo entra al recompilar y el
+ * componente lo arregla ya.
+ *
+ * Este fondo claro es lo que queda detrás de la barra transparente.
  */
 SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {});
 
@@ -28,9 +33,9 @@ SystemUI.setBackgroundColorAsync(colors.bg).catch(() => {});
  * hace la transición, y se ve un destello claro entre pantalla y pantalla.
  */
 const tema: Theme = {
-  ...DarkTheme,
+  ...DefaultTheme,
   colors: {
-    ...DarkTheme.colors,
+    ...DefaultTheme.colors,
     background: colors.bg,
     card: colors.surface,
     text: colors.text,
@@ -49,10 +54,34 @@ export default function App() {
     void iniciar();
   }, [iniciar]);
 
+  /**
+   * Los tres botones de Android, oscuros. Y **cada vez que se vuelve a la app**.
+   *
+   * El `<NavigationBar style="dark" />` de abajo los pone así al arrancar, pero
+   * Android se queda con lo suyo cuando la app pasa a segundo plano y vuelve
+   * —salir a otra app, apagar y prender la pantalla, volver de la cámara— y los
+   * deja blancos otra vez. Blancos, sobre el papel claro que asoma detrás de la
+   * barra transparente, no se ven.
+   *
+   * Por eso el componente no alcanza y hace falta volver a pedirlo en cada
+   * regreso a primer plano.
+   */
+  useEffect(() => {
+    const poner = () => NavigationBar.setStyle('dark');
+    poner();
+    const sub = AppState.addEventListener('change', (estado) => {
+      if (estado === 'active') poner();
+    });
+    return () => sub.remove();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <View style={estilos.raiz}>
-        <StatusBar style="light" />
+        <StatusBar style="dark" />
+        {/* Los tres botones de Android, oscuros: la barra es transparente y
+            atrás está el papel. El efecto de arriba los repone al volver. */}
+        <NavigationBar style="dark" />
         {/* Hasta que el guardado no está leído no se dibuja nada: mostrar la
             colección vacía y llenarla un cuadro después se ve como si se
             hubiera perdido el progreso. */}

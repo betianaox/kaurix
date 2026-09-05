@@ -62,6 +62,18 @@ export type Criatura = {
   quieto: ImageSourcePropType;
   sombra: ImageSourcePropType;
   /**
+   * El crecido, quieto. Es en lo que termina la criatura.
+   *
+   * Fijo y no animado a propósito: se muestra en la ficha al lado del huevo y
+   * del bebé, y lo que ahí se lee es el cambio de forma. Una sola de las tres
+   * moviéndose se lleva toda la atención y las otras dos dejan de mirarse.
+   *
+   * Sale de `assets/bichos2.png` con `herramientas/bichos.js`, normalizado
+   * contra sus siete hermanos igual que `quieto` contra los suyos. Que se vea
+   * más grande que el bebé es cosa de quien los dibuja juntos, no del archivo.
+   */
+  crecido: ImageSourcePropType;
+  /**
    * El adulto, parado. Es el final de la crianza.
    *
    * Opcional mientras el arte no exista: una criatura sin adulto se puede
@@ -80,12 +92,41 @@ export type Criatura = {
    * aparecer ya nacida, en vez de bloquear todo.
    */
   huevo?: Pieza;
+  /**
+   * El huevo quieto: un cuadro suelto del animado, con las alas abiertas.
+   *
+   * El animado vuela, y así va donde se lo encuentra y en la ficha de la que se
+   * está criando. Va quieto en **la evolución** —huevo, bebé, crecido, una al
+   * lado de la otra—: ahí es una etapa de un camino terminado, y aleteando
+   * entre dos imágenes fijas se lleva la mirada de la criatura, que es lo que
+   * se fue a ver.
+   *
+   * Con las alas abiertas y no en reposo: plegadas contra el cascarón es un
+   * huevo cualquiera, y abiertas se entiende de qué criatura es sin verla.
+   *
+   * Sale del mismo WebP con `herramientas/huevo-quieto.js` —que elige el cuadro
+   * midiendo cuánto abren las alas—, así que hereda el recorte y el encuadre
+   * exactos del animado. No lleva escala propia: es un cuadro de la misma tira
+   * y mide igual.
+   */
+  huevoQuieto?: ImageSourcePropType;
   /** El intento que no lo logra. Se repite entre 2 y 4 veces. */
   falla?: Unica;
   eclosion?: Unica;
 };
 
 /**
+ * Las ocho criaturas, **en el orden en que salen a jugarse**: una por vuelta.
+ *
+ * El orden de esta lista es el orden de las vueltas, y el número de sus
+ * archivos es el mismo: la criatura de la vuelta 3 usa `03-*`. Es una sola
+ * numeración para todo —el arte, las cards, el álbum— y por eso reordenar es
+ * mover un bloque de acá y renumerar sus archivos, no mantener dos listas que
+ * se contradicen.
+ *
+ * Los ids no cambian nunca: son lo que hay guardado en el disco de cada
+ * jugador. Los nombres son los provisorios con que entró cada bicho.
+ *
  * Para sumar una criatura: convertir sus cuatro videos con
  * `node herramientas/tanda.js`, que además escribe el bloque de acá abajo con
  * las escalas y duraciones ya medidas.
@@ -98,7 +139,9 @@ export const criaturas: Criatura[] = [
     bebe: { arte: require('../../assets/criaturas/01-bebe.webp'), escala: 0.417 },
     quieto: require('../../assets/criaturas/01-quieto.webp'),
     sombra: require('../../assets/criaturas/01-sombra.webp'),
+    crecido: require('../../assets/criaturas/01-crecido.webp'),
     huevo: { arte: require('../../assets/criaturas/01-huevo.webp'), escala: 0.698 },
+    huevoQuieto: require('../../assets/criaturas/01-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/01-falla.webp'),
       escala: 0.781,
@@ -111,13 +154,15 @@ export const criaturas: Criatura[] = [
     },
   },
   {
-    id: 'dragon-musgo',
-    nombre: 'Dragón de musgo',
-    elemento: 'tierra',
-    bebe: { arte: require('../../assets/criaturas/02-bebe.webp'), escala: 0.542 },
+    id: 'gato-bruma',
+    nombre: 'Gato de bruma',
+    elemento: 'aire',
+    bebe: { arte: require('../../assets/criaturas/02-bebe.webp'), escala: 0.688 },
     quieto: require('../../assets/criaturas/02-quieto.webp'),
     sombra: require('../../assets/criaturas/02-sombra.webp'),
-    huevo: { arte: require('../../assets/criaturas/02-huevo.webp'), escala: 0.688 },
+    crecido: require('../../assets/criaturas/02-crecido.webp'),
+    huevo: { arte: require('../../assets/criaturas/02-huevo.webp'), escala: 0.73 },
+    huevoQuieto: require('../../assets/criaturas/02-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/02-falla.webp'),
       escala: 0.73,
@@ -130,16 +175,18 @@ export const criaturas: Criatura[] = [
     },
   },
   {
-    id: 'capibara-alado',
-    nombre: 'Capibara alado',
-    elemento: 'tierra',
-    bebe: { arte: require('../../assets/criaturas/03-bebe.webp'), escala: 0.605 },
+    id: 'fenix',
+    nombre: 'Fénix',
+    elemento: 'fuego',
+    bebe: { arte: require('../../assets/criaturas/03-bebe.webp'), escala: 0.625 },
     quieto: require('../../assets/criaturas/03-quieto.webp'),
     sombra: require('../../assets/criaturas/03-sombra.webp'),
-    huevo: { arte: require('../../assets/criaturas/03-huevo.webp'), escala: 0.802 },
+    crecido: require('../../assets/criaturas/03-crecido.webp'),
+    huevo: { arte: require('../../assets/criaturas/03-huevo.webp'), escala: 0.708 },
+    huevoQuieto: require('../../assets/criaturas/03-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/03-falla.webp'),
-      escala: 0.77,
+      escala: 0.833,
       duracion: 2000,
     },
     eclosion: {
@@ -149,16 +196,18 @@ export const criaturas: Criatura[] = [
     },
   },
   {
-    id: 'lobo-niebla',
-    nombre: 'Lobo de niebla',
-    elemento: 'agua',
-    bebe: { arte: require('../../assets/criaturas/04-bebe.webp'), escala: 0.688 },
+    id: 'cachorro-miel',
+    nombre: 'Cachorro de miel',
+    elemento: 'aire',
+    bebe: { arte: require('../../assets/criaturas/04-bebe.webp'), escala: 0.406 },
     quieto: require('../../assets/criaturas/04-quieto.webp'),
     sombra: require('../../assets/criaturas/04-sombra.webp'),
-    huevo: { arte: require('../../assets/criaturas/04-huevo.webp'), escala: 0.75 },
+    crecido: require('../../assets/criaturas/04-crecido.webp'),
+    huevo: { arte: require('../../assets/criaturas/04-huevo.webp'), escala: 0.77 },
+    huevoQuieto: require('../../assets/criaturas/04-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/04-falla.webp'),
-      escala: 0.75,
+      escala: 0.583,
       duracion: 2000,
     },
     eclosion: {
@@ -168,16 +217,18 @@ export const criaturas: Criatura[] = [
     },
   },
   {
-    id: 'gato-bruma',
-    nombre: 'Gato de bruma',
-    elemento: 'aire',
+    id: 'oso-dorado',
+    nombre: 'Oso dorado',
+    elemento: 'fuego',
     bebe: { arte: require('../../assets/criaturas/05-bebe.webp'), escala: 0.688 },
     quieto: require('../../assets/criaturas/05-quieto.webp'),
     sombra: require('../../assets/criaturas/05-sombra.webp'),
-    huevo: { arte: require('../../assets/criaturas/05-huevo.webp'), escala: 0.73 },
+    crecido: require('../../assets/criaturas/05-crecido.webp'),
+    huevo: { arte: require('../../assets/criaturas/05-huevo.webp'), escala: 0.75 },
+    huevoQuieto: require('../../assets/criaturas/05-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/05-falla.webp'),
-      escala: 0.73,
+      escala: 0.895,
       duracion: 2000,
     },
     eclosion: {
@@ -187,16 +238,18 @@ export const criaturas: Criatura[] = [
     },
   },
   {
-    id: 'fenix',
-    nombre: 'Fénix',
-    elemento: 'fuego',
-    bebe: { arte: require('../../assets/criaturas/06-bebe.webp'), escala: 0.625 },
+    id: 'lobo-niebla',
+    nombre: 'Lobo de niebla',
+    elemento: 'agua',
+    bebe: { arte: require('../../assets/criaturas/06-bebe.webp'), escala: 0.688 },
     quieto: require('../../assets/criaturas/06-quieto.webp'),
     sombra: require('../../assets/criaturas/06-sombra.webp'),
-    huevo: { arte: require('../../assets/criaturas/06-huevo.webp'), escala: 0.708 },
+    crecido: require('../../assets/criaturas/06-crecido.webp'),
+    huevo: { arte: require('../../assets/criaturas/06-huevo.webp'), escala: 0.75 },
+    huevoQuieto: require('../../assets/criaturas/06-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/06-falla.webp'),
-      escala: 0.833,
+      escala: 0.75,
       duracion: 2000,
     },
     eclosion: {
@@ -206,16 +259,18 @@ export const criaturas: Criatura[] = [
     },
   },
   {
-    id: 'oso-dorado',
-    nombre: 'Oso dorado',
-    elemento: 'fuego',
-    bebe: { arte: require('../../assets/criaturas/07-bebe.webp'), escala: 0.688 },
+    id: 'capibara-alado',
+    nombre: 'Capibara alado',
+    elemento: 'tierra',
+    bebe: { arte: require('../../assets/criaturas/07-bebe.webp'), escala: 0.605 },
     quieto: require('../../assets/criaturas/07-quieto.webp'),
     sombra: require('../../assets/criaturas/07-sombra.webp'),
-    huevo: { arte: require('../../assets/criaturas/07-huevo.webp'), escala: 0.75 },
+    crecido: require('../../assets/criaturas/07-crecido.webp'),
+    huevo: { arte: require('../../assets/criaturas/07-huevo.webp'), escala: 0.802 },
+    huevoQuieto: require('../../assets/criaturas/07-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/07-falla.webp'),
-      escala: 0.895,
+      escala: 0.77,
       duracion: 2000,
     },
     eclosion: {
@@ -225,16 +280,18 @@ export const criaturas: Criatura[] = [
     },
   },
   {
-    id: 'cachorro-miel',
-    nombre: 'Cachorro de miel',
-    elemento: 'aire',
-    bebe: { arte: require('../../assets/criaturas/08-bebe.webp'), escala: 0.406 },
+    id: 'dragon-musgo',
+    nombre: 'Dragón de musgo',
+    elemento: 'tierra',
+    bebe: { arte: require('../../assets/criaturas/08-bebe.webp'), escala: 0.542 },
     quieto: require('../../assets/criaturas/08-quieto.webp'),
     sombra: require('../../assets/criaturas/08-sombra.webp'),
-    huevo: { arte: require('../../assets/criaturas/08-huevo.webp'), escala: 0.77 },
+    crecido: require('../../assets/criaturas/08-crecido.webp'),
+    huevo: { arte: require('../../assets/criaturas/08-huevo.webp'), escala: 0.688 },
+    huevoQuieto: require('../../assets/criaturas/08-huevo-quieto.webp'),
     falla: {
       arte: require('../../assets/criaturas/08-falla.webp'),
-      escala: 0.583,
+      escala: 0.73,
       duracion: 2000,
     },
     eclosion: {

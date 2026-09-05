@@ -16,7 +16,7 @@ import {
  *
  * **Todavía no mira lo que hay enfrente.** Aparecen en cualquier lado y cada
  * tanto, que alcanza para probar el circuito completo —encontrar, guardar,
- * verlo en el morral— sin depender del reconocimiento de imágenes. Cuando ese
+ * verlo en el bolso— sin depender del reconocimiento de imágenes. Cuando ese
  * exista, lo único que cambia es de dónde sale `lugar`: en vez de no pasarlo, se
  * le pasa lo que la cámara está viendo, y el sorteo se limita a los ingredientes
  * de ahí.
