@@ -10,7 +10,7 @@ import type { Tono } from './tonos';
  *
  * **No hay una regla única.** Hay cuatro regímenes, uno por grupo, porque los
  * grupos son cosas distintas. Está explicado entero en
- * `docs/reconocer-el-lugar.md`; el resumen:
+ * `../docs/kaurix-reconocer-el-lugar.md`; el resumen:
  *
  * | Grupo | Contra qué |
  * |---|---|
@@ -182,7 +182,7 @@ const VERDURA: Record<string, Reconocimiento> = {
     principal: { escenas: ['verdura'], tonos: ['verde'] },
     alternativas: [{ escenas: ['planta'], tonos: ['verde'] }],
   },
-  choclo: {
+  maiz: {
     principal: { escenas: ['verdura'], tonos: ['amarillo'] },
     alternativas: [{ escenas: ['comida'], tonos: ['amarillo'] }],
   },

@@ -25,7 +25,7 @@ export const QUEMADOS: Quemado[] = [
   { id: 'morron', arte: require('../../assets/quemados/morron.webp') },
   { id: 'cebolla', arte: require('../../assets/quemados/cebolla.webp') },
   { id: 'tomate', arte: require('../../assets/quemados/tomate.webp') },
-  { id: 'choclo', arte: require('../../assets/quemados/choclo.webp') },
+  { id: 'maiz', arte: require('../../assets/quemados/maiz.webp') },
   { id: 'aji', arte: require('../../assets/quemados/aji.webp') },
   { id: 'hierbas', arte: require('../../assets/quemados/hierbas.webp') },
   { id: 'naranja', arte: require('../../assets/quemados/naranja.webp') },

@@ -132,7 +132,7 @@ export const INGREDIENTES: Ingrediente[] = [
   { id: 'apio', nombre: 'Apio', lugar: 'verdura', peso: 70, arte: require('../../assets/cocina/apio.webp') },
   { id: 'morron', nombre: 'Morrón', lugar: 'verdura', peso: 65, arte: require('../../assets/cocina/morron.webp') },
   { id: 'brocoli', nombre: 'Brócoli', lugar: 'verdura', peso: 60, arte: require('../../assets/cocina/brocoli.webp') },
-  { id: 'choclo', nombre: 'Choclo', lugar: 'verdura', peso: 55, arte: require('../../assets/cocina/choclo.webp') },
+  { id: 'maiz', nombre: 'Maíz', lugar: 'verdura', peso: 55, arte: require('../../assets/cocina/maiz.webp') },
   { id: 'arvejas', nombre: 'Arvejas', lugar: 'verdura', peso: 50, arte: require('../../assets/cocina/arvejas.webp') },
   { id: 'boniato', nombre: 'Boniato', lugar: 'verdura', peso: 45, arte: require('../../assets/cocina/boniato.webp') },
   { id: 'kale', nombre: 'Kale', lugar: 'verdura', peso: 40, arte: require('../../assets/cocina/kale.webp') },

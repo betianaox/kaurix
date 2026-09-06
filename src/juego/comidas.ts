@@ -109,7 +109,7 @@ export const COMIDAS: Comida[] = [
   receta('pan-molde', 'Pan de molde', 1, false, ['harina', 'sal', 'aceite']),
   receta('pan-hamburguesa', 'Pan de hamburguesa', 1, false, ['harina', 'huevo', 'manteca']),
   receta('pan-pancho', 'Pan de pancho', 1, false, ['harina', 'sal', 'manteca']),
-  receta('tortilla', 'Tortilla', 1, false, ['harina', 'huevo', 'aceite']),
+  receta('tortilla', 'Tortilla', 1, false, ['maiz', 'sal', 'aceite']),
   receta('papas-fritas', 'Papas fritas', 1, false, ['papa', 'aceite', 'sal']),
   receta('sopa-verduras', 'Sopa de verduras', 1, false, ['papa', 'apio', 'cebolla']),
   receta('churrasco', 'Churrasco', 1, false, ['bife', 'aceite-oliva', 'pimienta']),
@@ -161,7 +161,7 @@ export const COMIDAS: Comida[] = [
   receta('pizza', 'Pizza', 3, false, ['queso', 'tomate'], 'pasta'),
   receta('quiche', 'Quiche', 3, false, ['huevo', 'espinaca'], 'pasta'),
 
-  receta('pastelito-naranja', 'Pastelito de naranja', 3, true, ['naranja', 'choclo'], 'pastelito-confites'),
+  receta('pastelito-naranja', 'Pastelito de naranja', 3, true, ['naranja', 'maiz'], 'pastelito-confites'),
   receta('pastelito-frutos-rojos', 'Pastelito de frutos rojos', 3, true, ['pera', 'frambuesa'], 'pastelito-moras'),
   receta('pastelito-flores', 'Pastelito de flores', 3, true, ['brocoli', 'anana'], 'pastelito-miel'),
   receta('pastelito-perlas', 'Pastelito de perlas', 3, true, ['arvejas', 'azucar'], 'pastelito-frutilla'),
