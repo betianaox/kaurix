@@ -216,6 +216,20 @@ export function RuletaGrande({
   /** El premio recién ganado, mientras se lo anuncia. */
   const [premio, setPremio] = useState<CasillaEnRuleta | null>(null);
 
+  /**
+   * Qué dibujo lleva el botón del centro, congelado mientras la rueda gira.
+   *
+   * El botón cambia de play a cámara cuando se usa el giro del día, y ese
+   * momento cae **justo mientras la rueda está girando**: el dibujo se daba
+   * vuelta a mitad de la animación, delante de todo, y se veía como un error.
+   *
+   * Acá el cambio espera a que frene. No es un efecto: es no tener ninguno.
+   */
+  const [botonGratis, setBotonGratis] = useState(gratis);
+  useEffect(() => {
+    if (!girando) setBotonGratis(gratis);
+  }, [gratis, girando]);
+
   const lado = Math.floor(Math.min(width * 0.9, height * 0.52));
 
   /**
@@ -372,13 +386,14 @@ export function RuletaGrande({
             accessibilityRole="button"
             accessibilityLabel={gratis ? textos.girar : textos.conVideo}
           >
+            {/* SIN OPACIDAD, NUNCA. Es una pieza de la ruleta y no un botón de
+                interfaz: cualquier transparencia lo despega del dibujo y se nota
+                que está pegado encima. Llegó a atenuarse mientras no había
+                anuncio cargado, y como pedir el video pone el siguiente en
+                "cargando", se apagaba justo al girar. */}
             <Image
-              source={gratis ? BOTON_GIRAR : BOTON_VIDEO}
-              style={[
-                { width: boton, height: boton },
-                // Apagado cuando no hay video: se ve que está ahí y que ahora no.
-                !gratis && !videoListo && { opacity: 0.45 },
-              ]}
+              source={botonGratis ? BOTON_GIRAR : BOTON_VIDEO}
+              style={{ width: boton, height: boton }}
               resizeMode="contain"
               fadeDuration={0}
             />

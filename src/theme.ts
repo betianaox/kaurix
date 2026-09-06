@@ -133,11 +133,19 @@ export const spacing = {
  * con `useWindowDimensions`. Esto es el corte, y está acá y no repetido en cada
  * pantalla para que todas cambien de forma en el mismo punto.
  *
- * 600 puntos no es un número elegido: es el mismo umbral con el que Android
- * separa teléfono de tablet —el `sw600dp` de sus recursos—, así que un aparato
- * que el sistema considera grande acá también lo es.
+ * Estuvo en 600, que es el umbral con el que Android separa teléfono de tablet
+ * —el `sw600dp` de sus recursos—. **Se bajó a 520 porque ese número se rompe en
+ * cuanto alguien toca el tamaño de pantalla.**
+ *
+ * El caso medido es la Galaxy Tab A11 donde se prueba: mide 800 px con densidad
+ * de fábrica 213, o sea 601 puntos, y entraba por uno. Con el tamaño de pantalla
+ * subido en ajustes —densidad 240, que es como viene puesta— pasa a 533 y queda
+ * afuera: una tablet de diez pulgadas mostrando el bolso de un teléfono.
+ *
+ * Entre 520 y los 360 de un teléfono común hay margen de sobra, así que el corte
+ * no se le mueve a nadie por el otro lado.
  */
-export const ANCHO_GRANDE = 600;
+export const ANCHO_GRANDE = 520;
 
 /**
  * Cuántas cajitas de ingrediente entran por fila.

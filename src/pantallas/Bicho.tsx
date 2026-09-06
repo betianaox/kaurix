@@ -718,7 +718,20 @@ function Etapas({
 }
 
 const estilos = StyleSheet.create({
-  hoja: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
+  /**
+   * El aire de la hoja.
+   *
+   * Menos a lo alto que a lo ancho, a propósito: lo que hay debajo es una lista
+   * —tramos, etapas— y cada hueco entre dos se suma. Con el aire de los costados
+   * la ficha del bicho terminado no entraba en una tablet y había que scrollear
+   * una pantalla que es para mirar de un vistazo.
+   */
+  hoja: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.lg,
+    gap: spacing.sm,
+  },
   /**
    * El header que no scrollea: el bicho, la barra y su lectura.
    *
@@ -770,10 +783,20 @@ const estilos = StyleSheet.create({
 
   /** El mismo marco, pero para una pantalla donde el bicho es el asunto. */
   retratoGrande: {
-    aspectRatio: 1.05,
-    // Casi cuadrado: sin tope, en una tablet el bicho ocupaba una pantalla
-    // entera y había que scrollear para llegar a las etapas.
-    maxWidth: 360,
+    // Más ancha que alta, porque el dibujo del crecido lo es: con la caja casi
+    // cuadrada quedaba una franja de papel vacía arriba y otra abajo, y el
+    // bicho se veía chico adentro de un marco grande.
+    aspectRatio: 1.3,
+    /**
+     * Casi cuadrado, con tope.
+     *
+     * En el teléfono el ancho disponible ya es menor que esto —unos 330— así
+     * que el tope no muerde y la ficha se ve igual que siempre. En la tablet sí
+     * manda, y ahí es donde importa: con 360 el retrato más las tres etapas no
+     * entraban en el alto y la ficha del bicho terminado, que es una foto para
+     * mirar, se leía scrolleando.
+     */
+    maxWidth: 300,
     alignSelf: 'center',
     width: '100%',
     borderWidth: 1,
@@ -783,7 +806,8 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  arteGrande: { width: '86%', height: '86%' },
+  // Casi toda la caja: lo que la separa del borde es el marco, no un margen.
+  arteGrande: { width: '92%', height: '94%' },
 
   tramos: { flexDirection: 'row', gap: 4 },
   tramo: {
@@ -880,12 +904,15 @@ const estilos = StyleSheet.create({
    * El huevo, deliberadamente más chico que el bicho.
    *
    * Con el header fijo los dos se ven a la vez, y del mismo tamaño competían: el
-   * huevo es un recuerdo de dónde salió, no la otra mitad de la pantalla. A 118
-   * contra los ~165 del bicho, la jerarquía se lee sola.
+   * huevo es un recuerdo de dónde salió, no la otra mitad de la pantalla.
    *
-   * Si cambia el alto del retrato, este número va detrás.
+   * **Este número va detrás del alto del retrato**, y ya se desfasó una vez: el
+   * bicho creció a 190 de caja y el huevo se quedó en 118, con lo que la
+   * diferencia dejó de leerse como jerarquía y pasó a leerse como un huevo
+   * chico. A 145 contra los ~167 que ocupa el bicho vuelve a estar cerca sin
+   * igualarlo.
    */
-  huevoCaja: { height: 118, alignItems: 'center', justifyContent: 'center' },
+  huevoCaja: { height: 145, alignItems: 'center', justifyContent: 'center' },
   huevo: { width: '100%', height: '100%' },
 
   boton: {
