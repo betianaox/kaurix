@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
   useWindowDimensions,
+  type ImageSourcePropType,
 } from 'react-native';
 
 import { Caldero } from '../cocina/Caldero';
@@ -238,11 +239,56 @@ export function CocinaScreen() {
    */
   const huecos = salio ? 0 : Math.max(0, TIPOS_MINIMOS - tipos);
 
+  /** El ancho del caldero. Lo usan el dibujo y la caja que le pone los botones encima. */
+  const anchoCaldero = Math.min(250, width * 0.62);
+
   return (
     <Pantalla titulo={t('cocina.titulo')} seccion="cocina">
-      <ScrollView contentContainerStyle={estilos.hoja}>
+      {/*
+        LA OLLA NO SE VA CON EL SCROLL.
+
+        Cocinar es ir y venir entre la despensa de abajo y lo que hay adentro:
+        con todo en el mismo scroll, tirar un ingrediente lo mandaba a una parte
+        de la pantalla que no se estaba mirando, y había que subir a ver qué
+        pasó. Igual que en la ficha del bicho, arriba queda fijo y solo se mueve
+        la lista.
+      */}
+      <View style={estilos.fijo}>
+        {/* Las dos acciones van ENCIMA del caldero, no al lado ni debajo: es la
+            olla la que se cocina y la que se vacía, y puestas sobre ella no hay
+            que explicar sobre qué actúan. De paso, el alto que ocupaban en un
+            renglón aparte se lo lleva la despensa.
+
+            ⚠️ Los dibujos son provisorios hasta que estén los definitivos. Lo
+            que ya está decidido es dónde van y cuándo se encienden: las dos
+            siempre presentes, apagadas mientras no haya nada que hacer. */}
         <View style={estilos.olla}>
-          <Caldero ancho={Math.min(250, width * 0.62)} tinte={tinte} encendido={hayAlgo} />
+          {/* La caja mide **lo que mide el caldero**, no lo que mide la
+              pantalla: es lo que hace que los dibujos caigan encima de la olla y
+              no contra los bordes de la hoja. */}
+          <View style={{ width: anchoCaldero }}>
+            <Caldero ancho={anchoCaldero} tinte={tinte} encendido={hayAlgo} />
+
+            <View style={estilos.acciones} pointerEvents="box-none">
+              <Accion
+                arte={COCINAR}
+                etiqueta={enResultado ? t('cocina.limpiar') : t('cocina.cocinar')}
+                // Con el resultado en la mesa el mismo lugar limpia la olla: el
+                // pulgar ya está ahí y no hay que salir a buscar cómo seguir.
+                onPress={enResultado ? () => setSalio(null) : prender}
+                puede={enResultado || alcanza}
+              />
+              <Accion
+                arte={VACIAR}
+                etiqueta={t('cocina.vaciar')}
+                onPress={() => setMezcla({})}
+                puede={hayAlgo && !enResultado}
+                // Un diez por ciento menos que la llama: es más alta y angosta,
+                // y al mismo lado pesaba más en pantalla.
+                lado={41}
+              />
+            </View>
+          </View>
         </View>
 
         {/* Lo que hay adentro, tocable para sacarlo. Sacar es gratis y tiene que
@@ -336,76 +382,9 @@ export function CocinaScreen() {
                       : t('cocina.nadaSale')}
         </Text>
 
-        <View style={estilos.botones}>
-          {enResultado ? (
-            // Ocupa el lugar de "Cocinar" a propósito: el pulgar ya está ahí y
-            // no hay que salir a buscar cómo seguir.
-            <Pressable
-              onPress={() => setSalio(null)}
-              style={({ pressed }) => [
-                estilos.prender,
-                // Hueco: es un paso de trámite, no el premio. Macizo competía
-                // con el plato que acaba de salir, que es lo que hay que mirar.
-                { backgroundColor: 'transparent', borderColor: tinte },
-                pressed && { opacity: 0.6 },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={t('cocina.limpiarLaOlla')}
-            >
-              <Text style={[estilos.prenderTexto, { color: tinte }]}>{t('cocina.limpiar')}</Text>
-            </Pressable>
-          ) : (
-          <Pressable
-            onPress={prender}
-            disabled={!alcanza}
-            style={({ pressed }) => [
-              estilos.prender,
-              // Tres estados, y ninguno gris sobre gris. Apagado es hueco con
-              // borde tenue —se lee que no se puede sin tener que adivinar qué
-              // dice—; con receta es macizo, que es la única acción del juego
-              // que da algo; y sin receta es hueco naranja, el mismo aviso que
-              // el borde, no un relleno oscuro con letra oscura encima.
-              !alcanza
-                ? { backgroundColor: 'transparent', borderColor: colors.border }
-                : sale
-                  ? { backgroundColor: tinte, borderColor: tinte }
-                  : { backgroundColor: 'transparent', borderColor: QUEMA },
-              pressed && alcanza && { opacity: 0.75 },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={
-              sale ? t('cocina.cocinarReceta', { receta: t(claveDe(sale)) }) : t('cocina.cocinar')
-            }
-          >
-            <Text
-              style={[
-                estilos.prenderTexto,
-                { color: sale ? colors.sobreTinte : alcanza ? QUEMA : colors.textMuted },
-              ]}
-            >
-              {/* Siempre "Cocinar". Lo que cambia es el color: naranja cuando no
-                  va a salir nada. El aviso ya está en el renglón de arriba y en
-                  el borde del botón, y agregarle "igual" era decirlo por tercera
-                  vez, con un tono que suena a reproche antes de que pase nada. */}
-              {t('cocina.cocinar')}
-            </Text>
-          </Pressable>
+      </View>
 
-          )}
-
-          {hayAlgo && !enResultado ? (
-            <Pressable
-              onPress={() => setMezcla({})}
-              style={({ pressed }) => [estilos.vaciar, pressed && { opacity: 0.6 }]}
-              accessibilityRole="button"
-              accessibilityLabel={t('cocina.vaciarLaOlla')}
-            >
-              <Text style={estilos.vaciarTexto}>{t('cocina.vaciar')}</Text>
-            </Pressable>
-          ) : null}
-        </View>
-
-        <View style={estilos.separador} />
+      <ScrollView contentContainerStyle={estilos.hoja}>
 
         {/* Apagada mientras se muestra el resultado, y no solo sorda: una
             despensa que se ve igual pero no responde parece rota. Apagada se
@@ -474,13 +453,155 @@ export function CocinaScreen() {
   );
 }
 
-/** El color del aviso: cocinar algo que no es nada. */
-const QUEMA = '#E0784A';
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Una de las dos acciones de la olla.
+ *
+ * **Solo el dibujo, sin palabra debajo.** Van sobre el caldero y ahí el texto
+ * compite con el arte; lo que hace cada una se entiende por lo que dibuja y por
+ * dónde está. El nombre igual existe para el lector de pantalla, que es donde
+ * hace falta de verdad.
+ *
+ * Apagada no se esconde: se queda en su lugar sin responder, para que la fila no
+ * se mueva y el pulgar sepa siempre dónde caer.
+ */
+function Accion({
+  arte,
+  etiqueta,
+  onPress,
+  puede,
+  lado = 46,
+}: {
+  /** Los dos dibujos: el de color y el blanco. */
+  arte: { si: ImageSourcePropType; no: ImageSourcePropType };
+  /** No se dibuja: es lo que lee un lector de pantalla. */
+  etiqueta: string;
+  onPress: () => void;
+  puede: boolean;
+  /**
+   * Cuánto ocupa el dibujo.
+   *
+   * Va por acción y no fijo porque las piezas no tienen la misma silueta: la
+   * flecha es alta y angosta y al mismo lado se lee más grande que la llama.
+   * Lo que tiene que verse parejo es el peso en pantalla, no el número.
+   */
+  lado?: number;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={!puede}
+      style={({ pressed }) => [
+        estilos.accion,
+        !puede && estilos.apagada,
+        pressed && puede && estilos.apretada,
+      ]}
+      accessibilityRole="button"
+      accessibilityLabel={etiqueta}
+      accessibilityState={{ disabled: !puede }}
+    >
+      {/* Dos dibujos y no uno atenuado: apagado es la pieza en blanco, que es
+          como está dibujada. Y encima va a media tinta, para que no compita con
+          la que sí se puede tocar. */}
+      <Image
+        source={puede ? arte.si : arte.no}
+        style={{ width: lado, height: lado }}
+        resizeMode="contain"
+        fadeDuration={0}
+      />
+    </Pressable>
+  );
+}
+
+/**
+ * Las dos acciones de la olla, cada una en sus dos estados.
+ *
+ * Recortadas de `assets/holow buttons.png` con sharp. Apagadas son la misma
+ * pieza en blanco: el dibujo trae el estado, así que no hay que atenuarlo.
+ */
+const COCINAR = {
+  si: require('../../assets/ui/cocinar.webp'),
+  no: require('../../assets/ui/cocinar-off.webp'),
+};
+/**
+ * Una flecha de volver y no un tacho de basura.
+ *
+ * Vaciar la olla **devuelve** los ingredientes al bolso: no se pierde nada. El
+ * tacho decía lo contrario, y en una pantalla donde cargar la olla es gratis
+ * justamente para que nadie tenga miedo de probar, un icono que promete
+ * destrucción es el peor cartel posible.
+ */
+const VACIAR = {
+  si: require('../../assets/ui/devolver.webp'),
+  no: require('../../assets/ui/devolver-off.webp'),
+};
 
 const estilos = StyleSheet.create({
-  hoja: { padding: AIRE, paddingBottom: spacing.xl },
+  /**
+   * La lista que scrollea.
+   *
+   * El aire de arriba lo pone acá y no el buscador: es la separación con el
+   * header, y puesta abajo del buscador solo lo despegaba de la grilla, que es
+   * justo lo que no hacía falta.
+   */
+  hoja: { paddingHorizontal: AIRE, paddingTop: 10, paddingBottom: spacing.xl },
 
-  olla: { alignItems: 'center' },
+  /**
+   * Lo que no se va con el scroll: la olla, lo que tiene adentro y su estado.
+   *
+   * Apretado a lo alto a propósito. Todo lo que se ahorra acá se lo lleva la
+   * despensa, que es la lista por la que de verdad hay que buscar.
+   */
+  fijo: {
+    paddingHorizontal: AIRE,
+    paddingTop: 4,
+    paddingBottom: 6,
+    backgroundColor: colors.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+
+  olla: { alignItems: 'center', justifyContent: 'center' },
+
+  /**
+   * Las dos acciones, encima del caldero.
+   *
+   * Absolutas sobre la caja del caldero —no sobre la hoja— y repartidas a lo
+   * ancho: quedan sobre los bordes de la olla y dejan libre el medio, que es
+   * donde el caldero tiene su boca. Colgadas del contenedor de la pantalla se
+   * iban contra los márgenes y dejaban de leerse como botones de la olla.
+   *
+   * `box-none` para que el hueco entre las dos no capture toques: lo único
+   * tocable son los dos dibujos.
+   */
+  acciones: {
+    ...StyleSheet.absoluteFill,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // Bien adentro del caldero, no contra sus bordes: en los extremos quedaban
+    // sobre las asas, medio salidos de la olla, y se leían como dos cosas
+    // apoyadas al lado en vez de dos botones de ella.
+    paddingHorizontal: 68,
+    // Y un poco más abajo del centro. Con `alignItems: center`, quitarle alto
+    // por arriba es lo que corre el punto medio hacia abajo: quedan sobre la
+    // panza de la olla y no sobre su boca, que es por donde entran las cosas.
+    paddingTop: 22,
+  },
+  /**
+   * El área de toque de cada acción.
+   *
+   * **Sin ficha de papel detrás.** La tuvo mientras los dibujos eran iconos de
+   * línea, que sobre el arte del caldero desaparecían. Estos vienen con volumen
+   * y borde blanco propios —del mismo material que los botones de la ruleta— y
+   * se leen solos sobre cualquier fondo.
+   */
+  accion: { padding: 6 },
+  /** Se hunde apenas, como una pieza que se aprieta de verdad. */
+  apretada: { opacity: 0.75, transform: [{ scale: 0.92 }] },
+  /** A media tinta: está, se ve qué es, y se ve que ahora no. */
+  apagada: { opacity: 0.7 },
 
   dentro: {
     flexDirection: 'row',
@@ -501,7 +622,7 @@ const estilos = StyleSheet.create({
      */
     alignContent: 'center',
     gap: spacing.sm,
-    marginTop: spacing.sm,
+    marginTop: 6,
     // Reservado: la despensa de abajo no se mueve nunca. Da para la ficha más
     // alta y para el quemado, que es lo más grande que puede aparecer acá.
     height: 80,
@@ -569,36 +690,14 @@ const estilos = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 13.5,
     textAlign: 'center',
-    marginTop: spacing.sm,
+    marginTop: 4,
     minHeight: 19,
   },
 
-  botones: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
-  prender: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 13,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-  },
-  prenderTexto: { fontSize: 16, fontWeight: '600', letterSpacing: 0.5 },
   // Mitad y mitad con "Cocinar": son las dos salidas de la misma decisión y
   // ninguna es más importante que la otra. De apéndice angosto al costado, se
   // leía como un botón de segunda.
-  vaciar: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 13,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: 'transparent',
-  },
-  vaciarTexto: { color: colors.text, fontSize: 16, fontWeight: '600', letterSpacing: 0.5 },
 
-  separador: { height: 1, backgroundColor: colors.border, marginVertical: spacing.md },
 
   buscador: {
     flexDirection: 'row',
@@ -607,7 +706,9 @@ const estilos = StyleSheet.create({
     paddingHorizontal: spacing.sm,
     borderRadius: radius.sm,
     backgroundColor: colors.surface,
-    marginBottom: spacing.sm,
+    // El mismo aire que tiene arriba: el buscador queda flotando entre el
+    // header y la grilla, y no apoyado sobre una de las dos.
+    marginBottom: 10,
   },
   campo: { flex: 1, color: colors.text, fontSize: 14, paddingVertical: 8 },
 
