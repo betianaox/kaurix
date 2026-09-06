@@ -12,7 +12,7 @@
  * "piedra": la escena la pone la etiqueta y **el color desempata**. Lo mismo
  * con las frutas, donde la alternativa a la naranja es "algo anaranjado".
  *
- * Ver `docs/reconocer-el-lugar.md`.
+ * Ver `../docs/kaurix-reconocer-el-lugar.md`.
  */
 
 /**

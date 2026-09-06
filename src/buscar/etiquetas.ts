@@ -23,7 +23,7 @@
  *
  * El color. Vive en `tonos.ts` y se cruza con esto en `objetivos.ts`. Son dos
  * señales independientes a propósito: la etiqueta dice qué clase de cosa hay y
- * el color desempata cuál. Ver `docs/reconocer-el-lugar.md`.
+ * el color desempata cuál. Ver `../docs/kaurix-reconocer-el-lugar.md`.
  */
 
 /**
