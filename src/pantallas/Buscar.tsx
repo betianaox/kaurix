@@ -536,6 +536,7 @@ export function BuscarScreen({ navigation }: Props) {
           <Conseguido
             arte={criatura.quieto}
             texto={t('buscar.encontrasteBicho', { bicho: t(`criaturas.${criatura.id}`) })}
+            detalle={t('buscar.daleDeComer')}
             tinte={tinte}
             sobreCamara
             aceptar={t('conseguido.aceptar')}

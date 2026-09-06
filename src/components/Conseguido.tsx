@@ -45,6 +45,7 @@ const VIDEO = require('../../assets/ui/video.webp');
 export function Conseguido({
   arte,
   texto,
+  detalle,
   tinte,
   aceptar,
   onAceptar,
@@ -55,6 +56,15 @@ export function Conseguido({
   arte: ImageSourcePropType;
   /** Qué conseguiste, ya armado y traducido. */
   texto: string;
+  /**
+   * Qué hacer ahora con eso, si hace falta decirlo.
+   *
+   * Va debajo y más chico: lo primero es qué te tocó, y recién después qué
+   * sigue. Casi nada lo necesita —un ingrediente se junta y ya— pero un bicho
+   * recién encontrado no hace nada solo, y sin esto la primera criatura se
+   * queda esperando en la colección sin que se entienda por qué.
+   */
+  detalle?: string;
   /** El color de la vuelta. Tiñe el halo y el botón. */
   tinte: string;
   /** Cómo se llama el botón de salir. */
@@ -148,7 +158,10 @@ export function Conseguido({
           <Image source={arte} style={estilos.arte} resizeMode="contain" fadeDuration={0} />
         </View>
 
-        <Text style={[estilos.texto, { color: tinte }]}>{texto}</Text>
+        <View style={estilos.dicho}>
+          <Text style={[estilos.texto, { color: tinte }]}>{texto}</Text>
+          {detalle ? <Text style={estilos.detalle}>{detalle}</Text> : null}
+        </View>
 
         {/* Los dos botones van uno al lado del otro, cada uno con su nombre
             debajo.
@@ -250,7 +263,30 @@ const estilos = StyleSheet.create({
     borderRadius: 68,
   },
   arte: { width: 104, height: 104 },
+  /**
+   * Lo que se dice, junto.
+   *
+   * Las dos líneas van en su propia caja y con poco aire entre ellas: si
+   * colgaran sueltas del contenedor, el `gap` grande que separa el dibujo de
+   * los botones las separaría también a ellas, y dejarían de leerse como una
+   * cosa dicha de corrido.
+   */
+  dicho: { alignItems: 'center', gap: spacing.sm },
   texto: { fontSize: 21, textAlign: 'center', lineHeight: 29, fontWeight: '600' },
+  /**
+   * La instrucción, en el color del texto del juego y no en el de la vuelta.
+   *
+   * Teñida igual que el titular las dos frases pesan lo mismo y hay que leer
+   * las dos para saber cuál importa. En el marrón de siempre se lee como lo que
+   * es: una nota al pie de la noticia.
+   */
+  detalle: {
+    color: colors.text,
+    fontSize: 15,
+    textAlign: 'center',
+    lineHeight: 21,
+    opacity: 0.85,
+  },
 
   botones: {
     flexDirection: 'row',

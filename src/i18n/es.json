@@ -64,7 +64,8 @@
     "juntaste": "Juntaste: {ingrediente}",
     "igualBusca": "Sigue buscando ingredientes igual.",
     "encontrasteIngrediente": "¡Encontraste {cantidad} {cosa}!",
-    "encontrasteBicho": "¡Encontraste a {bicho}!"
+    "encontrasteBicho": "¡Encontraste a {bicho}!",
+    "daleDeComer": "Dale de comer para que crezca"
   },
   "inventario": {
     "titulo": "BOLSO",

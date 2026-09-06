@@ -64,7 +64,8 @@
     "juntaste": "Picked up: {ingrediente}",
     "igualBusca": "Keep looking for ingredients anyway.",
     "encontrasteIngrediente": "You found {cantidad} {cosa}!",
-    "encontrasteBicho": "You found {bicho}!"
+    "encontrasteBicho": "You found {bicho}!",
+    "daleDeComer": "Feed it so it grows"
   },
   "inventario": {
     "titulo": "SATCHEL",
