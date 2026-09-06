@@ -154,6 +154,7 @@ export function RuletaGrande({
   onAceptarImpulso,
   onMultiplicar,
   multiplicarListo = false,
+  videoListo = false,
   onGirar,
   onFin,
   onCambiar,
@@ -186,6 +187,15 @@ export function RuletaGrande({
   onMultiplicar?: (premio: CasillaEnRuleta) => void;
   /** Si hay un anuncio cargado para ofrecer. */
   multiplicarListo?: boolean;
+  /**
+   * Si hay un video para pagar lo que se paga con video.
+   *
+   * Son dos cosas: volver a girar cuando ya se usó el giro del día, y cambiar
+   * los premios de la rueda. Sin anuncio cargado los dos quedan apagados —el
+   * único camino que no depende de esto es el giro gratis—, porque un botón que
+   * promete un video y no lo tiene no falla: no hace nada, que es peor.
+   */
+  videoListo?: boolean;
   /**
    * Aceptar el impulso que salió, que es lo único de la ruleta que hay que
    * aceptar: pisa al que estuviera corriendo. Los ingredientes no pasan por
@@ -350,7 +360,8 @@ export function RuletaGrande({
               responde al toque es la rueda, que se pone a girar. */}
           <Pressable
             onPress={onGirar}
-            disabled={girando}
+            // El giro del día siempre se puede; el de más, solo si hay video.
+            disabled={girando || (!gratis && !videoListo)}
             style={{
               position: 'absolute',
               left: (lado - boton) / 2,
@@ -363,7 +374,11 @@ export function RuletaGrande({
           >
             <Image
               source={gratis ? BOTON_GIRAR : BOTON_VIDEO}
-              style={{ width: boton, height: boton }}
+              style={[
+                { width: boton, height: boton },
+                // Apagado cuando no hay video: se ve que está ahí y que ahora no.
+                !gratis && !videoListo && { opacity: 0.45 },
+              ]}
               resizeMode="contain"
               fadeDuration={0}
             />
@@ -374,16 +389,17 @@ export function RuletaGrande({
             todo el día: si no te sirve nada de lo que hay, no queda nada por
             hacer más que esperar a mañana.
 
-            Lleva el icono de video porque **se va a pagar con uno**. El icono va
-            desde ahora aunque el video todavía no esté enganchado: cambiarlo
-            después, cuando la gente ya se acostumbró a que era gratis, se lee
-            como que le sacaron algo. */}
+            Se paga con un video, y el icono lo dice. Estuvo puesto desde antes
+            de que el video existiera a propósito: cambiarlo después, cuando la
+            gente ya se acostumbró a que era gratis, se lee como que le sacaron
+            algo. */}
         <Pressable
           onPress={onCambiar}
-          disabled={girando}
+          disabled={girando || !videoListo}
           style={({ pressed }) => [
             estilos.cambiar,
             { borderColor: `${tinte}88` },
+            !videoListo && { opacity: 0.45 },
             pressed && { opacity: 0.6 },
           ]}
           accessibilityRole="button"

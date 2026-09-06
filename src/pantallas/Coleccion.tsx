@@ -266,11 +266,34 @@ export function ColeccionScreen({ navigation }: Props) {
     return () => clearInterval(id);
   }, [impulso]);
 
+  /**
+   * Girar la rueda.
+   *
+   * **El sorteo pasa después del video, no antes.** Se pide el anuncio y el
+   * resultado sale al terminarlo: sorteando antes, alguien que corta el video a
+   * la mitad ya tendría el premio decidido, y el giro del día se habría gastado
+   * igual.
+   *
+   * El primero del día es gratis y no pasa por acá.
+   */
   function tirar() {
     if (tirada) return;
-    // Mientras no haya anuncios, el regiro es directo. Cuando entre AdMob, el
-    // video se pide acá y el sorteo pasa a ser lo que se hace al terminarlo.
-    setTirada({ indice: Math.floor(Math.random() * GAJOS), gratis });
+    const sortear = () => setTirada({ indice: Math.floor(Math.random() * GAJOS), gratis });
+    if (gratis) {
+      sortear();
+      return;
+    }
+    anuncio.mostrar(sortear);
+  }
+
+  /**
+   * Cambiar lo que muestra la rueda, que también se paga con un video.
+   *
+   * Sin esto, lo que hay en la ruleta es lo mismo todo el día: si no te sirve
+   * nada de lo que salió, no queda nada por hacer más que esperar a mañana.
+   */
+  function cambiar() {
+    anuncio.mostrar(cambiarRuleta);
   }
 
   function frenó() {
@@ -479,6 +502,7 @@ export function ColeccionScreen({ navigation }: Props) {
           rechazar: t('conseguido.rechazar'),
         }}
         multiplicarListo={anuncio.listo}
+        videoListo={anuncio.listo}
         /**
          * El impulso se aplica recién acá.
          *
@@ -502,7 +526,7 @@ export function ColeccionScreen({ navigation }: Props) {
         }}
         onGirar={tirar}
         onFin={frenó}
-        onCambiar={cambiarRuleta}
+        onCambiar={cambiar}
         onCerrar={() => setAbierta(false)}
       />
     </Pantalla>
