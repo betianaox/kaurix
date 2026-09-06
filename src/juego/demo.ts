@@ -2,7 +2,7 @@ import { casillasDe } from '../album/casillas';
 import { criaturas } from '../art';
 import { azarCon, barajar, semillaDe } from './azar';
 import { TRAMOS } from './crianza';
-import { NIVELES } from './datos';
+import { NIVELES, ORDEN_DE_VUELTAS } from './datos';
 import { INGREDIENTES } from './ingredientes';
 import { avanceDe, menuDe, pocionDe } from './menu';
 import { COMIDAS_COMO_RECETA, POCIONES } from './recetas';
@@ -189,20 +189,24 @@ function criando(
 }
 
 /**
- * Las cartas ganadas: seis de cada nueve —el 70% redondeado—, en las ocho hojas.
+ * Las cartas ganadas: seis de cada ocho acciones, en las ocho hojas.
  *
  * **La primera de la serie va siempre**, y el resto sorteado. Sin eso el sorteo
  * podía dejar la primera casilla vacía en varias hojas seguidas, y una hoja se
  * lee empezando por arriba a la izquierda: el hueco justo ahí la hace parecer
  * más vacía de lo que está.
+ *
+ * **Las doradas no se sortean.** Solo entra la de una hoja que quedó completa, y
+ * con seis de ocho no queda ninguna. Una dorada suelta es una partida que no
+ * pudo haber pasado: es lo único que no se gana con suerte.
  */
 function cartasGanadas(azar: () => number): string[] {
   const salida: string[] = [];
 
-  for (let nivel = 1; nivel <= NIVELES; nivel++) {
-    const casillas = casillasDe(nivel);
-    const cuantas = Math.round(casillas.length * PARTE.cartas);
-    const [primera, ...resto] = casillas;
+  for (const criatura of ORDEN_DE_VUELTAS) {
+    const acciones = casillasDe(criatura).filter((c) => c.tipo === 'accion');
+    const cuantas = Math.round(acciones.length * PARTE.cartas);
+    const [primera, ...resto] = acciones;
 
     salida.push(primera.llave);
     for (const c of barajar(resto, azar).slice(0, cuantas - 1)) salida.push(c.llave);
@@ -289,7 +293,7 @@ export function partidaDemo(base: Guardado, ahora = Date.now()): Guardado {
    * carta en el álbum es una partida que no pudo haber pasado. El sorteo del
    * 70% no lo sabe: puede dejarla afuera.
    */
-  const llaveCrecida = carta(nivel, CRECIDO);
+  const llaveCrecida = carta(CRECIDO, 'dormir');
   const cartas = cartasGanadas(azar);
   if (!cartas.includes(llaveCrecida)) cartas.push(llaveCrecida);
 

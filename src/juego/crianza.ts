@@ -37,55 +37,15 @@ export const MAX_CRIANZA = __DEV__ ? 8 : 4;
 export const TRAMOS = 3;
 
 /**
- * Cuánto tiempo puede pasar sin atención antes de que la barra empiece a bajar.
+ * ## Acá había un decaimiento y se sacó
  *
- * Dos días, no unas horas. Alguien que se fue el fin de semana no hizo nada
- * malo.
- */
-export const GRACIA_HORAS = 48;
-
-/**
- * Cuánto se pierde por día, medido en tramos, una vez pasada la gracia.
+ * La barra bajaba sola después de dos días sin atención, salvo la del tutorial.
+ * Se sacó **para todas**: es complejidad justo donde el juego ya pide bastante
+ * —buscar con la cámara, cocinar la escalera de recetas, seguir varias crianzas
+ * a la vez— y lo que agregaba era el miedo a irse, no una decisión interesante.
  *
- * Medio tramo por día: se nota, pero volver después de una semana no significa
- * encontrar la barra en cero.
+ * Lo que se avanzó queda. Volver a los tres días es encontrar todo donde estaba.
  */
-export const CAIDA_POR_DIA = 0.5;
-
-const HORA = 1000 * 60 * 60;
-
-/**
- * Aplica el tiempo que pasó desde la última atención.
- *
- * **Nunca baja del último tramo completo.** Se pierde lo avanzado dentro del
- * tramo actual y nada más: quien vuelve encuentra daño, pero también un lugar
- * donde pararse. La versión sin este piso es la que hace que la gente le tenga
- * miedo a los Tamagotchi y desinstale en vez de retomar.
- *
- * No modifica lo que recibe: devuelve el estado nuevo.
- */
-export function conElTiempo(c: EnCrianza, inmune: boolean, ahora = Date.now()): EnCrianza {
-  if (inmune) return c;
-
-  const horas = (ahora - new Date(c.ultimaAtencion).getTime()) / HORA;
-  const sinAtencion = horas - GRACIA_HORAS;
-  if (!(sinAtencion > 0)) return c;
-
-  const perdido = (sinAtencion / 24) * CAIDA_POR_DIA;
-  const avance = Math.max(0, c.avance - perdido);
-  if (avance === c.avance) return c;
-
-  return { ...c, avance };
-}
-
-/**
- * Cuánto falta para que empiece a perder, en horas. Negativo si ya está
- * perdiendo. Es lo que ordena la lista de avisos: es lo único que tiene reloj.
- */
-export function horasHastaPerder(c: EnCrianza, ahora = Date.now()): number {
-  const horas = (ahora - new Date(c.ultimaAtencion).getTime()) / HORA;
-  return GRACIA_HORAS - horas;
-}
 
 /** La barra entera, de 0 a 1, para dibujarla de un saque. */
 export function progreso(c: EnCrianza): number {

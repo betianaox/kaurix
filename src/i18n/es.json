@@ -151,7 +151,11 @@
     "titulo": "ÁLBUM",
     "legendaria": "Legendaria",
     "cuantas": "{tiene} de {total}",
-    "noLaTienes": "Todavía no la tienes"
+    "noLaTienes": "Todavía no la tienes",
+    "cartaNueva": "¡Carta nueva!",
+    "deQuien": "{bicho} {accion}",
+    "ganasteLegendaria": "¡Legendaria!",
+    "porCompletar": "Completaste la hoja de\n{bicho}"
   },
   "ayuda": {
     "titulo": "AYUDA",
@@ -325,5 +329,15 @@
     "aceptar": "Aceptar",
     "multiplicar": "Multiplicar x3",
     "rechazar": "Rechazar"
+  },
+  "acciones": {
+    "dormir": "Durmiendo",
+    "nadar": "Nadando",
+    "comer": "Comiendo",
+    "cantar": "Cantando",
+    "buscar": "Explorando",
+    "estrella": "Soñando",
+    "construir": "Trabajando",
+    "volar": "Volando"
   }
 }

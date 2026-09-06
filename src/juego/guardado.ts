@@ -24,7 +24,7 @@ const LLAVE = 'kaurix.guardado';
  * alcanza con devolver una partida nueva; después habrá que escribir el paso de
  * verdad, porque va a haber gente con progreso adentro.
  */
-export const VERSION = 1;
+export const VERSION = 2;
 
 /** Una criatura que está siendo criada. Nunca hay más de `MAX_CRIANZA`. */
 export type EnCrianza = {
@@ -113,8 +113,8 @@ export type Guardado = {
   /** Ids de las criaturas ya llevadas a adulto **en el nivel en curso**. */
   completadas: string[];
   /**
-   * Las cartas ganadas, como `"nivel:criatura"` — y `"nivel:legendaria"` para
-   * la del centro de la hoja.
+   * Las cartas ganadas, como `"bicho:accion"` — y `"bicho:legendaria"` para la
+   * del centro de su hoja.
    *
    * Una lista de strings y no un objeto anidado porque el álbum solo necesita
    * preguntar si tiene una carta, y porque así sobrevive a JSON sin que las
@@ -143,10 +143,18 @@ export function partidaNueva(): Guardado {
   };
 }
 
-/** La llave con que una carta vive en `cartas`. */
-export const carta = (nivel: number, criatura: string) => `${nivel}:${criatura}`;
+/**
+ * La llave con que una carta vive en `cartas`.
+ *
+ * `"bicho:accion"`, no `"vuelta:bicho"` como antes. Una hoja es de un bicho y
+ * sus nueve cartas son sus ocho acciones más la dorada, así que lo que
+ * identifica una carta es de quién es y qué está haciendo. La vuelta no entra:
+ * las ocho hojas se llenan al mismo tiempo y una carta es la misma la hayas
+ * conseguido en la vuelta que la hayas conseguido.
+ */
+export const carta = (criatura: string, accion: string) => `${criatura}:${accion}`;
 
-/** La legendaria de un nivel, la que va en el centro de la hoja. */
+/** La dorada de un bicho, la que va en el centro de su hoja. */
 export const LEGENDARIA = 'legendaria';
 
 export async function cargar(): Promise<Guardado> {

@@ -43,7 +43,8 @@
     "typecheck": "tsc --noEmit",
     "criatura": "node herramientas/procesar.js",
     "fondo": "node herramientas/mejor-fondo.js",
-    "reconocedor": "tsx herramientas/probar-reconocedor.ts"
+    "reconocedor": "tsx herramientas/probar-reconocedor.ts",
+    "album": "tsx herramientas/probar-album.ts"
   },
   "private": true
 }

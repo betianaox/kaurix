@@ -81,8 +81,8 @@ export function Carta({ casilla, nivel, ganada, ancho, lupa = false }: Props) {
   // la misma carta vista de los dos lados y tienen que recortar igual.
   const esquina = Math.round(ancho * RADIO);
 
-  const criatura = casilla.tipo === 'criatura' ? porId(casilla.criatura) : null;
-  const nombre = casilla.tipo === 'legendaria' ? t('album.legendaria') : (criatura?.nombre ?? '');
+  const nombre =
+    casilla.tipo === 'legendaria' ? t('album.legendaria') : t(`acciones.${casilla.accion}`);
 
   /** El arte de esta carta, si la serie está dibujada y ya la conseguiste. */
   const arte = ganada ? cardDe(nivel, casilla.indice) : null;

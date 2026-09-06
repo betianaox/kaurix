@@ -184,7 +184,49 @@ export function criaturaABuscar(
  * Cuántos intentos fallidos antes de que el huevo rompa. Cambia en cada huevo:
  * el jugador no sabe cuántos le van a tocar, y esa incertidumbre es la mitad de
  * la gracia.
+ *
+ * **El tutorial rompe al primer intento fallido.** Uno, no cero: el fallo tiene
+ * que existir para que se entienda que hay que volver a tocar, pero nadie tiene
+ * que aprender esa mecánica tocando cuatro veces sin saber si está funcionando.
  */
-export function fallosAntesDeRomper(azar: () => number = Math.random): number {
+export function fallosAntesDeRomper(
+  criatura?: string,
+  azar: () => number = Math.random
+): number {
+  if (criatura === TUTORIAL) return 1;
   return 2 + Math.floor(azar() * 3);
 }
+
+/**
+ * Qué tan lejos se siente una criatura al buscarla, relativo a lo normal.
+ *
+ * Multiplica el tiempo que hay que seguirla: 1 es lo normal, más alto es más
+ * lejos y más caminata.
+ *
+ * **El tutorial vale 0,35**, o sea aparece encima casi enseguida. Es la cara del
+ * branding y la primera que ve cualquiera: si la primera búsqueda de la vida
+ * cuesta veinte segundos de seguir un punto que no se sabe qué es, no hay
+ * segunda.
+ *
+ * ## Por qué es una tabla y no una cuenta sobre el número de vuelta
+ *
+ * Porque la dificultad **no tiene que crecer parejo**. Con una fórmula por
+ * vuelta, el juego se vuelve una escalera y a la cuarta ya sabés que cada una va
+ * a costar más que la anterior. Con valores escritos hay bichos fáciles tarde y
+ * difíciles temprano, y cuánto va a costar el próximo no se puede predecir.
+ *
+ * Son números para ajustar probando en la calle, uno por uno.
+ */
+const DIFICULTAD: Record<string, number> = {
+  'dragon-turquesa': 0.35,
+  'gato-bruma': 0.9,
+  fenix: 1.15,
+  'cachorro-miel': 0.8,
+  'oso-dorado': 1.25,
+  'lobo-niebla': 1.0,
+  'capibara-alado': 0.85,
+  'dragon-musgo': 1.3,
+};
+
+/** Cuánto cuesta encontrar a esta criatura. 1 si no tiene nada dicho. */
+export const dificultadDe = (criatura: string) => DIFICULTAD[criatura] ?? 1;

@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 
-import { conElTiempo, listoParaAdulto, recienNacida, MAX_CRIANZA, TRAMOS } from './crianza';
-import { NIVELES, TUTORIAL } from './datos';
+import { listoParaAdulto, recienNacida, MAX_CRIANZA, TRAMOS } from './crianza';
+import { cartaAlCrecer, doradaPorCompletar, type Premio } from '../album/sorteo';
+import { NIVELES } from './datos';
 import { avanceDe, faltanDe, menuDe, pocionDe, tramoCompleto, type Pedido } from './menu';
 import { cuanto, saleDe, type Mezcla } from './caldero';
 import type { CodigoIdioma } from '../i18n/idiomas';
@@ -48,7 +49,8 @@ type Estado = {
    */
   dar: (criatura: string, receta: string) => void;
   /** Cierra la crianza: gana la carta y, si completó el nivel, pasa de vuelta. */
-  volverAdulto: (criatura: string) => void;
+  /** Ver la implementación: devuelve la carta que salió y la dorada, si hubo. */
+  volverAdulto: (criatura: string) => Premio;
 
   /**
    * Prende el fuego: gasta todo lo que hay en el caldero.
@@ -122,9 +124,6 @@ type Estado = {
 /** Hay lugar para empezar otra criatura. */
 export const hayLugar = (j: Guardado) => j.crianza.length < MAX_CRIANZA;
 
-/** El tutorial no decrece nunca: nadie tiene que aprender la mecánica perdiendo. */
-const inmune = (criatura: string) => criatura === TUTORIAL;
-
 export const useJuego = create<Estado>((set, get) => {
   /** Aplica un cambio y lo deja escrito. */
   function aplicar(cambio: (j: Guardado) => Guardado) {
@@ -171,7 +170,7 @@ export const useJuego = create<Estado>((set, get) => {
       const ahora = Date.now();
       const juego: Guardado = {
         ...guardado,
-        crianza: guardado.crianza.map((c) => conElTiempo(c, inmune(c.criatura), ahora)),
+        crianza: guardado.crianza,
         visto: new Date(ahora).toISOString(),
       };
 
@@ -244,17 +243,38 @@ export const useJuego = create<Estado>((set, get) => {
       });
     },
 
+    /**
+     * Hacer crecer un bicho, que es lo que reparte las cartas.
+     *
+     * Devuelve qué salió para que la pantalla lo anuncie: una carta de acción
+     * siempre —sorteada entre las que faltan, con más chance de la hoja del
+     * bicho que criaste— y, si esa carta cerró una hoja, además su dorada.
+     *
+     * La dorada **no se sortea nunca**: es lo único que se gana completando, y
+     * por eso no puede haber una sin sus ocho.
+     */
     volverAdulto(criatura) {
+      let premio: Premio = null;
+
       aplicar((j) => {
         const c = j.crianza.find((x) => x.criatura === criatura);
         if (!c || !listoParaAdulto(c)) return j;
 
+        const salio = cartaAlCrecer(criatura, j.cartas);
+        const cartas = salio ? [...j.cartas, salio.llave] : [...j.cartas];
+
+        // La dorada se mira contra las cartas YA sumadas: la que acaba de salir
+        // es justamente la que puede estar cerrando la hoja.
+        const dorada = salio ? doradaPorCompletar(salio.criatura, cartas) : null;
+        if (dorada) cartas.push(carta(dorada, LEGENDARIA));
+
+        premio = salio ? { carta: salio, dorada } : null;
+
         const completadas = [...j.completadas, criatura];
-        const cartas = [...j.cartas, carta(j.nivel, criatura)];
         const crianza = j.crianza.filter((x) => x.criatura !== criatura);
 
-        // ¿Cerró el nivel? Entra la legendaria y todo vuelve a empezar más
-        // caro, con el álbum de otro color.
+        // ¿Cerró la vuelta? Todo vuelve a empezar más caro y con otro color. Las
+        // hojas del álbum no dependen de esto: se llenan las ocho a la vez.
         if (completadas.length < criaturas.length) {
           return { ...j, crianza, completadas, cartas };
         }
@@ -262,13 +282,15 @@ export const useJuego = create<Estado>((set, get) => {
         return {
           ...j,
           crianza,
-          cartas: [...cartas, carta(j.nivel, LEGENDARIA)],
+          cartas,
           completadas: [],
           // En la última vuelta el álbum está lleno y el nivel no avanza más:
           // se queda ahí en vez de desbordar a un nivel nueve que no existe.
           nivel: Math.min(NIVELES, j.nivel + 1),
         };
       });
+
+      return premio;
     },
 
     /**

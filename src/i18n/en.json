@@ -151,7 +151,11 @@
     "titulo": "ALBUM",
     "legendaria": "Legendary",
     "cuantas": "{tiene} of {total}",
-    "noLaTienes": "You don't have it yet"
+    "noLaTienes": "You don't have it yet",
+    "cartaNueva": "New card!",
+    "deQuien": "{bicho} {accion}",
+    "ganasteLegendaria": "Legendary!",
+    "porCompletar": "You completed the page of\n{bicho}"
   },
   "ayuda": {
     "titulo": "HELP",
@@ -325,5 +329,15 @@
     "aceptar": "Accept",
     "multiplicar": "Triple it",
     "rechazar": "Decline"
+  },
+  "acciones": {
+    "dormir": "Sleeping",
+    "nadar": "Swimming",
+    "comer": "Eating",
+    "cantar": "Singing",
+    "buscar": "Exploring",
+    "estrella": "Dreaming",
+    "construir": "Working",
+    "volar": "Flying"
   }
 }

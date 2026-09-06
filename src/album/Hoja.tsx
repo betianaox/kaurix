@@ -44,8 +44,9 @@ export function Hoja({ nivel, ganadas, ancho, alto, onCarta }: Props) {
   const color = colorDeNivel(nivel);
   // El encabezado lleva el nombre del bicho de la vuelta, no su número: "SERIE
   // 4" no le dice nada a nadie, y el bicho es lo que la hoja tiene de propio.
-  const bicho = porId(bichoDeNivel(nivel))?.nombre ?? '';
-  const casillas = casillasDe(nivel);
+  const bichoId = bichoDeNivel(nivel);
+  const bicho = porId(bichoId)?.nombre ?? '';
+  const casillas = casillasDe(bichoId);
   const tengo = casillas.filter((c) => ganadas.includes(c.llave)).length;
 
   // La carta se dimensiona por lo que sea que apriete primero: tres de ancho o

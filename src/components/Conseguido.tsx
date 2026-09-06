@@ -9,6 +9,8 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 
+import { RATIO as RATIO_CARD } from '../album/cards';
+import { Destello } from './Destello';
 import { Cerrar } from '../shell/Cerrar';
 import { colors, radius, spacing } from '../theme';
 
@@ -23,6 +25,33 @@ import { colors, radius, spacing } from '../theme';
  * los botones del juego. Por eso acá no se los tiñe ni se los enmarca: ya son
  * el botón.
  */
+/**
+ * Cuánto mide el estallido de rayos de atrás.
+ *
+ * Bastante más que la carta —que mide 176 de ancho— para que las puntas salgan
+ * por los cuatro lados. Contenida dentro de la carta no se vería, y ahí no
+ * habría estrella sino un fondo.
+ *
+ * Más ancha que la tarjeta a propósito: las puntas salen por los cuatro lados y
+ * se ven contra el velo. Recortada contra el borde, agrandarla no mostraba más
+ * estrella sino más relleno.
+ */
+const DESTELLO = 300;
+
+/**
+ * Cuánto se estira el destello a lo alto.
+ *
+ * Menos que la carta, que es 1,52. Con la proporción exacta el estirón se
+ * notaba y la figura se leía como un óvalo; acá solo acompaña la forma, que es
+ * lo que se quiere: que se sienta hecho para una carta sin que se vea que está
+ * estirado.
+ *
+ * Va de la mano con `DESTELLO`: subiendo uno y bajando el otro en la misma
+ * medida, el alto no se mueve y lo único que cambia es cuánto asoma a los
+ * costados. Así se afinaron las puntas horizontales sin tocar las verticales.
+ */
+const DESTELLO_ALTO = 1.24;
+
 const ACEPTAR = require('../../assets/ui/aceptar.webp');
 const VIDEO = require('../../assets/ui/video.webp');
 
@@ -52,6 +81,8 @@ export function Conseguido({
   multiplicar,
   rechazar,
   sobreCamara = false,
+  formato = 'icono',
+  festejo = false,
 }: {
   arte: ImageSourcePropType;
   /** Qué conseguiste, ya armado y traducido. */
@@ -111,6 +142,23 @@ export function Conseguido({
    * es lo que hace que el texto se lea sin depender de a qué le estés apuntando.
    */
   sobreCamara?: boolean;
+  /**
+   * Qué forma tiene lo que se ganó.
+   *
+   * `icono` es un ingrediente o un bicho: un dibujo suelto, cuadrado. `carta`
+   * es una figurita del álbum, que es alta y lleva su marco dorado dibujado
+   * encima, así que va más grande y con su proporción — achatada en un cuadrado
+   * no se le vería nada.
+   */
+  formato?: 'icono' | 'carta';
+  /**
+   * El festejo grande, para lo que se gana una vez cada muchas.
+   *
+   * Sube el halo y lo hace latir. Se guarda para las doradas: si todo festejara
+   * igual, completar una hoja entera se sentiría lo mismo que juntar una
+   * zanahoria.
+   */
+  festejo?: boolean;
 }) {
   const entrada = useRef(new Animated.Value(0)).current;
 
@@ -130,13 +178,47 @@ export function Conseguido({
   // esto y no `multiplicar` a secas: sin anuncio cargado, el cartel es el de un
   // solo botón, incluido cómo se llama.
   const hayOferta = !!multiplicar && multiplicar.listo;
+  const esCarta = formato === 'carta';
+
+  /**
+   * Cuánto mide la estrella de atrás.
+   *
+   * En la dorada va más chica que en una carta común, no más grande: la carta
+   * dorada tiene su propio resplandor dibujado y una estrella que la desborda le
+   * agrega ruido alrededor en vez de destacarla.
+   */
+  const ladoDestello = festejo ? Math.round(DESTELLO * 0.95) : DESTELLO;
+
+  /**
+   * El latido del halo en el festejo.
+   *
+   * Late el resplandor y no la carta: lo que se está mirando es el dibujo, y
+   * una carta que respira se lee como un error de render, no como una fiesta.
+   */
+  const brillo = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (!festejo) return;
+    const ciclo = Animated.loop(
+      Animated.sequence([
+        Animated.timing(brillo, { toValue: 1.06, duration: 1100, useNativeDriver: true }),
+        Animated.timing(brillo, { toValue: 1, duration: 1100, useNativeDriver: true }),
+      ])
+    );
+    ciclo.start();
+    return () => ciclo.stop();
+  }, [festejo, brillo]);
 
   return (
     <Animated.View
       style={[
         estilos.raiz,
         // Sobre la cámara no hay velo: la ventana se defiende sola.
-        !sobreCamara && { backgroundColor: colors.velo },
+        //
+        // Fuera de ella, una carta va sobre blanco entero y no sobre el velo
+        // crema: la carta es lo único que se mira, y el crema del velo es el
+        // mismo de la hoja que hay atrás, así que el cartel no se separaba de
+        // la pantalla que venía tapando.
+        !sobreCamara && { backgroundColor: esCarta ? '#FFFFFF' : colors.velo },
         {
           opacity: entrada,
           transform: [
@@ -146,21 +228,63 @@ export function Conseguido({
       ]}
     >
       <View style={[estilos.caja, sobreCamara && estilos.ventana]}>
-        {/* El resplandor detrás del dibujo: es lo que hace que se lea como algo
-            que se ganó y no como una ficha más del inventario.
+        {/* Lo que va detrás del dibujo: es lo que hace que se lea como algo que
+            se ganó y no como una ficha más del inventario.
 
             Va adentro de la misma caja que el dibujo y no suelto sobre la
             pantalla. Suelto quedaba centrado en la pantalla y no en el premio, y
             como además era mucho más grande que el dibujo, se leía como un fondo
-            de la hoja entera en vez de como un halo. */}
+            de la hoja entera en vez de como un halo.
+
+            **Un halo redondo para lo redondo y rayos para la carta.** El disco
+            funciona detrás de un ingrediente, que es una silueta suelta, pero
+            detrás de una carta rectangular le deja las cuatro esquinas afuera y
+            se lee como una mancha mal puesta. Los rayos salen del centro y no
+            tienen forma propia que respetar. */}
         <View style={estilos.retrato}>
-          <View style={[estilos.resplandor, { backgroundColor: `${tinte}33` }]} />
-          <Image source={arte} style={estilos.arte} resizeMode="contain" fadeDuration={0} />
+          {esCarta ? (
+            <Animated.View
+              style={[
+                estilos.destello,
+                { width: ladoDestello, height: Math.round(ladoDestello * DESTELLO_ALTO) },
+                festejo && { transform: [{ scale: brillo }] },
+              ]}
+              pointerEvents="none"
+            >
+              <Destello
+                lado={ladoDestello}
+                // Acompaña la forma de la carta sin copiarla. Ver DESTELLO_ALTO.
+                proporcion={DESTELLO_ALTO}
+                color={tinte}
+                // Menos, no más: la carta dorada ya brilla sola y con la
+                // estrella al mismo peso que en una carta común el fondo se le
+                // sumaba encima. En la que hay que mirar, el fondo se corre.
+                intensidad={festejo ? 0.85 : 1}
+              />
+            </Animated.View>
+          ) : (
+            <Animated.View
+              style={[
+                estilos.resplandor,
+                festejo && estilos.resplandorFiesta,
+                { backgroundColor: `${tinte}${festejo ? '55' : '33'}` },
+                festejo && { transform: [{ scale: brillo }] },
+              ]}
+            />
+          )}
+          <Image
+            source={arte}
+            style={esCarta ? estilos.carta : estilos.arte}
+            resizeMode="contain"
+            fadeDuration={0}
+          />
         </View>
 
-        <View style={estilos.dicho}>
+        <View style={[estilos.dicho, esCarta && estilos.dichoCarta]}>
           <Text style={[estilos.texto, { color: tinte }]}>{texto}</Text>
-          {detalle ? <Text style={estilos.detalle}>{detalle}</Text> : null}
+          {detalle ? (
+            <Text style={[estilos.detalle, esCarta && estilos.detalleFicha]}>{detalle}</Text>
+          ) : null}
         </View>
 
         {/* Los dos botones van uno al lado del otro, cada uno con su nombre
@@ -264,6 +388,25 @@ const estilos = StyleSheet.create({
   },
   arte: { width: 104, height: 104 },
   /**
+   * Una figurita del álbum: alta y bastante más grande que un icono.
+   *
+   * La proporción sale de `cards`, medida sobre el arte, así que la carta del
+   * cartel y la de la hoja son la misma forma. Y va grande porque es lo que se
+   * ganó: una figurita chiquita no se mira, se cierra.
+   */
+  carta: { width: 176, height: Math.round(176 * RATIO_CARD) },
+  /** La caja del destello. El SVG va centrado adentro y no ocupa lugar. */
+  destello: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resplandorFiesta: {
+    width: 268,
+    height: 268,
+    borderRadius: 134,
+  },
+  /**
    * Lo que se dice, junto.
    *
    * Las dos líneas van en su propia caja y con poco aire entre ellas: si
@@ -272,6 +415,14 @@ const estilos = StyleSheet.create({
    * cosa dicha de corrido.
    */
   dicho: { alignItems: 'center', gap: spacing.sm },
+  /**
+   * Aire de más entre la carta y lo que dice.
+   *
+   * La estrella de atrás es más alta que la carta y se sale por abajo, así que
+   * el texto la tocaba aunque el espacio con la carta fuera el de siempre. Este
+   * margen lo separa de la punta, no del dibujo.
+   */
+  dichoCarta: { marginTop: 26 },
   texto: { fontSize: 21, textAlign: 'center', lineHeight: 29, fontWeight: '600' },
   /**
    * La instrucción, en el color del texto del juego y no en el de la vuelta.
@@ -286,6 +437,26 @@ const estilos = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 21,
     opacity: 0.85,
+  },
+  /**
+   * El detalle de una carta: quién es y qué está haciendo.
+   *
+   * Más chico que el de un hallazgo, porque **no es una frase sino una ficha**:
+   * "Dragón turquesa VOLAR" es lo que dice la carta de sí misma, no algo que se
+   * le esté contando a nadie. Con el mismo cuerpo que "Dale de comer para que
+   * crezca" las dos cosas se leían igual, y una es un rótulo y la otra una
+   * instrucción.
+   *
+   * La caja alta va **solo en la acción**, y la pone quien arma el texto: el
+   * nombre del bicho tiene que leerse como nombre.
+   */
+  detalleFicha: {
+    fontSize: 13,
+    lineHeight: 18,
+    letterSpacing: 0.6,
+    // Sin peso extra: lo que destaca la acción es la caja alta, no la negrita.
+    // Con las dos cosas el rótulo pesaba más que el título de arriba.
+    fontWeight: '400',
   },
 
   botones: {

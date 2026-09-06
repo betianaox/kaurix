@@ -151,7 +151,11 @@
     "titulo": "ALBUM",
     "legendaria": "Leggendaria",
     "cuantas": "{tiene} di {total}",
-    "noLaTienes": "Non ce l’hai ancora"
+    "noLaTienes": "Non ce l’hai ancora",
+    "cartaNueva": "Carta nuova!",
+    "deQuien": "{bicho} {accion}",
+    "ganasteLegendaria": "Leggendaria!",
+    "porCompletar": "Hai completato la pagina di\n{bicho}"
   },
   "ayuda": {
     "titulo": "AIUTO",
@@ -325,5 +329,15 @@
     "aceptar": "Accetta",
     "multiplicar": "Moltiplica x3",
     "rechazar": "Rifiuta"
+  },
+  "acciones": {
+    "dormir": "Dormendo",
+    "nadar": "Nuotando",
+    "comer": "Mangiando",
+    "cantar": "Cantando",
+    "buscar": "Esplorando",
+    "estrella": "Sognando",
+    "construir": "Lavorando",
+    "volar": "Volando"
   }
 }

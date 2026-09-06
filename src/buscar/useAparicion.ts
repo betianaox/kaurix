@@ -133,6 +133,13 @@ type Opciones = {
    */
   tamano: Tamano;
   /**
+   * Cuánto cuesta encontrar a esta criatura, relativo a lo normal.
+   *
+   * Divide lo que se acerca por lectura: 1 es lo de siempre, más alto es más
+   * lejos. Lo decide `dificultadDe`, que tiene una tabla por bicho.
+   */
+  dificultad?: number;
+  /**
    * Congela la distancia. Va en verdadero mientras pasa algo que hay que mirar
    * —un intento fallido, la eclosión—: no corresponde que se aleje justo ahí.
    */
@@ -180,7 +187,23 @@ function wrap(angle: number): number {
  */
 const acotar = (a: number) => Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, a));
 
-export function useAparicion({ activo, tamano, congelado = false }: Opciones): Aparicion {
+export function useAparicion({
+  activo,
+  tamano,
+  dificultad = 1,
+  congelado = false,
+}: Opciones): Aparicion {
+  /**
+   * La dificultad se lee por referencia y no directo.
+   *
+   * La criatura se elige en un efecto, después del primer render, así que el
+   * primer valor que llega acá es el de por defecto. El bucle del sensor corre
+   * adentro de un efecto que no depende de esto —y no tiene que depender:
+   * volver a armarlo reiniciaría la distancia a mitad de búsqueda—, así que sin
+   * la referencia se quedaría con el 1 de arranque para siempre.
+   */
+  const dificultadRef = useRef(dificultad);
+  dificultadRef.current = dificultad;
   const { width, height } = useWindowDimensions();
 
   const [motor, setMotor] = useState<Motor>('probando');
@@ -334,7 +357,12 @@ export function useAparicion({ activo, tamano, congelado = false }: Opciones): A
         Math.abs(px - width / 2) / width < 0.28 && Math.abs(py - height / 2) / height < 0.24;
 
       if (!congeladoRef.current) {
-        const paso = porcion < A_LA_VISTA_MIN ? -ALEJA : enElCentro ? ACERCA : ACERCA * 0.45;
+        // La dificultad divide lo que se acerca, no lo que se aleja: lo que
+        // cambia entre un bicho y otro es cuánto hay que seguirlo, no cuánto
+        // castiga perderlo de vista. Dividiendo los dos, un bicho difícil sería
+        // además más indulgente, que es justo al revés.
+        const acerca = ACERCA / dificultadRef.current;
+        const paso = porcion < A_LA_VISTA_MIN ? -ALEJA : enElCentro ? acerca : acerca * 0.45;
         cercaniaRef.current = Math.max(0, Math.min(1, cercaniaRef.current + paso));
       }
       visibleRef.current = porcion;

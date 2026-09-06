@@ -13,10 +13,15 @@ import {
 } from 'react-native';
 
 import { porId, type Criatura } from '../art';
+import { cardDe } from '../album/cards';
+import { ACCIONES } from '../album/casillas';
+import type { Premio } from '../album/sorteo';
+import { Conseguido } from '../components/Conseguido';
+
 import { useT } from '../i18n';
 import { Receta as AyudaReceta } from '../inventario/Receta';
-import { GRACIA_HORAS, TRAMOS, horasHastaPerder, listoParaAdulto, progreso } from '../juego/crianza';
-import { colorDeNivel, TUTORIAL } from '../juego/datos';
+import { TRAMOS, listoParaAdulto, progreso } from '../juego/crianza';
+import { colorDeNivel, ORDEN_DE_VUELTAS } from '../juego/datos';
 import { multiplicadorDe } from '../juego/ruleta';
 import { faltanDe, menuDe, pocionDe, type Pedido } from '../juego/menu';
 import { claveDe, type Receta as TReceta } from '../juego/recetas';
@@ -46,6 +51,31 @@ export function BichoScreen({ route, navigation }: Props) {
   const juego = useJuego((e) => e.juego);
   const dar = useJuego((e) => e.dar);
   const volverAdulto = useJuego((e) => e.volverAdulto);
+
+  /**
+   * Lo que salió al hacerlo crecer, mientras se anuncia.
+   *
+   * `mostrando` es cuál de los dos carteles está en pantalla. Cuando la carta
+   * cierra una hoja son **dos, uno detrás del otro**: primero la que salió y
+   * después la dorada. Juntarlos en uno solo escondería el momento que importa
+   * —completar una hoja pasa ocho veces en todo el juego— detrás de la carta
+   * número sesenta y cuatro.
+   */
+  const [ganado, setGanado] = useState<{
+    premio: NonNullable<Premio>;
+    mostrando: 'carta' | 'dorada';
+  } | null>(null);
+
+  /** Hacer crecer y anunciar lo que salió. Los dos botones pasan por acá. */
+  function crecer() {
+    // La ficha se dibuja sin criatura mientras se resuelve la ruta; los botones
+    // que llaman acá no existen todavía, pero el tipo no lo sabe.
+    if (!criatura) return;
+    const premio = volverAdulto(criatura.id);
+    // Sin premio el álbum ya está completo: nada que anunciar, la criatura
+    // creció igual.
+    if (premio) setGanado({ premio, mostrando: 'carta' });
+  }
   const t = useT();
 
   /**
@@ -120,14 +150,41 @@ export function BichoScreen({ route, navigation }: Props) {
    * tres etapas juntas —huevo, bebé, crecido—, que es lo único que muestra el
    * camino completo de una sola mirada.
    */
+  /**
+   * El cartel de lo que salió al hacerlo crecer.
+   *
+   * Se arma acá y se dibuja en las **dos** fichas. Hacer crecer un bicho lo saca
+   * de la crianza, así que en cuanto se toca el botón esta pantalla deja de ser
+   * la ficha de crianza y pasa a ser la del crecido: si el cartel viviera solo
+   * en la primera, se montaría y desaparecería en el mismo instante. Es
+   * exactamente lo que pasaba —el premio no se veía nunca.
+   */
+  /**
+   * Va adentro de un Modal y no suelto en la hoja.
+   *
+   * `Pantalla` dibuja el header arriba y mete los children en el cuerpo, así que
+   * un absoluto acá adentro tapa la hoja pero **no el header**: quedaba el
+   * nombre del bicho y la X de cerrar encima del premio, y con la X se podía
+   * salir sin haberlo visto. El Modal se dibuja sobre la ventana entera.
+   */
+  const reparto = ganado ? (
+    <Modal visible transparent animationType="none" statusBarTranslucent>
+      <Reparto ganado={ganado} onSeguir={setGanado} />
+    </Modal>
+  ) : null;
+
   if (!crianza) {
     return (
       <Pantalla titulo={t(`criaturas.${criatura.id}`).toUpperCase()} encima>
         <ScrollView contentContainerStyle={estilos.hoja}>
-          <View style={[estilos.retrato, { borderColor: `${tinte}55` }]}>
+          {/* Acá el retrato va grande y no comparte estilo con la ficha de
+              crianza: esta pantalla no tiene header fijo ni una lista larga que
+              leer debajo, así que el bicho crecido puede ocupar lo que quiera.
+              Es lo que se vino a mirar. */}
+          <View style={[estilos.retratoGrande, { borderColor: `${tinte}55` }]}>
             <Image
               source={criatura.crecido}
-              style={estilos.arte}
+              style={estilos.arteGrande}
               resizeMode="contain"
               fadeDuration={0}
             />
@@ -143,17 +200,29 @@ export function BichoScreen({ route, navigation }: Props) {
 
           <Etapas criatura={criatura} tinte={tinte} t={t} />
         </ScrollView>
+        {reparto}
       </Pantalla>
     );
   }
 
-  const esTutorial = criatura.id === TUTORIAL;
-  const faltan = horasHastaPerder(crianza);
   const pocion = pocionDe(criatura.id, juego.nivel);
 
   return (
     <Pantalla titulo={t(`criaturas.${criatura.id}`).toUpperCase()} encima>
-      <ScrollView contentContainerStyle={estilos.hoja}>
+      {/*
+        EL BICHO Y SU BARRA NO SE VAN CON EL SCROLL.
+
+        Debajo hay cuatro tramos de recetas y una lista larga, y dar de comer es
+        ir y venir entre lo que falta y cuánto se avanzó. Con todo en el mismo
+        scroll, entregar algo movía la barra donde no se estaba mirando: se veía
+        desaparecer una comida del bolso y nada más.
+
+        Por eso el retrato y la barra quedan fijos y solo scrollea lo de abajo.
+        El bicho va bastante más chato que cuando ocupaba la hoja entera —si no,
+        el header se come media pantalla y no queda lugar para lo que hay que
+        leer.
+      */}
+      <View style={estilos.fijo}>
         <View style={[estilos.retrato, { borderColor: `${tinte}55` }]}>
           <Image source={criatura.bebe.arte} style={estilos.arte} resizeMode="contain" fadeDuration={0} />
 
@@ -169,6 +238,8 @@ export function BichoScreen({ route, navigation }: Props) {
 
         <Barra tramo={crianza.tramo} avance={crianza.avance} tinte={tinte} />
 
+        {/* La lectura de la barra va con la barra: sola, la barra dice cuánto
+            falta pero no de qué tramo. */}
         <Text style={estilos.dato}>
           {t('bicho.tramo', {
             actual: Math.min(crianza.tramo + 1, TRAMOS),
@@ -176,7 +247,9 @@ export function BichoScreen({ route, navigation }: Props) {
             porcentaje: Math.round(progreso(crianza) * 100),
           })}
         </Text>
+      </View>
 
+      <ScrollView contentContainerStyle={estilos.hoja}>
         {Array.from({ length: TRAMOS }, (_, i) => (
           <Tramo
             key={i}
@@ -206,26 +279,6 @@ export function BichoScreen({ route, navigation }: Props) {
           />
         ) : null}
 
-        <View style={estilos.tarjeta}>
-          <Text style={estilos.titulo}>Atención</Text>
-          {esTutorial ? (
-            <Text style={estilos.texto}>
-              Esta criatura nunca decae. Es con la que se aprende, y nadie tiene que aprender
-              perdiendo.
-            </Text>
-          ) : faltan > 0 ? (
-            <Text style={estilos.texto}>
-              Está bien por {Math.ceil(faltan)} horas más. Después empieza a perder lo avanzado de
-              este tramo — nunca los tramos que ya ganó.
-            </Text>
-          ) : (
-            <Text style={[estilos.texto, { color: '#E0784A' }]}>
-              Te está extrañando: lleva más de {GRACIA_HORAS} horas sin atención y está perdiendo
-              avance.
-            </Text>
-          )}
-        </View>
-
         {/*
           El huevo del que salió.
           Es de las mejores piezas de arte del juego y durante la búsqueda se ve
@@ -251,7 +304,7 @@ export function BichoScreen({ route, navigation }: Props) {
             largo, el paso más importante del juego pasaba desapercibido. */}
         {listo ? (
           <Pressable
-            onPress={() => volverAdulto(criatura.id)}
+            onPress={crecer}
             style={({ pressed }) => [
               estilos.boton,
               { backgroundColor: tinte },
@@ -322,7 +375,7 @@ export function BichoScreen({ route, navigation }: Props) {
             <Pressable
               onPress={() => {
                 setAnuncio(false);
-                volverAdulto(criatura.id);
+                crecer();
               }}
               style={({ pressed }) => [
                 estilos.crecer,
@@ -340,7 +393,74 @@ export function BichoScreen({ route, navigation }: Props) {
           </Animated.View>
         </Pressable>
       </Modal>
+
+      {/* Va al final de todo y fuera del Modal del anuncio: se muestra después
+          de cerrarlo, y tiene que quedar por encima de la ficha entera. */}
+      {reparto}
     </Pantalla>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Los carteles de lo que salió: la carta y, si cerró una hoja, la dorada.
+ *
+ * Van encadenados y no a la vez. Al cerrar la carta, si hay dorada, se cambia lo
+ * que se muestra en lugar de cerrar: el segundo cartel entra con su propia
+ * animación y se lee como una segunda cosa que pasó, no como una continuación
+ * de la primera.
+ */
+function Reparto({
+  ganado,
+  onSeguir,
+}: {
+  ganado: { premio: NonNullable<Premio>; mostrando: 'carta' | 'dorada' };
+  onSeguir: (siguiente: { premio: NonNullable<Premio>; mostrando: 'carta' | 'dorada' } | null) => void;
+}) {
+  const t = useT();
+  const { premio, mostrando } = ganado;
+
+  /** El número de serie de un bicho: su lugar en el orden de las vueltas. */
+  const serieDe = (criatura: string) => ORDEN_DE_VUELTAS.indexOf(criatura) + 1;
+  const nombreDe = (criatura: string) => t(`criaturas.${criatura}`);
+
+  if (mostrando === 'dorada' && premio.dorada) {
+    const bicho = premio.dorada;
+    return (
+      <Conseguido
+        // La novena de la serie: el bicho crecido, en dorado.
+        arte={cardDe(serieDe(bicho), 8)!}
+        texto={t('album.ganasteLegendaria')}
+        // El nombre en caja alta, igual que la acción en la carta común: las dos
+        // líneas de abajo son rótulos de la carta, no frases.
+        detalle={t('album.porCompletar', { bicho: nombreDe(bicho).toUpperCase() })}
+        tinte={colorDeNivel(serieDe(bicho))}
+        formato="carta"
+        festejo
+        aceptar={t('conseguido.aceptar')}
+        onAceptar={() => onSeguir(null)}
+      />
+    );
+  }
+
+  const bicho = premio.carta.criatura;
+  return (
+    <Conseguido
+      arte={cardDe(serieDe(bicho), ACCIONES.indexOf(premio.carta.accion as never))!}
+      texto={t('album.cartaNueva')}
+      detalle={t('album.deQuien', {
+        bicho: nombreDe(bicho),
+        // Solo la acción va en caja alta: el nombre del bicho se lee como
+        // nombre, y la acción como el rótulo de la carta.
+        accion: t(`acciones.${premio.carta.accion}`).toUpperCase(),
+      })}
+      tinte={colorDeNivel(serieDe(bicho))}
+      formato="carta"
+      aceptar={t('conseguido.aceptar')}
+      // Si esta carta cerró una hoja, el cartel no se va: da lugar a la dorada.
+      onAceptar={() => onSeguir(premio.dorada ? { premio, mostrando: 'dorada' } : null)}
+    />
   );
 }
 
@@ -599,10 +719,46 @@ function Etapas({
 
 const estilos = StyleSheet.create({
   hoja: { padding: spacing.md, paddingBottom: spacing.xl, gap: spacing.md },
+  /**
+   * El header que no scrollea: el bicho, la barra y su lectura.
+   *
+   * Lleva fondo propio y no transparente: sin él, la lista de tramos se ve pasar
+   * por debajo del bicho al scrollear. Y la línea de abajo es lo que lo separa
+   * de lo que sí se mueve — sin ella los dos bloques se leen como uno solo y el
+   * corte parece un error.
+   *
+   * La línea va del crema oscuro de siempre y **no del color de la vuelta**: es
+   * parte del papel, como cualquier otro filo del juego, no una decoración de
+   * este bicho. Teñida cambiaba de color ocho veces y se leía como si quisiera
+   * decir algo.
+   */
+  fijo: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    gap: spacing.sm,
+    backgroundColor: colors.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md },
 
+  /**
+   * La caja del bicho.
+   *
+   * Achatada —casi el doble de ancha que alta— porque va en un header fijo y
+   * tiene que dejar sitio a los cuatro tramos de abajo. Cuando ocupaba la hoja
+   * entera podía permitirse ser casi cuadrada.
+   */
   retrato: {
-    aspectRatio: 1.2,
+    aspectRatio: 1.75,
+    // El tope es lo que lo salva en pantallas anchas. Con solo la proporción,
+    // en una tablet de 900 puntos el header medía más de quinientos de alto y
+    // se comía la hoja entera. Va por ancho y no por alto para que la caja no
+    // se deforme: el alto sale de la proporción.
+    maxWidth: 332,
+    alignSelf: 'center',
+    width: '100%',
     borderWidth: 1,
     borderRadius: radius.lg,
     backgroundColor: colors.surface,
@@ -610,7 +766,24 @@ const estilos = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  arte: { width: '80%', height: '80%' },
+  arte: { width: '76%', height: '88%' },
+
+  /** El mismo marco, pero para una pantalla donde el bicho es el asunto. */
+  retratoGrande: {
+    aspectRatio: 1.05,
+    // Casi cuadrado: sin tope, en una tablet el bicho ocupaba una pantalla
+    // entera y había que scrollear para llegar a las etapas.
+    maxWidth: 360,
+    alignSelf: 'center',
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  arteGrande: { width: '86%', height: '86%' },
 
   tramos: { flexDirection: 'row', gap: 4 },
   tramo: {
@@ -703,7 +876,16 @@ const estilos = StyleSheet.create({
   etapaCaja: { height: 110, width: '100%', alignItems: 'center', justifyContent: 'flex-end' },
   etapaNombre: { color: colors.textFaint, fontSize: 11, letterSpacing: 0.4 },
 
-  huevoCaja: { height: 150, alignItems: 'center', justifyContent: 'center' },
+  /**
+   * El huevo, deliberadamente más chico que el bicho.
+   *
+   * Con el header fijo los dos se ven a la vez, y del mismo tamaño competían: el
+   * huevo es un recuerdo de dónde salió, no la otra mitad de la pantalla. A 118
+   * contra los ~165 del bicho, la jerarquía se lee sola.
+   *
+   * Si cambia el alto del retrato, este número va detrás.
+   */
+  huevoCaja: { height: 118, alignItems: 'center', justifyContent: 'center' },
   huevo: { width: '100%', height: '100%' },
 
   boton: {

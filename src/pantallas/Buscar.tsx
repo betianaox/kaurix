@@ -24,7 +24,7 @@ import { useReconocer } from '../buscar/useReconocer';
 import { CADA, useIngredientes } from '../buscar/useIngredientes';
 import { CriaturaView, medida } from '../components/CriaturaView';
 import { hayLugar, useJuego } from '../juego/store';
-import { colorDeNivel, criaturaABuscar, fallosAntesDeRomper } from '../juego/datos';
+import { colorDeNivel, criaturaABuscar, dificultadDe, fallosAntesDeRomper } from '../juego/datos';
 import type { Rutas } from '../navegacion/rutas';
 import { Cerrar } from '../shell/Cerrar';
 import { colors, radius, spacing } from '../theme';
@@ -129,7 +129,7 @@ export function BuscarScreen({ navigation }: Props) {
     if (!elegida) return;
 
     setCriatura(elegida);
-    fallosRestantes.current = elegida.falla ? fallosAntesDeRomper() : 0;
+    fallosRestantes.current = elegida.falla ? fallosAntesDeRomper(elegida.id) : 0;
     const inicial: Fase = elegida.huevo ? 'huevo' : 'nacido';
     faseRef.current = inicial;
     setFase(inicial);
@@ -174,6 +174,9 @@ export function BuscarScreen({ navigation }: Props) {
   const aparicion = useAparicion({
     activo: !!permiso?.granted && !!criatura,
     tamano,
+    // Cuánto cuesta encontrar a esta: el tutorial aparece encima casi enseguida
+    // y las demás varían. Ver `dificultadDe`.
+    dificultad: criatura ? dificultadDe(criatura.id) : 1,
     congelado: fase === 'falla' || fase === 'eclosion',
   });
 
