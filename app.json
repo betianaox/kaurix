@@ -31,6 +31,7 @@
         }
       ],
       "./plugins/withAnimatedWebp",
+      "./plugins/withKotlinJvmTarget",
       [
         "expo-navigation-bar",
         {
