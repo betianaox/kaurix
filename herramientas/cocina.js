@@ -12,6 +12,14 @@
  *
  * Los ingredientes se normalizan por tamaño visual, como los de pociones. Las
  * preparaciones no hace falta: ya vienen todas del mismo tamaño.
+ *
+ * ## ⚠️ Esto vacía `assets/cocina` y la palta no sale de acá
+ *
+ * La palta viene de la lámina food3 y la arma `food3.js`. Como esta herramienta
+ * deja la carpeta con lo que ella genera, correrla sola **borra la palta** y la
+ * app deja de abrir: su `require` apunta a un archivo que ya no está.
+ *
+ * Después de correr esta, correr `node herramientas/food3.js`.
  */
 
 const fs = require('fs');
@@ -79,7 +87,7 @@ const INGREDIENTES = [
   { id: 'arvejas', nombre: 'Arvejas', lugar: 'verdura', pieza: 'f05c5' },
   { id: 'coliflor', nombre: 'Coliflor', lugar: 'verdura', pieza: 'f06c4' },
   { id: 'papa', nombre: 'Papa', lugar: 'verdura', pieza: 'f01c5', lamina: 'food2' },
-  { id: 'choclo', nombre: 'Choclo', lugar: 'verdura', pieza: 'f06c6' },
+  { id: 'maiz', nombre: 'Maíz', lugar: 'verdura', pieza: 'f06c6' },
 ];
 
 /** Las 16 preparaciones. El nivel lo decide la receta, no el archivo. */
