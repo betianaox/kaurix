@@ -1,7 +1,54 @@
 # Reconocer qué hay enfrente
 
-Cómo la cámara va a decidir qué ingrediente aparece. Es el plan, no está
-implementado.
+Cómo la cámara decide qué ingrediente aparece.
+
+**Estado: escrito entero, sin probar contra una cámara.** El código está y anda;
+lo que falta es un build nativo para verlo funcionar. En Expo Go los módulos no
+existen, el reconocedor queda apagado y el juego sortea libre como antes.
+
+| Archivo | Qué hace |
+|---|---|
+| `src/buscar/tonos.ts` | de color a tono: la señal barata |
+| `src/buscar/etiquetas.ts` | de lo que dice el modelo a las escenas del juego |
+| `src/buscar/objetivos.ts` | la tabla: contra qué se consigue cada uno de los 74 |
+| `src/buscar/resolver.ts` | de una lectura al ingrediente. Puro, sin cámara |
+| `src/buscar/mirar.ts` | la foto y las dos señales. Módulos nativos protegidos |
+| `src/buscar/useReconocer.ts` | el bucle cada 1,5 s, con suavizado |
+| `herramientas/probar-reconocedor.ts` | `npm run reconocedor`: probar sin teléfono |
+
+## Los cinco errores que encontró la herramienta
+
+Ninguno se razonó: aparecieron corriendo `npm run reconocedor`, y **ninguno da
+síntoma jugando**. Quedan acá porque son la clase de error que va a volver.
+
+1. Una pared blanca se leía **amarilla**. La saturación mínima era fija, y un
+   color casi blanco la supera con el tinte de cualquier lámpara.
+2. `seafood` contenía `food`: una foto de fruta activaba la escena de la carne.
+   Igual `flowerpot` con `flower`. Se pasó a comparar palabras enteras.
+3. Apuntar a una naranja daba **doce frutas distintas**: la tolerancia de color
+   valía lo mismo que acertarlo. Ahora acertar de lleno gana; la vecindad baja a
+   alternativa.
+4. Unas piedras grises daban piedra luna y obsidiana, **las dos gemas más raras**,
+   porque eran las únicas con el gris de vecino. El gris es el color de casi
+   todas las piedras del mundo.
+5. Una pared blanca daba piedra luna **el 100% de las veces**: `wall` a secas
+   contaba como ladrillo. Una pared tiene que decir de qué está hecha.
+
+## Cómo reparte hoy
+
+Salida de `npm run reconocedor`:
+
+| Apuntando a | Sale |
+|---|---|
+| una naranja | Naranja 51%, Durazno 34%, Mango 15% |
+| una banana | Banana 45%, Pera 36%, Mango 11% |
+| pared de ladrillo | Rubí 100% |
+| piedras grises | Arenisca 23%, Pirita 19%, Jade 15%, Amatista 13% |
+| piedra violeta | Amatista 100% |
+| arena | Arenisca 100% |
+| la alacena | las doce, por peso |
+| flor violeta | Lavanda 68%, Hibisco violeta 32% |
+| una pared blanca | nada |
 
 ## Por qué no alcanza con la categoría
 

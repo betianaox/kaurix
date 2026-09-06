@@ -13,8 +13,11 @@ import {
 } from 'react-native';
 
 import { porId, type Criatura, type Pieza } from '../art';
+import { ingredienteAlAzar } from '../juego/ingredientes';
 import { useT } from '../i18n';
+import { queAparece } from '../buscar/resolver';
 import { useAparicion } from '../buscar/useAparicion';
+import { useReconocer } from '../buscar/useReconocer';
 import { useIngredientes } from '../buscar/useIngredientes';
 import { CriaturaView, medida } from '../components/CriaturaView';
 import { hayLugar, useJuego } from '../juego/store';
@@ -92,6 +95,8 @@ export function BuscarScreen({ navigation }: Props) {
   /** Intentos fallidos que le faltan a este huevo antes de romperse. */
   const fallosRestantes = useRef(0);
   const reclamada = useRef(false);
+  /** La vista de la cámara, para poder pedirle una foto y mirar qué hay. */
+  const camara = useRef<CameraView | null>(null);
   const lleno = !hayLugar(juego);
   const tinte = colorDeNivel(juego.nivel);
 
@@ -155,13 +160,38 @@ export function BuscarScreen({ navigation }: Props) {
     congelado: fase === 'falla' || fase === 'eclosion',
   });
 
+  /**
+   * QUÉ ESTÁ VIENDO LA CÁMARA.
+   *
+   * Mira cada segundo y medio y publica una lectura firme. En un binario sin el
+   * reconocedor —Expo Go— `lectura` queda en null para siempre y abajo se cae al
+   * sorteo libre. Ver `docs/reconocer-el-lugar.md`.
+   */
+  const { lectura } = useReconocer(camara, !!permiso?.granted);
+
   // La otra mitad del botón de buscar: la misma cámara junta ingredientes.
   const { hallazgos, juntar } = useIngredientes({
     activo: !!permiso?.granted,
+    /**
+     * Qué aparece, decidido en el momento de aparecer y no antes: entre que se
+     * abre la pantalla y que sale un ingrediente pasan segundos, y lo que la
+     * cámara ve pudo haber cambiado.
+     *
+     * Sin reconocedor o sin lectura firme, sortea entre todos como hasta ahora.
+     * **Esa caída es provisoria**: cuando el reconocedor esté probado hay que
+     * decidir qué pasa de verdad al no reconocer nada, que es una de las cosas
+     * que el plan deja abiertas. Hoy regala ingredientes por apuntar a una pared.
+     */
+    elegir: () => (lecturaRef.current ? queAparece(lecturaRef.current) : ingredienteAlAzar()),
     // Se suma al bolso y nada más. El aviso de qué juntaste se sacó de la
     // cámara: sobre la imagen real no va a haber texto.
     onJuntar: (i) => sumarIngrediente(i.id),
   });
+
+  // La lectura se lee desde `elegir`, que corre adentro de un temporizador y no
+  // en el render: sin la referencia veria siempre la primera.
+  const lecturaRef = useRef(lectura);
+  lecturaRef.current = lectura;
 
   function cambiarFase(f: Fase) {
     faseRef.current = f;
@@ -230,7 +260,7 @@ export function BuscarScreen({ navigation }: Props) {
 
   return (
     <View style={estilos.raiz}>
-      <CameraView style={StyleSheet.absoluteFill} facing="back" />
+      <CameraView ref={camara} style={StyleSheet.absoluteFill} facing="back" />
 
       {criatura && pieza ? (
         // Se mantiene montada aunque esté fuera de cuadro: desmontarla reinicia

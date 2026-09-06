@@ -5,12 +5,14 @@
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-ml-kit/image-labeling": "^2.0.0",
     "@react-navigation/native": "^7.3.18",
     "@react-navigation/native-stack": "^7.18.10",
     "expo": "~57.0.13",
     "expo-build-properties": "~57.0.17",
     "expo-camera": "~57.0.3",
     "expo-haptics": "~57.0.1",
+    "expo-image-manipulator": "~57.0.16",
     "expo-keep-awake": "~57.0.1",
     "expo-linear-gradient": "~57.0.1",
     "expo-localization": "~57.0.1",
@@ -22,6 +24,7 @@
     "react": "19.2.3",
     "react-native": "0.86.2",
     "react-native-google-mobile-ads": "16.0.3",
+    "react-native-image-colors": "^2.6.0",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-screens": "~4.26.0",
     "react-native-svg": "15.15.4",
@@ -31,6 +34,7 @@
     "@types/react": "~19.2.2",
     "ffmpeg-static": "^5.3.0",
     "sharp": "^0.35.4",
+    "tsx": "^4.23.13",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -38,7 +42,8 @@
     "android": "expo run:android",
     "typecheck": "tsc --noEmit",
     "criatura": "node herramientas/procesar.js",
-    "fondo": "node herramientas/mejor-fondo.js"
+    "fondo": "node herramientas/mejor-fondo.js",
+    "reconocedor": "tsx herramientas/probar-reconocedor.ts"
   },
   "private": true
 }

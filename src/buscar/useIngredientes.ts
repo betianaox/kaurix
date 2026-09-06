@@ -1,11 +1,7 @@
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  ingredienteAlAzar,
-  type Ingrediente,
-  type LugarId,
-} from '../juego/ingredientes';
+import type { Ingrediente } from '../juego/ingredientes';
 
 /**
  * Los ingredientes que van apareciendo mientras buscás.
@@ -14,12 +10,16 @@ import {
  * para encontrar criaturas y para juntar cosas. Por eso la pantalla se abre
  * siempre, incluso cuando ya tenés todas las criaturas que podés criar.
  *
- * **Todavía no mira lo que hay enfrente.** Aparecen en cualquier lado y cada
- * tanto, que alcanza para probar el circuito completo —encontrar, guardar,
- * verlo en el bolso— sin depender del reconocimiento de imágenes. Cuando ese
- * exista, lo único que cambia es de dónde sale `lugar`: en vez de no pasarlo, se
- * le pasa lo que la cámara está viendo, y el sorteo se limita a los ingredientes
- * de ahí.
+ * ## Qué aparece
+ *
+ * Lo decide `elegir`, que recibe lo que la cámara reconoció. Si no hay nada
+ * reconocido —o el binario no trae el reconocedor, como pasa en Expo Go— cae al
+ * sorteo libre de siempre, que es lo que mantiene el juego jugable mientras
+ * tanto.
+ *
+ * Este archivo no sabe nada de cámaras ni de modelos: recibe una función y la
+ * llama. Ver `useReconocer` y `resolver`, y el plan en
+ * `docs/reconocer-el-lugar.md`.
  */
 
 /** Cada cuánto puede aparecer uno, en milisegundos. */
@@ -56,18 +56,28 @@ export type Hallazgo = {
 
 type Opciones = {
   activo: boolean;
-  /** Qué está viendo la cámara, cuando se sepa. Limita el sorteo a ese lugar. */
-  lugar?: LugarId;
+  /**
+   * Qué ingrediente toca ahora, o `null` si no hay nada que corresponda con lo
+   * que la cámara está viendo.
+   *
+   * Se pasa como función y no como valor porque se llama en el momento de la
+   * aparición: entre que se monta la pantalla y que aparece el ingrediente
+   * pasan segundos, y lo que la cámara ve pudo haber cambiado tres veces.
+   *
+   * Devolver `null` es una respuesta válida: no aparece nada. Es lo que hace
+   * que apuntar a una pared blanca no regale ingredientes.
+   */
+  elegir: () => Ingrediente | null;
   /** Se llama al tocarlo, para guardarlo. */
   onJuntar: (ingrediente: Ingrediente) => void;
 };
 
-export function useIngredientes({ activo, lugar, onJuntar }: Opciones) {
+export function useIngredientes({ activo, elegir, onJuntar }: Opciones) {
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
 
   // El temporizador corre fuera del render y necesita lo último de las dos.
-  const lugarRef = useRef(lugar);
-  lugarRef.current = lugar;
+  const elegirRef = useRef(elegir);
+  elegirRef.current = elegir;
   const juntarRef = useRef(onJuntar);
   juntarRef.current = onJuntar;
 
@@ -81,9 +91,14 @@ export function useIngredientes({ activo, lugar, onJuntar }: Opciones) {
       setHallazgos((previos) => {
         if (previos.length >= A_LA_VEZ) return previos;
 
+        // Nada que corresponda con lo que se esta mirando: no aparece nada.
+        // Este turno se pierde y se vuelve a preguntar en el siguiente.
+        const ingrediente = elegirRef.current();
+        if (!ingrediente) return previos;
+
         const nuevo: Hallazgo = {
           id: `${Date.now()}`,
-          ingrediente: ingredienteAlAzar(lugarRef.current),
+          ingrediente,
           x: 0.14 + Math.random() * 0.72,
           // De la mitad para abajo: las cosas están apoyadas en algo, y el
           // suelo de lo que ve la cámara queda en la parte baja del cuadro. Uno
