@@ -44,6 +44,15 @@
         {
           "androidAppId": "ca-app-pub-5829308591228932~8823020495"
         }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
       ]
     ],
     "extra": {
