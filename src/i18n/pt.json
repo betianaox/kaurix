@@ -62,7 +62,9 @@
     "sinCriaturas": "Não sobrou nenhuma criatura para encontrar nesta volta.",
     "salir": "Sair",
     "juntaste": "Você pegou: {ingrediente}",
-    "igualBusca": "Continue procurando ingredientes."
+    "igualBusca": "Continue procurando ingredientes.",
+    "encontrasteIngrediente": "Você encontrou {cantidad} {cosa}!",
+    "encontrasteBicho": "Você encontrou {bicho}!"
   },
   "inventario": {
     "titulo": "BOLSA",
@@ -212,7 +214,7 @@
     "apio": "Aipo",
     "morron": "Pimentão",
     "brocoli": "Brócolis",
-    "choclo": "Milho",
+    "maiz": "Milho",
     "arvejas": "Ervilhas",
     "boniato": "Batata-doce",
     "kale": "Couve",
@@ -317,5 +319,10 @@
     "ganasteIngrediente": "Você ganhou {cantidad} {cosa}!",
     "ganasteBicho": "{bicho} cresce {factor}x mais rápido por {horas} horas.",
     "seguir": "Continuar"
+  },
+  "conseguido": {
+    "aceptar": "Aceitar",
+    "multiplicar": "Multiplicar x3",
+    "rechazar": "Recusar"
   }
 }

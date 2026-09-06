@@ -62,7 +62,9 @@
     "sinCriaturas": "Non è rimasta nessuna creatura da trovare in questo giro.",
     "salir": "Esci",
     "juntaste": "Hai raccolto: {ingrediente}",
-    "igualBusca": "Continua a cercare ingredienti."
+    "igualBusca": "Continua a cercare ingredienti.",
+    "encontrasteIngrediente": "Hai trovato {cantidad} {cosa}!",
+    "encontrasteBicho": "Hai trovato {bicho}!"
   },
   "inventario": {
     "titulo": "SACCA",
@@ -212,7 +214,7 @@
     "apio": "Sedano",
     "morron": "Peperone",
     "brocoli": "Broccoli",
-    "choclo": "Mais",
+    "maiz": "Mais",
     "arvejas": "Piselli",
     "boniato": "Patata dolce",
     "kale": "Cavolo riccio",
@@ -317,5 +319,10 @@
     "ganasteIngrediente": "Hai vinto {cantidad} {cosa}!",
     "ganasteBicho": "{bicho} cresce {factor}x più veloce per {horas} ore.",
     "seguir": "Continua"
+  },
+  "conseguido": {
+    "aceptar": "Accetta",
+    "multiplicar": "Moltiplica x3",
+    "rechazar": "Rifiuta"
   }
 }

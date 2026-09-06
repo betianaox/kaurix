@@ -93,8 +93,11 @@ async function foto(camara: CameraView): Promise<string | null> {
   try {
     const tomada = await camara.takePictureAsync({
       quality: 0.4,
-      // Sin sonido y sin animacion de captura: quien juega no esta sacando
-      // fotos, esta mirando. Un clic cada segundo y medio seria insoportable.
+      // Sin sonido: quien juega no esta sacando fotos, esta mirando. Un clic
+      // cada segundo y medio seria insoportable.
+      //
+      // El destello de captura no se apaga desde aca: es `animateShutter` en el
+      // <CameraView> de `Buscar`, y sin eso la imagen parpadea en cada lectura.
       shutterSound: false,
       // Salta el enderezado y el pipeline de procesado. Da la imagen mas rapido
       // y para reconocer no importa que este rotada.

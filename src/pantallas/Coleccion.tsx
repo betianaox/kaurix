@@ -23,6 +23,7 @@ import {
   puedeGirarGratis,
   restanteMs,
 } from '../juego/ruleta';
+import { useAnuncioRecompensado } from '../anuncios/useAnuncioRecompensado';
 import { useJuego } from '../juego/store';
 import type { Rutas } from '../navegacion/rutas';
 import { Pantalla } from '../shell/Pantalla';
@@ -215,6 +216,17 @@ export function ColeccionScreen({ navigation }: Props) {
   const [abierta, setAbierta] = useState(false);
 
   const cambiarRuleta = useJuego((e) => e.cambiarRuleta);
+  const sumarIngrediente = useJuego((e) => e.sumarIngrediente);
+  const aceptarImpulso = useJuego((e) => e.aceptarImpulso);
+
+  /**
+   * El video que multiplica por tres lo que salió en la ruleta.
+   *
+   * Se pide apenas se abre la colección, no cuando se toca el botón: un anuncio
+   * tarda en cargar, y pedirlo recién al tocarlo deja al jugador esperando
+   * delante de un cartel que ya le prometió el premio.
+   */
+  const anuncio = useAnuncioRecompensado();
   const gratis = puedeGirarGratis(juego.ultimoGiro);
   const impulso = impulsoVigente(juego.impulso);
 
@@ -462,7 +474,31 @@ export function ColeccionScreen({ navigation }: Props) {
           cambiar: t('ruleta.cambiar'),
           ganasteIngrediente: t('ruleta.ganasteIngrediente'),
           ganasteBicho: t('ruleta.ganasteBicho'),
-          seguir: t('ruleta.seguir'),
+          aceptar: t('conseguido.aceptar'),
+          multiplicar: t('conseguido.multiplicar'),
+          rechazar: t('conseguido.rechazar'),
+        }}
+        multiplicarListo={anuncio.listo}
+        /**
+         * El impulso se aplica recién acá.
+         *
+         * `girar` gastó el giro y nada más: pisarle el impulso que tenía
+         * corriendo sin preguntar sería cobrarle el premio. Si dice que no, no
+         * pasa nada y se queda con el que tenía.
+         */
+        onAceptarImpulso={(premio) => aceptarImpulso(premio.clave)}
+        /**
+         * Multiplicar por tres lo que salió.
+         *
+         * La ruleta ya otorgó el premio cuando frenó, así que acá se suma el
+         * doble de lo que salió y el total queda en el triple. Si el video se
+         * corta antes de terminar no llega la recompensa y el jugador se queda
+         * con lo que había ganado: nunca pierde nada por intentarlo.
+         */
+        onMultiplicar={(premio) => {
+          if (premio.cantidad === null) return;
+          const extra = premio.cantidad * 2;
+          anuncio.mostrar(() => sumarIngrediente(premio.clave, extra));
         }}
         onGirar={tirar}
         onFin={frenó}

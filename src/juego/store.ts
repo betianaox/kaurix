@@ -97,6 +97,15 @@ type Estado = {
    * resolver las dos.
    */
   girar: (premio: Casilla, gratis: boolean) => void;
+  /**
+   * Aceptar el impulso que salió en la ruleta.
+   *
+   * Va aparte de `girar` porque **se puede rechazar**: un impulso pisa al que
+   * esté corriendo, así que si ya tenías uno andando, aceptar este te saca el
+   * otro. Esa es una decisión, no un premio, y no se puede tomar sola cuando
+   * frena la rueda.
+   */
+  aceptarImpulso: (criatura: string) => void;
 
   /**
    * Cambia lo que muestra la ruleta.
@@ -344,14 +353,22 @@ export const useJuego = create<Estado>((set, get) => {
           };
         }
 
-        return {
-          ...j,
-          // UN IMPULSO PISA AL OTRO. Si se sumaran, diez videos dejarían a los
-          // bichos al doble para siempre y el sistema dejaría de significar algo.
-          impulso: nuevoImpulso(premio.criatura, ahora),
-          ultimoGiro: gastado,
-        };
+        // El impulso NO se aplica acá: se ofrece, y lo aplica `aceptarImpulso`
+        // si quien juega dice que sí. El giro se gasta igual —salió lo que
+        // salió— pero pisarle el impulso que tenía corriendo sin preguntar sería
+        // cobrarle el premio.
+        return { ...j, ultimoGiro: gastado };
       });
+    },
+
+    aceptarImpulso(criatura) {
+      aplicar((j) => ({
+        ...j,
+        // UN IMPULSO PISA AL OTRO. Si se sumaran, diez videos dejarían a los
+        // bichos al doble para siempre y el sistema dejaría de significar algo.
+        // Por eso hace falta preguntar antes de llegar hasta acá.
+        impulso: nuevoImpulso(criatura, Date.now()),
+      }));
     },
 
     cambiarRuleta() {

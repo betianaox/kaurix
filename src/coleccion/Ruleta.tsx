@@ -12,7 +12,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 
-import Ionicons from '@expo/vector-icons/Ionicons';
+import { Conseguido } from '../components/Conseguido';
 import { DURACION_HORAS, FACTOR } from '../juego/ruleta';
 import { Cerrar } from '../shell/Cerrar';
 import { colors, radius, spacing } from '../theme';
@@ -60,6 +60,8 @@ const RUEDA = require('../../assets/ruleta/rueda.webp');
 const AGUJA = require('../../assets/ruleta/aguja.webp');
 const BOTON_GIRAR = require('../../assets/ruleta/boton-girar.webp');
 const BOTON_VIDEO = require('../../assets/ruleta/boton-video.webp');
+/** El mismo dibujo que paga el multiplicar del cartel: esto cuesta un video. */
+const VIDEO = require('../../assets/ui/video.webp');
 
 /**
  * Cuántos gajos tiene el dibujo.
@@ -149,6 +151,9 @@ export function RuletaGrande({
   gratis,
   tinte,
   textos,
+  onAceptarImpulso,
+  onMultiplicar,
+  multiplicarListo = false,
   onGirar,
   onFin,
   onCambiar,
@@ -167,8 +172,26 @@ export function RuletaGrande({
     cambiar: string;
     ganasteIngrediente: string;
     ganasteBicho: string;
-    seguir: string;
+    aceptar: string;
+    multiplicar: string;
+    rechazar: string;
   };
+  /**
+   * Ver un video para multiplicar por tres lo que salió.
+   *
+   * El premio base ya se otorgó cuando la rueda frenó, así que esto suma lo que
+   * falta y nada se pierde si el video se corta a la mitad. Sin esta prop no se
+   * ofrece —los bichos no se multiplican— y queda solo el botón de seguir.
+   */
+  onMultiplicar?: (premio: CasillaEnRuleta) => void;
+  /** Si hay un anuncio cargado para ofrecer. */
+  multiplicarListo?: boolean;
+  /**
+   * Aceptar el impulso que salió, que es lo único de la ruleta que hay que
+   * aceptar: pisa al que estuviera corriendo. Los ingredientes no pasan por
+   * acá —ya están sumados— y por eso solo se llama con premios de bicho.
+   */
+  onAceptarImpulso?: (premio: CasillaEnRuleta) => void;
   onGirar: () => void;
   onFin: () => void;
   /** Vuelve a sortear lo que muestra la rueda. */
@@ -182,7 +205,6 @@ export function RuletaGrande({
   const [girando, setGirando] = useState(false);
   /** El premio recién ganado, mientras se lo anuncia. */
   const [premio, setPremio] = useState<CasillaEnRuleta | null>(null);
-  const entrada = useRef(new Animated.Value(0)).current;
 
   const lado = Math.floor(Math.min(width * 0.9, height * 0.52));
 
@@ -237,13 +259,6 @@ export function RuletaGrande({
       // Se anuncia recién cuando la rueda frenó. Mostrarlo antes le saca a la
       // ruleta lo único que tiene: el rato en que todavía no sabés qué salió.
       setPremio(casillas[destino] ?? null);
-      entrada.setValue(0);
-      Animated.spring(entrada, {
-        toValue: 1,
-        friction: 6,
-        tension: 90,
-        useNativeDriver: true,
-      }).start();
       onFin();
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -374,7 +389,7 @@ export function RuletaGrande({
           accessibilityRole="button"
           accessibilityLabel={textos.cambiar}
         >
-          <Ionicons name="videocam" size={18} color={tinte} />
+          <Image source={VIDEO} style={estilos.cambiarIcono} resizeMode="contain" fadeDuration={0} />
           <Text style={estilos.cambiarTexto}>{textos.cambiar}</Text>
         </Pressable>
 
@@ -384,12 +399,47 @@ export function RuletaGrande({
             capa de atrás. En una fila de hermanos el que se dibuja último es el
             que queda arriba, y este tiene que quedar arriba de todo. */}
         {premio ? (
-          <Anuncio
-            premio={premio}
-            entrada={entrada}
+          <Conseguido
+            arte={premio.arte}
+            texto={textoDelPremio(premio, textos)}
             tinte={tinte}
-            textos={textos}
-            onSeguir={() => setPremio(null)}
+            aceptar={textos.aceptar}
+            onAceptar={() => {
+              // El bicho es lo único que hay que aceptar; el ingrediente ya está
+              // sumado desde que frenó la rueda y acá solo se cierra.
+              if (premio.cantidad === null) onAceptarImpulso?.(premio);
+              setPremio(null);
+            }}
+            rechazar={
+              /**
+               * Solo el impulso se puede rechazar.
+               *
+               * Aceptarlo apaga el que estuvieras corriendo, así que es una
+               * decisión que pisa otra y necesita las dos salidas. El giro ya se
+               * gastó igual: lo que se elige es si el impulso entra o no, no si
+               * el premio valió.
+               *
+               * Un ingrediente no lleva esto: no le saca nada a nadie.
+               */
+              onAceptarImpulso && premio.cantidad === null
+                ? { texto: textos.rechazar, onPress: () => setPremio(null) }
+                : undefined
+            }
+            multiplicar={
+              // Solo los ingredientes se multiplican: un bicho es uno, no tres.
+              onMultiplicar && premio.cantidad !== null
+                ? {
+                    texto: textos.multiplicar,
+                    listo: multiplicarListo,
+                    // Se cierra en el acto: el video tapa la pantalla entera y
+                    // dejar el cartel abajo lo deja asomando al volver.
+                    onPress: () => {
+                      onMultiplicar(premio);
+                      setPremio(null);
+                    },
+                  }
+                : undefined
+            }
           />
         ) : null}
       </View>
@@ -400,30 +450,17 @@ export function RuletaGrande({
 /* ────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Lo que ganaste, anunciado.
+ * Qué decir de lo que salió.
  *
- * Va encima de la rueda y tapa todo: es el momento del premio y no tiene que
- * competir con nada. Entra con un rebote —no con un desvanecido— porque un
- * premio que aparece despacio no se siente como un premio.
- *
- * Se cierra a mano y no solo. Cerrarlo por tiempo obliga a mirar rápido, y la
- * mitad de la gracia es quedarse viendo qué te tocó.
+ * Un ingrediente se cuenta —"¡Ganaste 2 tomates!"— y un bicho se explica, porque
+ * lo que gana no es el bicho sino que crezca más rápido un rato. Es la única
+ * diferencia entre los dos premios, y por eso el cartel es el mismo.
  */
-function Anuncio({
-  premio,
-  entrada,
-  tinte,
-  textos,
-  onSeguir,
-}: {
-  premio: CasillaEnRuleta;
-  entrada: Animated.Value;
-  tinte: string;
-  textos: { ganasteIngrediente: string; ganasteBicho: string; seguir: string };
-  onSeguir: () => void;
-}) {
-  const esRegalo = premio.cantidad !== null;
-  const texto = esRegalo
+function textoDelPremio(
+  premio: CasillaEnRuleta,
+  textos: { ganasteIngrediente: string; ganasteBicho: string }
+): string {
+  return premio.cantidad !== null
     ? textos.ganasteIngrediente
         .replace('{cantidad}', String(premio.cantidad))
         .replace('{cosa}', premio.nombre)
@@ -431,46 +468,6 @@ function Anuncio({
         .replace('{bicho}', premio.nombre)
         .replace('{factor}', String(FACTOR))
         .replace('{horas}', String(DURACION_HORAS));
-
-  return (
-    <Animated.View
-      style={[
-        estilos.anuncio,
-        {
-          opacity: entrada,
-          transform: [
-            { scale: entrada.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) },
-          ],
-        },
-      ]}
-    >
-      {/* El resplandor detrás del dibujo: es lo que hace que se lea como algo
-          que se ganó y no como una ficha más del inventario.
-
-          Va adentro de la misma caja que el dibujo y no suelto sobre la
-          pantalla. Suelto quedaba centrado en la pantalla y no en el premio, y
-          como además era mucho más grande que el dibujo, se leía como un fondo
-          de la hoja entera en vez de como un halo. */}
-      <View style={estilos.retrato}>
-        <View style={[estilos.resplandor, { backgroundColor: `${tinte}33` }]} />
-        <Image source={premio.arte} style={estilos.premio} resizeMode="contain" fadeDuration={0} />
-      </View>
-
-      <Text style={[estilos.anuncioTexto, { color: tinte }]}>{texto}</Text>
-
-      <Pressable
-        onPress={onSeguir}
-        style={({ pressed }) => [
-          estilos.seguir,
-          { backgroundColor: tinte },
-          pressed && { opacity: 0.75 },
-        ]}
-        accessibilityRole="button"
-      >
-        <Text style={estilos.seguirTexto}>{textos.seguir}</Text>
-      </Pressable>
-    </Animated.View>
-  );
 }
 
 /* ────────────────────────────────────────────────────────────────────────── */
@@ -527,13 +524,25 @@ const estilos = StyleSheet.create({
   cambiar: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    paddingVertical: 12,
-    paddingHorizontal: 22,
+    gap: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 14,
     borderRadius: 999,
     borderWidth: 1,
     backgroundColor: colors.surfaceAlt,
   },
+  /**
+   * Bastante más grande que el icono de línea que había antes.
+   *
+   * La ficha tiene relieve, borde y sombra: chica se apelmaza y se lee como una
+   * mancha naranja. Grande se ve que es una cámara, y es lo que hace que la
+   * pastilla se lea como algo que cuesta un video.
+   *
+   * El alto de la pastilla ahora lo pone el icono, no el texto, y por eso el
+   * padding de arriba y abajo bajó a casi nada: con el de antes el botón
+   * quedaba con un dedo de aire arriba del dibujo.
+   */
+  cambiarIcono: { width: 36, height: 36 },
   cambiarTexto: { color: colors.text, fontSize: 15.5, fontWeight: '600' },
 
   anuncio: {

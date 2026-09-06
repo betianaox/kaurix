@@ -62,7 +62,9 @@
     "sinCriaturas": "There are no creatures left to find this round.",
     "salir": "Exit",
     "juntaste": "Picked up: {ingrediente}",
-    "igualBusca": "Keep looking for ingredients anyway."
+    "igualBusca": "Keep looking for ingredients anyway.",
+    "encontrasteIngrediente": "You found {cantidad} {cosa}!",
+    "encontrasteBicho": "You found {bicho}!"
   },
   "inventario": {
     "titulo": "SATCHEL",
@@ -212,7 +214,7 @@
     "apio": "Celery",
     "morron": "Bell pepper",
     "brocoli": "Broccoli",
-    "choclo": "Corn",
+    "maiz": "Corn",
     "arvejas": "Peas",
     "boniato": "Sweet potato",
     "kale": "Kale",
@@ -317,5 +319,10 @@
     "ganasteIngrediente": "You won {cantidad} {cosa}!",
     "ganasteBicho": "{bicho} grows {factor}x faster for {horas} hours.",
     "seguir": "Continue"
+  },
+  "conseguido": {
+    "aceptar": "Accept",
+    "multiplicar": "Triple it",
+    "rechazar": "Decline"
   }
 }

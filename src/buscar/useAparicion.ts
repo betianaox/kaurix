@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, useWindowDimensions } from 'react-native';
 
 import { probeOrientation } from './sensores';
+import { TODO_CERCA } from '../flags';
 
 /**
  * Cómo aparece una criatura sobre la imagen de la cámara.
@@ -63,15 +64,29 @@ export const LEJOS = 0.45;
  */
 const A_LA_VISTA_MIN = 0.5;
 
-/** Cuánto se acerca por lectura del sensor si la tenés en el centro. */
-const ACERCA = 0.011;
+/**
+ * Cuánto se acerca por lectura del sensor si la tenés en el centro.
+ *
+ * A unas treinta lecturas por segundo, esto es lo que decide cuánto hay que
+ * buscar. Empezó en 0,011 —un tercio de la distancia por segundo— y con eso la
+ * criatura estaba encima en tres segundos sin moverse del lugar: todo el juego
+ * pasaba en un metro cuadrado. Ahora tarda cerca de veinte segundos de
+ * seguimiento sostenido, que es lo que obliga a caminar y a buscarla de verdad.
+ *
+ * Es el número para calibrar en la calle. Más bajo, más lejos se siente.
+ */
+const ACERCA = TODO_CERCA ? 0.011 : 0.002;
 
 /**
  * Cuánto se aleja por lectura si mirás para otro lado. Más lento que lo que se
  * acerca, a propósito: perderla de vista un segundo no debería mandarla al
  * fondo y obligar a empezar de nuevo.
+ *
+ * **Va atado a `ACERCA`**, alrededor de un tercio. Si alejarse fuera más rápido
+ * que acercarse, la criatura no se alcanzaría nunca por más que la sigas: al
+ * bajar uno hay que bajar el otro.
  */
-const ALEJA = 0.004;
+const ALEJA = TODO_CERCA ? 0.004 : 0.0007;
 
 /** A partir de acá se considera que la tenés cerca. */
 export const CERCA = 0.75;

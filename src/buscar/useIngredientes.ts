@@ -12,18 +12,18 @@ import type { Ingrediente } from '../juego/ingredientes';
  *
  * ## Qué aparece
  *
- * Lo decide `elegir`, que recibe lo que la cámara reconoció. Si no hay nada
- * reconocido —o el binario no trae el reconocedor, como pasa en Expo Go— cae al
- * sorteo libre de siempre, que es lo que mantiene el juego jugable mientras
- * tanto.
+ * Lo decide `elegir`, que se recibe ya armada. Cuándo cae al sorteo libre y
+ * cuándo no aparece nada se decide en `Buscar`, que es quien sabe si este
+ * binario trae el reconocedor; acá `null` significa siempre lo mismo: este
+ * turno no aparece nada.
  *
  * Este archivo no sabe nada de cámaras ni de modelos: recibe una función y la
  * llama. Ver `useReconocer` y `resolver`, y el plan en
- * `docs/reconocer-el-lugar.md`.
+ * `../docs/kaurix-reconocer-el-lugar.md`.
  */
 
 /** Cada cuánto puede aparecer uno, en milisegundos. */
-const CADA = 3800;
+export const CADA = 3800;
 
 /** Cuánto se queda en pantalla antes de irse solo. */
 const DURA = 6000;
@@ -68,11 +68,20 @@ type Opciones = {
    * que apuntar a una pared blanca no regale ingredientes.
    */
   elegir: () => Ingrediente | null;
+  /**
+   * Cada cuánto aparece uno, si no es el ritmo de siempre.
+   *
+   * Lo usa `Buscar` para espaciarlos mientras hay una criatura dada vuelta: ahí
+   * lo que se está haciendo es seguirla, y un ingrediente cada tres segundos y
+   * medio se lleva el ojo. Espaciados siguen apareciendo, pero como algo que
+   * pasa mientras buscás y no como la otra mitad de la pantalla.
+   */
+  cada?: number;
   /** Se llama al tocarlo, para guardarlo. */
   onJuntar: (ingrediente: Ingrediente) => void;
 };
 
-export function useIngredientes({ activo, elegir, onJuntar }: Opciones) {
+export function useIngredientes({ activo, cada = CADA, elegir, onJuntar }: Opciones) {
   const [hallazgos, setHallazgos] = useState<Hallazgo[]>([]);
 
   // El temporizador corre fuera del render y necesita lo último de las dos.
@@ -116,10 +125,10 @@ export function useIngredientes({ activo, elegir, onJuntar }: Opciones) {
 
         return [...previos, nuevo];
       });
-    }, CADA);
+    }, cada);
 
     return () => clearInterval(reloj);
-  }, [activo]);
+  }, [activo, cada]);
 
   const juntar = useCallback((h: Hallazgo) => {
     setHallazgos((previos) => previos.filter((x) => x.id !== h.id));
