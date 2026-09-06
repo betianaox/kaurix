@@ -270,22 +270,31 @@ export function CocinaScreen() {
             <Caldero ancho={anchoCaldero} tinte={tinte} encendido={hayAlgo} />
 
             <View style={estilos.acciones} pointerEvents="box-none">
+              {/* Con algo servido en la mesa —salga bien o se queme— no hay
+                  nada que cocinar hasta que se levante: la llama se apaga. */}
               <Accion
                 arte={COCINAR}
-                etiqueta={enResultado ? t('cocina.limpiar') : t('cocina.cocinar')}
-                // Con el resultado en la mesa el mismo lugar limpia la olla: el
-                // pulgar ya está ahí y no hay que salir a buscar cómo seguir.
-                onPress={enResultado ? () => setSalio(null) : prender}
-                puede={enResultado || alcanza}
+                etiqueta={t('cocina.cocinar')}
+                onPress={prender}
+                puede={!enResultado && alcanza}
               />
+
+              {/* El de la derecha cambia de oficio según lo que haya en la olla.
+                  Con ingredientes los devuelve al bolso; con un resultado
+                  servido, lo levanta y deja la olla lista para la próxima.
+
+                  Es el mismo lugar porque es el mismo gesto —despejar la
+                  mesa— y porque el pulgar ya está ahí. Lo que cambia es el
+                  dibujo, para que no haya que adivinar cuál de los dos hace. */}
               <Accion
-                arte={VACIAR}
-                etiqueta={t('cocina.vaciar')}
-                onPress={() => setMezcla({})}
-                puede={hayAlgo && !enResultado}
-                // Un diez por ciento menos que la llama: es más alta y angosta,
-                // y al mismo lado pesaba más en pantalla.
-                lado={41}
+                arte={enResultado ? LIMPIAR : VACIAR}
+                etiqueta={enResultado ? t('cocina.limpiar') : t('cocina.vaciar')}
+                onPress={enResultado ? () => setSalio(null) : () => setMezcla({})}
+                puede={enResultado || hayAlgo}
+                // La flecha va un diez por ciento menos que la llama: es más
+                // alta y angosta, y al mismo lado pesaba más en pantalla. El
+                // check es redondo y va del tamaño de la llama.
+                lado={enResultado ? 46 : 41}
               />
             </View>
           </View>
@@ -535,6 +544,18 @@ const COCINAR = {
 const VACIAR = {
   si: require('../../assets/ui/devolver.webp'),
   no: require('../../assets/ui/devolver-off.webp'),
+};
+
+/**
+ * Levantar lo que salió y dejar la olla lista.
+ *
+ * El check verde de la misma serie que usa el cartel de lo que se consigue: es
+ * un "listo, seguimos", no una acción que gaste nada. Va sin estado apagado
+ * porque solo existe cuando hay algo servido, y ahí siempre se puede.
+ */
+const LIMPIAR = {
+  si: require('../../assets/ui/aceptar.webp'),
+  no: require('../../assets/ui/aceptar.webp'),
 };
 
 const estilos = StyleSheet.create({
