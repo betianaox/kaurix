@@ -506,13 +506,20 @@ const estilos = StyleSheet.create({
     right: -4,
     bottom: -4,
     minWidth: 26,
-    height: 22,
     paddingHorizontal: 8,
-    borderRadius: 11,
+    paddingVertical: 3,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cuantoTexto: { color: colors.sobreTinte, fontSize: 10.5, fontWeight: '700' },
+  cuantoTexto: {
+    color: colors.sobreTinte,
+    fontSize: 10.5,
+    fontWeight: '700',
+    lineHeight: 13,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
 
   // Pastilla, y con peso. Es la única otra cosa que se puede hacer acá además
   // de girar: en gris tenue sobre fondo negro se leía como una nota al pie y no
@@ -560,15 +567,24 @@ const estilos = StyleSheet.create({
   },
   seguirTexto: { color: colors.sobreTinte, fontSize: 16, fontWeight: '700', letterSpacing: 0.5 },
 
+  /** El alto sale del texto: con la letra del sistema más grande, un `height`
+   *  fijo deja el reloj desbordado contra el borde de abajo. */
   contador: {
     position: 'absolute',
     top: 4,
     left: 4,
     paddingHorizontal: 6,
-    height: 18,
+    paddingVertical: 2,
     borderRadius: radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  contadorTexto: { color: colors.sobreTinte, fontSize: 11, fontWeight: '700' },
+  contadorTexto: {
+    color: colors.sobreTinte,
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
 });

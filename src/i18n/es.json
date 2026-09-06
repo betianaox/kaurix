@@ -82,12 +82,12 @@
   "cocina": {
     "titulo": "COCINA",
     "vacia": "Echa dentro lo que quieras combinar.",
-    "minimo": "Agrega al menos {minimo} cosas.",
+    "minimo": "Agrega {minimo} ingredientes diferentes.",
     "vaASalir": "Va a salir {receta}.",
     "empiezanAsi_una": "1 receta empieza así.",
     "empiezanAsi": "{cantidad} recetas empiezan así.",
     "nadaSale": "Así no va a salir nada.",
-    "quemado": "Se quemó. Se perdió lo que había dentro.",
+    "quemado": "Se perdieron los ingredientes.",
     "cocinar": "Cocinar",
     "cocinarReceta": "Cocinar {receta}",
     "vaciar": "Vaciar",
@@ -147,7 +147,6 @@
   "album": {
     "titulo": "ÁLBUM",
     "legendaria": "Legendaria",
-    "serie": "Serie {numero}",
     "cuantas": "{tiene} de {total}",
     "noLaTienes": "Todavía no la tienes"
   },

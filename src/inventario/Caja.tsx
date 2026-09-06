@@ -89,18 +89,27 @@ const estilos = StyleSheet.create({
   fondo: { ...StyleSheet.absoluteFill },
   apagado: { opacity: 0.28 },
 
+  /** El alto sale del texto: con la letra del sistema más grande, un `height`
+   *  fijo deja el número desbordado contra el borde de abajo. */
   cuenta: {
     position: 'absolute',
     right: 4,
     bottom: 4,
     minWidth: 20,
-    height: 18,
     paddingHorizontal: 5,
-    borderRadius: 9,
+    paddingVertical: 2,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cuentaTexto: { color: colors.sobreTinte, fontSize: 11, fontWeight: '700' },
+  cuentaTexto: {
+    color: colors.sobreTinte,
+    fontSize: 11,
+    fontWeight: '700',
+    lineHeight: 14,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
 
   nombre: { color: colors.text, fontSize: 11.5, textAlign: 'center', marginTop: 4 },
   nombreVacio: { color: colors.textFaint },

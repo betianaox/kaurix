@@ -14,7 +14,6 @@ import {
 
 import { porId, type Criatura, type Pieza } from '../art';
 import { useT } from '../i18n';
-import { Apoyo } from '../buscar/Apoyo';
 import { useAparicion } from '../buscar/useAparicion';
 import { useIngredientes } from '../buscar/useIngredientes';
 import { CriaturaView, medida } from '../components/CriaturaView';
@@ -29,6 +28,15 @@ import { colors, radius, spacing } from '../theme';
  *
  * Va a pantalla completa, sin el armazón: la cámara ocupa todo y el header
  * taparía justo lo que hay que mirar.
+ *
+ * **Y encima no va nada escrito.** Estaban la pista de lo que se siente cerca,
+ * el aviso de lo que juntabas y la aclaración de cuándo no hay criatura: tres
+ * renglones con el alto reservado al pie. Se sacaron enteros. Lo que se mira
+ * acá es la imagen real con las cosas apoyadas encima, y cualquier texto sobre
+ * eso es la app hablando por arriba de la escena que se armó.
+ *
+ * Lo único que queda es el botón de cerrar. Lo que decían esos renglones va a
+ * volver de otra forma, fuera de la cámara.
  *
  * Toda la parte difícil —dónde aparece, cómo se acerca, qué motor corre— vive en
  * `useAparicion`. Acá solo está la secuencia del huevo y qué pasa cuando sale.
@@ -66,10 +74,6 @@ type Fase = 'huevo' | 'falla' | 'eclosion' | 'nacido';
  */
 const HALLAZGO = 112;
 
-/** Cuanto se queda el aviso de lo que juntaste, y cuanto tarda en irse. */
-const AVISO_VISIBLE_MS = 3000;
-const AVISO_FUNDIDO_MS = 600;
-
 /** Ancho de la criatura como proporción del ancho de pantalla. */
 const ANCHO = 1.0;
 
@@ -88,46 +92,6 @@ export function BuscarScreen({ navigation }: Props) {
   /** Intentos fallidos que le faltan a este huevo antes de romperse. */
   const fallosRestantes = useRef(0);
   const reclamada = useRef(false);
-  const [diagnostico, setDiagnostico] = useState('');
-  /** Lo último que se juntó, para poder decirlo sin abrir el bolso. */
-  const [ultimo, setUltimo] = useState<string | null>(null);
-
-  /**
-   * EL AVISO DE LO QUE JUNTASTE SE VA SOLO.
-   *
-   * Antes se quedaba hasta que juntabas otra cosa, y eso lo volvia un cartel
-   * fijo: a los dos minutos decia algo que habias agarrado hace rato y ya no
-   * mirabas. Un aviso que no se va deja de ser un aviso.
-   *
-   * Tres segundos alcanzan para leer un nombre y confirmar que el toque hizo
-   * algo, que es todo lo que tiene que hacer. Despues se desvanece.
-   *
-   * Se apaga con opacidad y no desmontando el texto: si desapareciera de golpe,
-   * el pie de pantalla daria un salto. Por eso `ultimo` sigue en su lugar
-   * mientras el aviso se apaga, y solo se limpia al final.
-   */
-  const avisoOpacidad = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!ultimo) return;
-
-    avisoOpacidad.setValue(1);
-    const animacion = Animated.timing(avisoOpacidad, {
-      toValue: 0,
-      duration: AVISO_FUNDIDO_MS,
-      delay: AVISO_VISIBLE_MS,
-      useNativeDriver: true,
-    });
-    animacion.start(({ finished }) => {
-      if (finished) setUltimo(null);
-    });
-
-    // Si juntas otra cosa antes de que termine, esta animacion se corta y
-    // arranca la nueva desde opacidad 1. Sin esto, la de antes seguiria
-    // corriendo y apagaria el aviso recien aparecido.
-    return () => animacion.stop();
-  }, [ultimo, avisoOpacidad]);
-
   const lleno = !hayLugar(juego);
   const tinte = colorDeNivel(juego.nivel);
 
@@ -194,10 +158,9 @@ export function BuscarScreen({ navigation }: Props) {
   // La otra mitad del botón de buscar: la misma cámara junta ingredientes.
   const { hallazgos, juntar } = useIngredientes({
     activo: !!permiso?.granted,
-    onJuntar: (i) => {
-      sumarIngrediente(i.id);
-      setUltimo(i.nombre);
-    },
+    // Se suma al bolso y nada más. El aviso de qué juntaste se sacó de la
+    // cámara: sobre la imagen real no va a haber texto.
+    onJuntar: (i) => sumarIngrediente(i.id),
   });
 
   function cambiarFase(f: Fase) {
@@ -288,7 +251,6 @@ export function BuscarScreen({ navigation }: Props) {
               siguiente={siguiente}
               nombre={t(`criaturas.${criatura.id}`)}
               elemento={criatura.elemento}
-              onFallo={(m) => setDiagnostico(`el arte no cargó: ${m}`)}
             />
           </Pressable>
         </Animated.View>
@@ -299,6 +261,13 @@ export function BuscarScreen({ navigation }: Props) {
         Van por encima de la criatura pero no le tapan el toque: cada uno ocupa
         solo su cajita. Todavía aparecen en cualquier lado; cuando la cámara
         sepa qué está mirando, van a salir donde corresponde.
+
+        **Sin sombra de contacto.** Llevaban una elipse difusa apoyada en la
+        base para que se leyeran posadas sobre lo que hubiera abajo. Funcionaba
+        cuando el ingrediente caía sobre una superficie horizontal y fallaba en
+        todo lo demás: contra una pared, en el aire o sobre algo oscuro, la
+        sombra queda flotando sin nada que la explique. Una sombra que solo
+        acierta a veces miente más de lo que ayuda.
       */}
       {hallazgos.map((h) => (
         <Pressable
@@ -314,18 +283,6 @@ export function BuscarScreen({ navigation }: Props) {
           // lector de pantalla para saber qué hay ahí.
           accessibilityLabel={t('buscar.juntar', { ingrediente: t(`ingredientes.${h.ingrediente.id}`) })}
         >
-          {/* LA SOMBRA DE CONTACTO: es lo que hace que la cosa se lea apoyada
-              sobre lo que haya abajo en vez de pegada sobre la imagen.
-
-              Es angosta y suave a proposito. Antes era mas ancha (72% del
-              objeto) y mas oscura, y a ese tamaño no se leia como sombra sino
-              como una mancha gris debajo. Una sombra de contacto real es mas
-              chica que el objeto y se desvanece rapido: lo que la vende es que
-              este pegada al punto donde algo toca el piso, no que sea grande. */}
-          <View style={estilos.apoyo} pointerEvents="none">
-            <Apoyo ancho={HALLAZGO * 0.54 * h.escala} fuerza={0.2} />
-          </View>
-
           <Image
             source={h.ingrediente.arte}
             style={{
@@ -350,74 +307,9 @@ export function BuscarScreen({ navigation }: Props) {
           <Cerrar lado={42} />
         </Pressable>
 
-        {/* EL PIE TIENE EL ALTO RESERVADO, no el que necesite en cada momento.
-            La pista de arriba —"se siente algo cerca"— es lo que se mira mientras
-            se busca, y si el renglón de abajo aparece y desaparece, la pista sube
-            y baja con él. Un texto que se mueve solo mientras lo estás leyendo se
-            lee peor que uno mal escrito.
-
-            Por eso los dos renglones de abajo ocupan su lugar SIEMPRE, con o sin
-            texto adentro. Cuesta unos píxeles de pantalla y a cambio nada se
-            mueve nunca. */}
-        <View style={estilos.pie}>
-          <Text style={estilos.pista} numberOfLines={2}>
-            {criatura
-              ? pista(fase, aparicion.aLaVista, aparicion.centrada, t)
-              : // ESTAR AL TOPE NO SE ANUNCIA. Antes decia "estas criando 8
-                // criaturas, que son todas las que se pueden a la vez", y eso
-                // convierte un limite del juego en un problema de la persona:
-                // le pide que vaya a resolver algo a otra pantalla justo cuando
-                // vino a buscar. Que no aparezcan huevos alcanza, y abajo sigue
-                // la invitacion a juntar ingredientes, que es lo que si puede
-                // hacer ahora.
-                //
-                // El limite en si no cambia: `lleno` sigue frenando la
-                // aparicion mas arriba. Lo que se saca es el cartel.
-                lleno
-                ? ''
-                : t('buscar.sinCriaturas')}
-          </Text>
-
-          {/* El renglón de lo que juntaste. Reservado aunque esté vacío: ese es
-              el punto. Se va solo a los tres segundos (ver `avisoOpacidad`). */}
-          <View style={estilos.renglon}>
-            {ultimo ? (
-              <Animated.Text style={[estilos.aparte, { opacity: avisoOpacidad }]}>
-                {t('buscar.juntaste', { ingrediente: ultimo })}
-              </Animated.Text>
-            ) : null}
-          </View>
-
-          {/* Y el de la aclaración de cuando no hay criatura, igual de reservado:
-              si no, aparecer o desaparecer movería todo lo de arriba. */}
-          <View style={estilos.renglon}>
-            {!criatura ? <Text style={estilos.aparte}>{t('buscar.igualBusca')}</Text> : null}
-            {diagnostico ? <Text style={estilos.diagnostico}>{diagnostico}</Text> : null}
-          </View>
-        </View>
       </View>
     </View>
   );
-}
-
-/**
- * Qué decir según lo que esté pasando.
- *
- * Nunca promete un hallazgo que puede no ocurrir: dice lo que se siente, no lo
- * que va a pasar.
- */
-function pista(
-  fase: Fase,
-  aLaVista: boolean,
-  centrada: boolean,
-  t: (clave: string) => string
-): string {
-  if (fase === 'eclosion') return t('buscar.rompiendo');
-  if (fase === 'falla') return t('buscar.casi');
-  if (fase === 'nacido') return t('buscar.tocaloParaQuedartelo');
-  if (!aLaVista) return t('buscar.cerca');
-  if (centrada) return t('buscar.tocaElHuevo');
-  return t('buscar.centro');
 }
 
 function Aviso({
@@ -446,29 +338,11 @@ function Aviso({
   );
 }
 
-/**
- * Lo que va sobre la cámara **no sigue al tema**.
- *
- * Detrás no hay una pantalla de la app: hay lo que la cámara esté viendo, que
- * puede ser cualquier cosa y no se elige. Con la tinta oscura del tema claro,
- * el HUD desaparecía sobre cualquier imagen que no fuera muy clara. Acá el
- * texto es blanco y va apoyado sobre una pastilla oscura, que es lo único que
- * se lee siempre.
- *
- * La pantalla completa —cuando no hay permiso de cámara, o no hay lugar para
- * más criaturas— sí es de la app, y esa sigue el tema como todo lo demás.
- */
-const SOBRE_CAMARA = '#FFFFFF';
-const SOBRE_CAMARA_TENUE = 'rgba(255,255,255,0.78)';
-const SOBRE_CAMARA_APENAS = 'rgba(255,255,255,0.55)';
-
 const estilos = StyleSheet.create({
   raiz: { flex: 1, backgroundColor: '#000' },
   criatura: { position: 'absolute' },
 
   hallazgo: { position: 'absolute', alignItems: 'center', width: 92, marginLeft: -46 },
-  /** La sombra en el piso: detrás del arte y pegada a su base. */
-  apoyo: { position: 'absolute', bottom: 4, alignItems: 'center' },
 
   hud: {
     position: 'absolute',
@@ -480,33 +354,6 @@ const estilos = StyleSheet.create({
     padding: spacing.md,
   },
   salir: { alignSelf: 'flex-end', padding: 4 },
-
-  pie: { alignItems: 'center', gap: 6, paddingBottom: spacing.lg },
-  /**
-   * Un renglón de alto fijo, tenga texto o no.
-   *
-   * Es lo que impide que la pista de arriba se mueva cuando aparece o se va el
-   * aviso de lo que juntaste. 18 es lo que ocupa una línea de `aparte` (13 de
-   * cuerpo) con su interlineado.
-   */
-  renglon: { height: 18, justifyContent: 'center' },
-  pista: {
-    color: SOBRE_CAMARA,
-    fontSize: 15,
-    // Dos renglones fijos: la pista cambia de largo según lo que esté pasando,
-    // y si creciera de uno a dos empujaría todo lo de abajo.
-    height: 46,
-    lineHeight: 19,
-    textAlignVertical: 'center',
-    textAlign: 'center',
-    backgroundColor: 'rgba(0,0,0,0.55)',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-  },
-  aparte: { color: SOBRE_CAMARA_TENUE, fontSize: 13, textAlign: 'center' },
-  diagnostico: { color: SOBRE_CAMARA_APENAS, fontSize: 11, textAlign: 'center' },
 
   centro: {
     flex: 1,

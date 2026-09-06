@@ -32,7 +32,7 @@ import {
 } from '../juego/recetas';
 import { useJuego } from '../juego/store';
 import { Pantalla } from '../shell/Pantalla';
-import { colors, radius, spacing } from '../theme';
+import { colors, columnasDeIngredientes, radius, spacing } from '../theme';
 
 /**
  * El bolso: tres cajones.
@@ -59,6 +59,17 @@ import { colors, radius, spacing } from '../theme';
  * un campo de texto que tapa lugar para ahorrar un gesto que no cuesta nada.
  */
 
+/**
+ * El aire de la grilla: el mismo a los costados y entre cajitas.
+ *
+ * Era `spacing.md` (20) al borde y `spacing.sm` (12) en el medio. Con dos
+ * números distintos la fila quedaba con más margen afuera que adentro, y en
+ * total se iban 76 puntos de los 360 de un teléfono: más de un quinto de la
+ * pantalla en nada. Uno solo y más chico deja las cajitas más grandes sin que
+ * se toquen.
+ */
+const AIRE = 10;
+
 type Pestana = 'ingredientes' | 'comidas' | 'pociones';
 
 const PESTANAS: { id: Pestana; clave: string; icono: keyof typeof Ionicons.glyphMap }[] = [
@@ -66,9 +77,6 @@ const PESTANAS: { id: Pestana; clave: string; icono: keyof typeof Ionicons.glyph
   { id: 'comidas', clave: 'inventario.comidas', icono: 'restaurant-outline' },
   { id: 'pociones', clave: 'inventario.pociones', icono: 'flask-outline' },
 ];
-
-/** Cuántas cajitas entran por fila. */
-const COLUMNAS = 4;
 
 export function InventarioScreen() {
   const juego = useJuego((e) => e.juego);
@@ -92,7 +100,16 @@ export function InventarioScreen() {
    */
   const preparadas = { ...juego.inventario.comidas, ...juego.inventario.pociones };
 
-  const lado = Math.floor((width - spacing.md * 2 - spacing.sm * (COLUMNAS - 1)) / COLUMNAS);
+  /**
+   * Cuántas cajitas entran por fila, y cuánto mide cada una.
+   *
+   * Las columnas ya no son cuatro fijas: en una pantalla grande son cinco —ver
+   * `columnasDeIngredientes`—, y el aire de los costados y del medio es más
+   * chico que antes. Cada punto que se le saca al aire se lo gana el dibujo,
+   * que es lo que se vino a mirar.
+   */
+  const columnas = columnasDeIngredientes(width);
+  const lado = Math.floor((width - AIRE * 2 - AIRE * (columnas - 1)) / columnas);
 
   // LA BUSQUEDA ACEPTA TODOS LOS NOMBRES, no solo el que se muestra. Quien
   // creció diciendo aguacate va a escribir "aguacate" aunque la etiqueta diga
@@ -322,7 +339,7 @@ const estilos = StyleSheet.create({
   },
   campo: { flex: 1, color: colors.text, fontSize: 14, paddingVertical: 8 },
 
-  hoja: { padding: spacing.md, paddingBottom: spacing.xl },
+  hoja: { padding: AIRE, paddingBottom: spacing.xl },
   grupo: { marginBottom: spacing.md },
   grupoTitulo: {
     color: colors.textFaint,
@@ -330,7 +347,7 @@ const estilos = StyleSheet.create({
     letterSpacing: 2,
     marginBottom: 8,
   },
-  grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: AIRE },
 
   vacio: { paddingVertical: spacing.xl, alignItems: 'center', gap: 8 },
   vacioTexto: { color: colors.textMuted, fontSize: 14, textAlign: 'center' },

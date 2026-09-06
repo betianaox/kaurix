@@ -126,6 +126,34 @@ export const spacing = {
   xl: 48,
 } as const;
 
+/**
+ * A PARTIR DE QUÉ ANCHO LA PANTALLA SE CONSIDERA GRANDE.
+ *
+ * En React Native no hay media queries: lo que hay es el ancho real, que se lee
+ * con `useWindowDimensions`. Esto es el corte, y está acá y no repetido en cada
+ * pantalla para que todas cambien de forma en el mismo punto.
+ *
+ * 600 puntos no es un número elegido: es el mismo umbral con el que Android
+ * separa teléfono de tablet —el `sw600dp` de sus recursos—, así que un aparato
+ * que el sistema considera grande acá también lo es.
+ */
+export const ANCHO_GRANDE = 600;
+
+/**
+ * Cuántas cajitas de ingrediente entran por fila.
+ *
+ * Cuatro en un teléfono y cinco en una tablet. Con las cuatro fijas, en una
+ * pantalla del doble de ancho cada cajita salía dos veces y media más grande
+ * que en el teléfono, mientras que las fichas de la colección y las cartas del
+ * álbum —que tienen que entrar en el alto— crecían bastante menos. El bolso
+ * terminaba siendo la pantalla de los dibujos grandes y las dos que de verdad
+ * muestran arte, las de los dibujos chicos.
+ *
+ * Cinco y no seis a propósito: seis las deja casi del tamaño del teléfono y se
+ * pierde lo bueno de la pantalla grande, que es poder mirar el dibujo.
+ */
+export const columnasDeIngredientes = (ancho: number) => (ancho >= ANCHO_GRANDE ? 5 : 4);
+
 export const radius = {
   sm: 10,
   md: 16,

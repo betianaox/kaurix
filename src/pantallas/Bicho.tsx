@@ -630,12 +630,19 @@ const estilos = StyleSheet.create({
     top: 8,
     right: 8,
     paddingHorizontal: 9,
-    height: 24,
-    borderRadius: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  impulsoTexto: { color: colors.sobreTinte, fontSize: 13, fontWeight: '700' },
+  impulsoTexto: {
+    color: colors.sobreTinte,
+    fontSize: 13,
+    fontWeight: '700',
+    lineHeight: 16,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
 
   tarjeta: {
     backgroundColor: colors.surface,

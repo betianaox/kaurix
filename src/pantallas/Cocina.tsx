@@ -15,8 +15,7 @@ import { Caldero } from '../cocina/Caldero';
 import { otroQuemado, type Quemado } from '../cocina/quemados';
 import { Caja } from '../inventario/Caja';
 import {
-  MINIMO,
-  TOPE,
+  TIPOS_MINIMOS,
   agregar,
   cuanto,
   puedenSalir,
@@ -30,7 +29,7 @@ import { RECETAS, claveDe, deClase, type Receta as TReceta } from '../juego/rece
 import { useT, useBuscador } from '../i18n';
 import { useJuego } from '../juego/store';
 import { Pantalla } from '../shell/Pantalla';
-import { colors, radius, spacing } from '../theme';
+import { colors, columnasDeIngredientes, radius, spacing } from '../theme';
 
 /**
  * La cocina: el caldero.
@@ -56,6 +55,9 @@ import { colors, radius, spacing } from '../theme';
  * cuando no va a salir nada. Perder ingredientes tiene que ser una decisión que
  * se tomó mirando, no una trampa.
  */
+/** El aire de la despensa: el mismo a los costados y entre cajitas que el bolso. */
+const AIRE = 10;
+
 export function CocinaScreen() {
   const juego = useJuego((e) => e.juego);
   const cocinar = useJuego((e) => e.cocinar);
@@ -83,23 +85,41 @@ export function CocinaScreen() {
   const posibles = useMemo(() => puedenSalir(mezcla), [mezcla]);
   const cuantas = cuanto(mezcla);
   const hayAlgo = cuantas > 0;
+
+  /** Los renglones de adentro de la olla, uno por cosa distinta. */
+  const adentro = Object.keys(mezcla).filter((id) => mezcla[id] > 0);
+  /** Cuántas cosas DISTINTAS hay adentro. Es una ficha en la mesa cada una. */
+  const tipos = adentro.length;
+
   /**
    * Alcanza para prender el fuego.
    *
    * No es que sea poco probable con menos: es imposible. Ninguna receta lleva
-   * menos de `MINIMO` cosas, así que abajo de eso el botón no ofrece una apuesta
-   * mala sino una que no existe.
-   */
-  const alcanza = cuantas >= MINIMO;
-
-  /**
-   * El caldero está lleno: no entra nada más.
+   * menos de `TIPOS_MINIMOS` cosas **distintas**, y ninguna repite ingrediente,
+   * así que abajo de eso el botón no ofrece una apuesta mala sino una que no
+   * existe.
    *
-   * Pasado el tope no hay receta que pueda salir, así que seguir tirando es
-   * tirar al vacío. Se frena acá y no al cocinar: enterarse de que sobraba
-   * medio bolso recién cuando ya se gastó es la peor manera de contarlo.
+   * SE CUENTAN TIPOS Y NO UNIDADES. Antes miraba `cuantas`, que suma unidades, y
+   * con tres manzanas daba por buena una olla de la que no podía salir nada.
    */
-  const lleno = cuantas >= TOPE;
+  const alcanza = tipos >= TIPOS_MINIMOS;
+
+  /*
+   * EL CALDERO NO TIENE TOPE.
+   *
+   * Lo tenía: `cuantas >= TOPE`, con `TOPE` sacado de la receta más cara del
+   * catálogo —seis unidades—. La idea era no dejar tirar al vacío, porque
+   * `saleDe` exige coincidencia exacta y con algo de más no sale nada.
+   *
+   * Se sacó porque frenaba antes de tiempo: querer poner cuatro duraznos y que
+   * la olla deje de aceptar en el segundo se lee como que la app está rota, no
+   * como una regla. El único límite que queda es el de verdad: no se puede
+   * tirar lo que no se tiene.
+   *
+   * A cambio, ahora se puede armar una olla de la que no sale nada. Eso ya
+   * pasaba con tres cosas mal elegidas; lo que cambia es que ahora también pasa
+   * por cantidad.
+   */
 
   /**
    * La olla terminó y todavía no se limpió.
@@ -112,7 +132,15 @@ export function CocinaScreen() {
    */
   const enResultado = salio !== null;
 
-  const lado = Math.floor((width - spacing.md * 2 - spacing.sm * 3) / 4);
+  /**
+   * La despensa se arma igual que la del bolso: mismas columnas y mismo aire.
+   *
+   * Son la misma cosa vista en dos pantallas —las cajitas de lo que tenés—, así
+   * que si acá entran cuatro y allá cinco, pasar de una a la otra se siente
+   * como cambiar de app. La cuenta sale de `columnasDeIngredientes`.
+   */
+  const columnas = columnasDeIngredientes(width);
+  const lado = Math.floor((width - AIRE * 2 - AIRE * (columnas - 1)) / columnas);
 
   /** Cuánto tenés de algo, sea ingrediente o preparación. */
   const enElBolso = (id: string) =>
@@ -186,26 +214,29 @@ export function CocinaScreen() {
     setMezcla({});
   }
 
-  /** Los renglones de adentro de la olla, uno por cosa distinta. */
-  const adentro = Object.keys(mezcla).filter((id) => mezcla[id] > 0);
-
   /**
-   * Los lugares vacíos que faltan para llegar al mínimo.
+   * Los casilleros vacíos que quedan en la mesa.
    *
    * El espacio de la mesa está reservado siempre —si apareciera al tirar la
    * primera cosa, empujaría la despensa y el segundo toque caería sobre otro
    * ingrediente—, y reservado y liso era un rectángulo de fondo vacío en el
    * medio de la pantalla. Con los casilleros, ese mismo espacio pasa a decir
-   * algo: cuántas cosas faltan como mínimo para que prender el fuego tenga
-   * sentido.
+   * algo: cuántos lugares quedan libres.
    *
-   * Cuenta unidades y no ingredientes distintos, igual que `MINIMO`: tres
-   * manzanas llenan la mesa tanto como tres cosas diferentes.
+   * SE DESCUENTAN FICHAS, NO UNIDADES. Antes restaba `cuantas`, que cuenta
+   * unidades, mientras que la fila dibuja **una ficha por ingrediente
+   * distinto**: al tirar la segunda banana el total no cambiaba de ficha —solo
+   * subía su número— pero se borraba un casillero igual, y la fila pasaba de
+   * tres lugares a dos. Con la tercera quedaba un solo casillero y la mesa se
+   * veía rota.
+   *
+   * Los dos números miden cosas distintas y solo coinciden mientras todo lo que
+   * tirás sea diferente, que es el caso en el que se probó.
    *
    * Con algo ya salido no van: ahí la mesa muestra en qué se convirtió todo, y
    * unos casilleros al lado leerían como que falta algo más.
    */
-  const huecos = salio ? 0 : Math.max(0, MINIMO - cuantas);
+  const huecos = salio ? 0 : Math.max(0, TIPOS_MINIMOS - tipos);
 
   return (
     <Pantalla titulo={t('cocina.titulo')} seccion="cocina">
@@ -289,15 +320,13 @@ export function CocinaScreen() {
                 // no el anuncio de un hecho. Lo que pasó ya se ve.
                 t(claveDe(salio.receta))
               : t('cocina.quemado')
-            : lleno
-              ? t('cocina.lleno')
-              : !hayAlgo
+            : !hayAlgo
               ? t('cocina.vacia')
               : !alcanza
                 ? // Se dice qué hacer, no qué no se puede. La regla es la misma,
                   // pero "agrega" deja al jugador con un próximo paso y la otra
                   // redacción lo dejaba con un dato.
-                  t('cocina.minimo', { minimo: MINIMO })
+                  t('cocina.minimo', { minimo: TIPOS_MINIMOS })
                 : sale
                   ? t('cocina.vaASalir', { receta: t(claveDe(sale)) })
                   : posibles.length === 1
@@ -378,13 +407,13 @@ export function CocinaScreen() {
 
         <View style={estilos.separador} />
 
-        {/* Apagada mientras se muestra el resultado —y también con el caldero
-            lleno—, y no solo sorda: una despensa que se ve igual pero no
-            responde parece rota. Apagada se lee como "ahora no", que es lo que
-            es. Sacar sigue disponible: las fichas de la mesa, arriba. */}
+        {/* Apagada mientras se muestra el resultado, y no solo sorda: una
+            despensa que se ve igual pero no responde parece rota. Apagada se
+            lee como "ahora no", que es lo que es. Sacar sigue disponible: las
+            fichas de la mesa, arriba. */}
         <View
-          pointerEvents={enResultado || lleno ? 'none' : 'auto'}
-          style={enResultado || lleno ? estilos.dormida : null}
+          pointerEvents={enResultado ? 'none' : 'auto'}
+          style={enResultado ? estilos.dormida : null}
         >
         <View style={estilos.buscador}>
           <Ionicons name="search" size={16} color={colors.textFaint} />
@@ -425,9 +454,9 @@ export function CocinaScreen() {
                   cuantos={queda}
                   nota={c.nota}
                   lado={lado}
-                  onPress={
-                    queda > 0 && !lleno ? () => setMezcla((m) => agregar(m, c.id)) : undefined
-                  }
+                  // Mientras quede en el bolso se puede seguir tirando, sin
+                  // tope de cuántas.
+                  onPress={queda > 0 ? () => setMezcla((m) => agregar(m, c.id)) : undefined}
                 />
               );
             })}
@@ -449,7 +478,7 @@ export function CocinaScreen() {
 const QUEMA = '#E0784A';
 
 const estilos = StyleSheet.create({
-  hoja: { padding: spacing.md, paddingBottom: spacing.xl },
+  hoja: { padding: AIRE, paddingBottom: spacing.xl },
 
   olla: { alignItems: 'center' },
 
@@ -458,6 +487,19 @@ const estilos = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
+    /**
+     * LA LÍNEA VA CENTRADA, no pegada arriba.
+     *
+     * Con `flexWrap` la fila pasa a ser una línea, y `alignContent` —que por
+     * defecto es `flex-start`— la apoya contra el borde de arriba del alto
+     * reservado. El alto de esa línea lo marca el hijo más alto: los huecos
+     * miden 62 y la ficha 57, así que al llenar la mesa desaparecían los
+     * huecos, la línea se achicaba y las tres fichas subían tres puntos.
+     *
+     * Se veía solo con la mesa llena: mientras quedara un hueco, él seguía
+     * marcando los 62 y nada se movía.
+     */
+    alignContent: 'center',
     gap: spacing.sm,
     marginTop: spacing.sm,
     // Reservado: la despensa de abajo no se mueve nunca. Da para la ficha más
@@ -472,7 +514,7 @@ const estilos = StyleSheet.create({
     width: 62,
     height: 62,
     borderRadius: radius.md,
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderStyle: 'dashed',
   },
   ficha: {
@@ -484,18 +526,40 @@ const estilos = StyleSheet.create({
   },
   fichaArte: { width: 34, height: 34 },
   fichaTexto: { color: colors.textMuted, fontSize: 9.5, textAlign: 'center' },
+  /**
+   * La cuenta. **El alto sale del texto, no al revés.**
+   *
+   * Tenía un `height` fijo de 16, medido contra el número a tamaño normal. Con
+   * la tipografía del sistema más grande —una tablet suele traerla así— la caja
+   * del texto crece, la píldora no, y el número se desborda por abajo hasta
+   * quedar pegado al borde.
+   *
+   * Con `paddingVertical` la píldora crece con lo que tiene adentro y anda con
+   * cualquier tamaño de letra. El `borderRadius` va en 999 por lo mismo: con la
+   * mitad del alto anotada a mano deja de ser un círculo apenas el alto cambia.
+   */
   fichaCuenta: {
     position: 'absolute',
     top: 2,
     right: 2,
     minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 4,
+    paddingVertical: 2,
   },
-  fichaCuentaTexto: { color: colors.sobreTinte, fontSize: 10, fontWeight: '700' },
+  fichaCuentaTexto: {
+    color: colors.sobreTinte,
+    fontSize: 10,
+    fontWeight: '700',
+    // Las dos juntas son las que centran de verdad en Android: sin ellas el
+    // sistema le agrega un relleno propio arriba y abajo que no es simétrico, y
+    // el número queda corrido aunque la caja tenga el alto que corresponde.
+    lineHeight: 12,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
 
   // Suelto y grande: es lo único que hay para ver, y la fila ya tiene el alto
   // reservado para él, así que nada de abajo se mueve.
@@ -547,7 +611,7 @@ const estilos = StyleSheet.create({
   },
   campo: { flex: 1, color: colors.text, fontSize: 14, paddingVertical: 8 },
 
-  grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  grilla: { flexDirection: 'row', flexWrap: 'wrap', gap: AIRE },
   nada: { color: colors.textMuted, fontSize: 13, textAlign: 'center', paddingVertical: spacing.md },
   dormida: { opacity: 0.35 },
 });

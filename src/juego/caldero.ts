@@ -54,6 +54,27 @@ export const MINIMO = Math.min(
 );
 
 /**
+ * CUÁNTAS COSAS DISTINTAS HACEN FALTA COMO MÍNIMO.
+ *
+ * No es lo mismo que `MINIMO`, y confundirlos es lo que rompía la cocina: aquel
+ * cuenta **unidades** y este cuenta **ingredientes diferentes**. Tres manzanas
+ * son tres unidades y un solo tipo, y con eso no puede salir absolutamente
+ * nada: las cincuenta y dos recetas del catálogo piden tres cosas distintas
+ * —las comidas y pociones de nivel 1 llevan tres ingredientes; las de nivel 2 y
+ * 3, una base más dos—, ninguna repite.
+ *
+ * Es lo que mira la cocina para saber si prender el fuego tiene sentido y
+ * cuántos casilleros vacíos quedan en la mesa. Contar unidades ahí dejaba
+ * ofrecer el botón con tres de lo mismo, que es una apuesta que no existe.
+ *
+ * Sale del catálogo y no de un `3` escrito a mano, igual que sus hermanos: si
+ * algún día entra una receta de dos ingredientes, esto se entera solo.
+ */
+export const TIPOS_MINIMOS = Math.min(
+  ...RECETAS.map((r) => Object.keys(requisitosDe(r)).length)
+);
+
+/**
  * Cuánto entra en el caldero. Más que esto no se puede tirar.
  *
  * **No es tres.** Tres es el `MINIMO`, y de ahí salen los lugares vacíos que

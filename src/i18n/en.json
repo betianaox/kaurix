@@ -82,12 +82,12 @@
   "cocina": {
     "titulo": "KITCHEN",
     "vacia": "Drop in whatever you want to combine.",
-    "minimo": "Add at least {minimo} things.",
+    "minimo": "Add {minimo} different ingredients.",
     "vaASalir": "This will make {receta}.",
     "empiezanAsi_una": "1 recipe starts like this.",
     "empiezanAsi": "{cantidad} recipes start like this.",
     "nadaSale": "Nothing will come of this.",
-    "quemado": "It burned. Everything inside was lost.",
+    "quemado": "The ingredients were lost.",
     "cocinar": "Cook",
     "cocinarReceta": "Cook {receta}",
     "vaciar": "Empty",
@@ -147,7 +147,6 @@
   "album": {
     "titulo": "ALBUM",
     "legendaria": "Legendary",
-    "serie": "Series {numero}",
     "cuantas": "{tiene} of {total}",
     "noLaTienes": "You don't have it yet"
   },

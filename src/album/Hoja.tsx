@@ -1,7 +1,8 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colorDeNivel } from '../juego/datos';
+import { porId } from '../art';
+import { bichoDeNivel, colorDeNivel } from '../juego/datos';
 import { useT } from '../i18n';
 import { colors, radius } from '../theme';
 import { Carta, RATIO } from './Carta';
@@ -27,29 +28,47 @@ type Props = {
 /**
  * Separación entre cartas, en puntos.
  *
- * Generoso a propósito: las cartas son ilustraciones saturadas y de marco
- * dorado, y pegadas entre sí se leen como una sola mancha de color. El aire es
- * lo que las devuelve a ser nueve cosas distintas.
+ * Las cartas son ilustraciones saturadas y de marco dorado, y pegadas entre sí
+ * se leen como una sola mancha de color. El aire es lo que las devuelve a ser
+ * nueve cosas distintas.
+ *
+ * Bajó de 14 a 9. Con 14, el aire se llevaba 56 puntos de ancho y otros 56 de
+ * alto, y como la carta sale de dividir lo que sobra por tres, cada punto de
+ * aire le saca un tercio de punto a cada carta en los dos ejes. El marco dorado
+ * ya separa bastante por sí solo: no hace falta tanto.
  */
-const AIRE = 14;
+const AIRE = 9;
 
 export function Hoja({ nivel, ganadas, ancho, alto, onCarta }: Props) {
   const t = useT();
   const color = colorDeNivel(nivel);
+  // El encabezado lleva el nombre del bicho de la vuelta, no su número: "SERIE
+  // 4" no le dice nada a nadie, y el bicho es lo que la hoja tiene de propio.
+  const bicho = porId(bichoDeNivel(nivel))?.nombre ?? '';
   const casillas = casillasDe(nivel);
   const tengo = casillas.filter((c) => ganadas.includes(c.llave)).length;
 
   // La carta se dimensiona por lo que sea que apriete primero: tres de ancho o
   // tres de alto. Sin esto, en una pantalla baja la fila de abajo queda cortada.
   const porAncho = (ancho - AIRE * 4) / 3;
-  const porAlto = (alto - AIRE * 4 - 50) / 3 / RATIO;
+  // Lo que ocupan el nombre del bicho arriba y la cuenta al pie, **con su aire
+  // incluido**. El aire es la mayor parte: dieciocho puntos arriba y otros
+  // tantos abajo, contra los dos que tenían antes. Pegados a las cartas, los
+  // dos renglones se leían como parte de la grilla y no como el título y el pie
+  // de una hoja.
+  //
+  // Sale casi gratis: en un teléfono la carta la limita el ancho, no el alto,
+  // así que reservar más acá no le saca ni un punto. En una tablet cuesta
+  // cuatro, y una hoja de álbum bien recortada los vale.
+  const RESERVA = 62;
+  const porAlto = (alto - AIRE * 4 - RESERVA) / 3 / RATIO;
   const anchoCarta = Math.floor(Math.min(porAncho, porAlto));
 
   return (
     <View style={[estilos.papel, { width: ancho, height: alto, borderColor: `${color}55` }]}>
       <View style={[estilos.tinte, { backgroundColor: color }]} pointerEvents="none" />
 
-      <Text style={[estilos.serie, { color }]}>SERIE {nivel}</Text>
+      <Text style={[estilos.serie, { color }]}>{bicho.toUpperCase()}</Text>
 
       {/* La grilla ocupa todo lo que sobra y va centrada: así la hoja queda
           equilibrada sea cual sea el alto de la pantalla. */}
@@ -110,8 +129,8 @@ const estilos = StyleSheet.create({
   tinte: { ...StyleSheet.absoluteFill, opacity: 0.16 },
 
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  serie: { fontSize: 11, letterSpacing: 3, marginBottom: 2 },
-  pie: { color: colors.textMuted, fontSize: 11, letterSpacing: 2, marginTop: 2 },
+  serie: { fontSize: 11, letterSpacing: 3, marginBottom: 18 },
+  pie: { color: colors.textMuted, fontSize: 11, letterSpacing: 2, marginTop: 18 },
 
   grilla: {
     flexDirection: 'row',
