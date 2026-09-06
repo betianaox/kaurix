@@ -161,30 +161,36 @@ export function InventarioScreen() {
         })}
       </View>
 
+      {/* El buscador va en su propia banda, con aire y una línea al pie: es la
+          misma forma que tienen la ficha del bicho y la cocina para separar lo
+          que se queda quieto de lo que scrollea. Pegado al borde de la lista se
+          leía como el primer renglón de la lista. */}
       {conBuscador ? (
-        <View style={estilos.buscador}>
-          <Ionicons name="search" size={16} color={colors.textFaint} />
-          <TextInput
-            value={busqueda}
-            onChangeText={setBusqueda}
-            placeholder={t(pestana === 'comidas' ? 'inventario.buscarComida' : 'inventario.buscarIngrediente')}
-            placeholderTextColor={colors.textFaint}
-            style={estilos.campo}
-            autoCorrect={false}
-            // Sin acentos ni mayúsculas para comparar: quien escribe "rocio"
-            // tiene que encontrar "Rocío".
-            autoCapitalize="none"
-          />
-          {busqueda ? (
-            <Pressable
-              onPress={() => setBusqueda('')}
-              hitSlop={10}
-              accessibilityRole="button"
-              accessibilityLabel={t('inventario.borrarBusqueda')}
-            >
-              <Ionicons name="close-circle" size={16} color={colors.textFaint} />
-            </Pressable>
-          ) : null}
+        <View style={estilos.banda}>
+          <View style={estilos.buscador}>
+            <Ionicons name="search" size={16} color={colors.textFaint} />
+            <TextInput
+              value={busqueda}
+              onChangeText={setBusqueda}
+              placeholder={t(pestana === 'comidas' ? 'inventario.buscarComida' : 'inventario.buscarIngrediente')}
+              placeholderTextColor={colors.textFaint}
+              style={estilos.campo}
+              autoCorrect={false}
+              // Sin acentos ni mayúsculas para comparar: quien escribe "rocio"
+              // tiene que encontrar "Rocío".
+              autoCapitalize="none"
+            />
+            {busqueda ? (
+              <Pressable
+                onPress={() => setBusqueda('')}
+                hitSlop={10}
+                accessibilityRole="button"
+                accessibilityLabel={t('inventario.borrarBusqueda')}
+              >
+                <Ionicons name="close-circle" size={16} color={colors.textFaint} />
+              </Pressable>
+            ) : null}
+          </View>
         </View>
       ) : null}
 
@@ -327,19 +333,26 @@ const estilos = StyleSheet.create({
   },
   pestanaTexto: { color: colors.textMuted, fontSize: 12.5 },
 
+  /** La banda del buscador: lo único que no se mueve con la lista. */
+  banda: {
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.sm,
+    backgroundColor: colors.bg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   buscador: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginHorizontal: spacing.md,
-    marginTop: spacing.sm,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.sm,
     backgroundColor: colors.surface,
   },
   campo: { flex: 1, color: colors.text, fontSize: 14, paddingVertical: 8 },
 
-  hoja: { padding: AIRE, paddingBottom: spacing.xl },
+  hoja: { padding: AIRE, paddingTop: 10, paddingBottom: spacing.xl },
   grupo: { marginBottom: spacing.md },
   grupoTitulo: {
     color: colors.textFaint,
