@@ -159,13 +159,37 @@
   },
   "ayuda": {
     "titulo": "HELP",
-    "que": "How to play: search, raise, combine, and what everything on a creature's page means.",
-    "espera": "It gets written once the rules are settled, so we don't explain something that's still changing."
+    "comoSeJuega": "HOW TO PLAY",
+    "buscarTitulo": "Searching with the camera",
+    "buscarTexto": "The camera looks at whatever is in front of you and the creatures appear right there, in your home or your street. You have to turn, get closer and keep them in sight: if they leave the frame, they drift away.",
+    "buscarAumentada": "Ingredients also come from what you point at. Fruit shows up in front of real fruit; a stone, in front of stones or a brick wall; flour, when you open the pantry. Nothing comes at random: aiming well is half the game.",
+    "coleccionTitulo": "Growing them",
+    "coleccionTexto": "Each creature asks for food, across three stages, and a potion for the final leap. You come back whenever you want and it is where you left it.",
+    "cocinaTitulo": "Cooking",
+    "cocinaTexto": "Gather ingredients to combine them into food. Three or more will do it, and dishes combine with each other into better ones.",
+    "inventarioTitulo": "The bag",
+    "inventarioTexto": "An inventory of what you gathered, what you cooked and the potions you made. Here you can check the recipes and where each ingredient is found, by tapping on it.",
+    "albumTitulo": "The album",
+    "albumTexto": "Every creature that grows gives you a new card. Complete a page to win its legendary one.",
+    "acerca": "ABOUT",
+    "valorar": "Rate the app",
+    "privacidad": "Privacy",
+    "contacto": "Contact",
+    "version": "Version {v}",
+    "verSaludo": "Show the welcome again"
   },
   "avisos": {
-    "titulo": "ALERTS",
-    "que": "What you can do right now, sorted by urgency, each with the button that resolves it.",
-    "espera": "The alerts engine is missing. It needs the recipes to know what can already be made."
+    "titulo": "NEWS",
+    "camino": "PATH OF DAYS",
+    "hoy": "Today",
+    "reclamar": "Claim",
+    "vuelveManana": "Come back tomorrow for the next one",
+    "dia": "Day {n}",
+    "ingredientes": "{cuantos} ingredients",
+    "comida": "A dish",
+    "pocion": "A potion",
+    "ganaste": "Daily reward!",
+    "cuantas": "{cosa} ×{cuantos}"
   },
   "enObra": {
     "encabezado": "Under construction"
@@ -339,5 +363,11 @@
     "estrella": "Dreaming",
     "construir": "Working",
     "volar": "Flying"
+  },
+  "bienvenida": {
+    "titulo": "Kaurix",
+    "texto": "There are creatures hidden in the real world. Point your camera {icono} to find them, gather ingredients from what is around you, cook, and raise them until they grow.",
+    "empezar": "Start",
+    "ayuda": "How to play"
   }
 }

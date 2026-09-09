@@ -159,13 +159,37 @@
   },
   "ayuda": {
     "titulo": "AIUTO",
-    "que": "Come si gioca: cercare, allevare, combinare, e cosa significa ogni cosa nella scheda della creatura.",
-    "espera": "Si scrive quando le regole saranno chiuse, per non spiegare qualcosa che ancora cambia."
+    "comoSeJuega": "COME SI GIOCA",
+    "buscarTitulo": "Cercare con la fotocamera",
+    "buscarTexto": "La fotocamera guarda ciò che hai davanti e le creature appaiono lì, in casa tua o nella tua strada. Bisogna girare, avvicinarsi e non perderle di vista: se escono dall’inquadratura si allontanano.",
+    "buscarAumentada": "Anche gli ingredienti nascono da ciò che inquadri. Un frutto appare davanti a frutta vera; una pietra, davanti a pietre o a un muro di mattoni; la farina, aprendo la dispensa. Niente arriva a caso: mirare bene è metà del gioco.",
+    "coleccionTitulo": "Farle crescere",
+    "coleccionTexto": "Ogni creatura chiede cibo, in tre tappe, e una pozione per l’ultimo salto. Torni quando vuoi ed è dove l’hai lasciata.",
+    "cocinaTitulo": "Cucinare",
+    "cocinaTexto": "Raccogli ingredienti per combinarli in cibo. Con tre o più ci riesci, e i piatti si combinano tra loro per darne di migliori.",
+    "inventarioTitulo": "La borsa",
+    "inventarioTexto": "Un inventario di quello che hai raccolto, di quello che hai cucinato e delle pozioni che hai preparato. Qui puoi consultare le ricette e dove si trova ogni ingrediente, toccandolo.",
+    "albumTitulo": "L’album",
+    "albumTexto": "Ogni creatura che cresce ti dà una figurina nuova. Completa una pagina per vincere la leggendaria.",
+    "acerca": "INFORMAZIONI",
+    "valorar": "Valuta l’app",
+    "privacidad": "Privacy",
+    "contacto": "Contatti",
+    "version": "Versione {v}",
+    "verSaludo": "Rivedi il benvenuto"
   },
   "avisos": {
     "titulo": "AVVISI",
-    "que": "Cosa si può fare adesso, in ordine di urgenza, ognuna con il pulsante che la risolve.",
-    "espera": "Manca il motore degli avvisi. Gli servono le ricette per sapere cosa si può già preparare."
+    "camino": "CAMMINO DEI GIORNI",
+    "hoy": "Oggi",
+    "reclamar": "Riscuoti",
+    "vuelveManana": "Torna domani per il prossimo",
+    "dia": "Giorno {n}",
+    "ingredientes": "{cuantos} ingredienti",
+    "comida": "Un piatto",
+    "pocion": "Una pozione",
+    "ganaste": "Premio del giorno!",
+    "cuantas": "{cosa} ×{cuantos}"
   },
   "enObra": {
     "encabezado": "In lavorazione"
@@ -339,5 +363,11 @@
     "estrella": "Sognando",
     "construir": "Lavorando",
     "volar": "Volando"
+  },
+  "bienvenida": {
+    "titulo": "Kaurix",
+    "texto": "Ci sono creature nascoste nel mondo reale. Punta la fotocamera {icono} per trovarle, raccogli ingredienti da ciò che hai intorno, cucina e allevale finché non crescono.",
+    "empezar": "Inizia",
+    "ayuda": "Come si gioca"
   }
 }

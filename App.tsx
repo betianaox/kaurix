@@ -1,4 +1,9 @@
-import { DefaultTheme, NavigationContainer, type Theme } from '@react-navigation/native';
+import {
+  DefaultTheme,
+  NavigationContainer,
+  useNavigationContainerRef,
+  type Theme,
+} from '@react-navigation/native';
 import { NavigationBar } from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';
@@ -8,6 +13,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useJuego } from './src/juego/store';
 import { Navegacion } from './src/navegacion';
+import type { Rutas } from './src/navegacion/rutas';
+import { Bienvenida } from './src/shell/Bienvenida';
 import { colors } from './src/theme';
 
 /**
@@ -47,6 +54,18 @@ const tema: Theme = {
 export default function App() {
   const iniciar = useJuego((e) => e.iniciar);
   const cargado = useJuego((e) => e.cargado);
+  const saludado = useJuego((e) => e.juego.saludado);
+  const saludar = useJuego((e) => e.saludar);
+
+  /**
+   * La referencia al navegador, solo para el saludo.
+   *
+   * El diálogo vive **afuera** del navegador —tiene que poder aparecer encima de
+   * cualquier pantalla y antes de que se elija ninguna—, así que no puede usar
+   * `useNavigation`. La referencia es la manera de que su botón de ayuda lleve
+   * a algún lado.
+   */
+  const navegador = useNavigationContainerRef<Rutas>();
 
   // Se lee el disco una sola vez, al arrancar. Es también el momento en que se
   // cobra el tiempo que pasó con la app cerrada.
@@ -86,8 +105,25 @@ export default function App() {
             colección vacía y llenarla un cuadro después se ve como si se
             hubiera perdido el progreso. */}
         {cargado ? (
-          <NavigationContainer theme={tema}>
+          <NavigationContainer theme={tema} ref={navegador}>
             <Navegacion />
+
+            {/* EL SALUDO DE LA PRIMERA VEZ.
+
+                Va acá y no adentro de una pantalla: no es de la colección ni de
+                ninguna otra, es de la app. Y se dibuja después del navegador
+                para quedar por encima de lo que haya.
+
+                Las dos salidas lo dan por visto. La de la ayuda además abre la
+                ayuda, que es lo único que hace falta saber para arrancar. */}
+            <Bienvenida
+              visible={!saludado}
+              onCerrar={saludar}
+              onAyuda={() => {
+                saludar();
+                navegador.navigate('Ayuda');
+              }}
+            />
           </NavigationContainer>
         ) : null}
       </View>

@@ -159,13 +159,37 @@
   },
   "ayuda": {
     "titulo": "AYUDA",
-    "que": "Cómo se juega: buscar, criar, combinar, y qué significa cada cosa de la ficha del bicho.",
-    "espera": "Se escribe cuando las reglas estén cerradas, para no explicar algo que todavía cambia."
+    "comoSeJuega": "CÓMO SE JUEGA",
+    "buscarTitulo": "Buscar con la cámara",
+    "buscarTexto": "La cámara mira lo que tienes enfrente y las criaturas aparecen ahí, en tu casa o en tu calle. Hay que girar, acercarse y no perderlas de vista: si se van del cuadro se alejan.",
+    "buscarAumentada": "Los ingredientes también salen de lo que apuntas. Una fruta aparece frente a fruta de verdad; una piedra, frente a piedras o a una pared de ladrillo; la harina, abriendo la alacena. Nada sale al azar: apuntar bien es la mitad del juego.",
+    "coleccionTitulo": "Hacerlos crecer",
+    "coleccionTexto": "Cada criatura pide comida, en tres tramos, y una poción para el último salto. Vuelves cuando quieres y está donde la dejaste.",
+    "cocinaTitulo": "Cocinar",
+    "cocinaTexto": "Junta ingredientes para combinarlos en comida. Con tres o más lo logras, y las comidas se combinan entre sí para dar otras mejores.",
+    "inventarioTitulo": "El bolso",
+    "inventarioTexto": "Un inventario de lo que juntaste, lo que cocinaste y las pociones que armaste. Aquí puedes consultar las recetas y dónde se consigue cada ingrediente, tocando sobre él.",
+    "albumTitulo": "El álbum",
+    "albumTexto": "Cada criatura que crece te da una figurita nueva. Completa una hoja para ganar la legendaria.",
+    "acerca": "ACERCA DE",
+    "valorar": "Valorar la app",
+    "privacidad": "Privacidad",
+    "contacto": "Contacto",
+    "version": "Versión {v}",
+    "verSaludo": "Ver la bienvenida otra vez"
   },
   "avisos": {
     "titulo": "AVISOS",
-    "que": "Lo que se puede hacer ahora, ordenado por urgencia, cada cosa con el botón que la resuelve.",
-    "espera": "Falta el motor de avisos. Necesita las recetas para saber qué se puede preparar ya."
+    "camino": "CAMINO DE LOS DÍAS",
+    "hoy": "Hoy",
+    "reclamar": "Reclamar",
+    "vuelveManana": "Vuelve mañana por el siguiente",
+    "dia": "Día {n}",
+    "ingredientes": "{cuantos} ingredientes",
+    "comida": "Una comida",
+    "pocion": "Una poción",
+    "ganaste": "¡Premio del día!",
+    "cuantas": "{cosa} ×{cuantos}"
   },
   "enObra": {
     "encabezado": "En obra"
@@ -339,5 +363,11 @@
     "estrella": "Soñando",
     "construir": "Trabajando",
     "volar": "Volando"
+  },
+  "bienvenida": {
+    "titulo": "Kaurix",
+    "texto": "Hay criaturas escondidas en el mundo real. Apunta con la cámara {icono} para encontrarlas, junta ingredientes de lo que tienes alrededor, cocina y críalas hasta que crezcan.",
+    "empezar": "Empezar",
+    "ayuda": "Cómo se juega"
   }
 }
