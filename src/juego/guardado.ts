@@ -220,9 +220,19 @@ function completar(j: Guardado): Guardado {
     // Una partida anterior al saludo ya vio la app: mostrárselo ahora sería
     // darle la bienvenida a alguien que lleva semanas jugando.
     saludado: j.saludado ?? true,
-    // Una partida anterior al camino empieza por el primer paso, con el premio
-    // del día disponible: es lo mismo que ve alguien que instala hoy.
-    sendero: j.sendero ?? senderoNuevo(),
+    /**
+     * El camino.
+     *
+     * Una partida anterior a él empieza de cero, con el premio del día
+     * disponible: es lo mismo que ve alguien que instala hoy.
+     *
+     * Y se comprueba que traiga `dias`, porque la primera versión del camino
+     * guardaba `paso` —el escalón, que se reiniciaba cada vuelta— en vez de la
+     * cuenta corrida. Un guardado de esos deja `dias` en `undefined` y la
+     * pantalla escribe "Día NaN".
+     */
+    sendero:
+      j.sendero && typeof j.sendero.dias === 'number' ? j.sendero : senderoNuevo(),
     // Una partida anterior a los idiomas no tiene ninguno elegido, así que se
     // resuelve como si fuera la primera vez: mirando el teléfono.
     idioma: j.idioma && esIdiomaSoportado(j.idioma) ? j.idioma : idiomaDelDispositivo(),

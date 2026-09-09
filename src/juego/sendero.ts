@@ -96,18 +96,38 @@ export type Reclamo =
   | { tipo: 'pocion'; id: string }
   | null;
 
-/** En qué paso del camino está, y cuándo se reclamó el último. */
+/** Cuántos días se cobraron, y cuándo fue el último. */
 export type Sendero = {
-  /** De 0 a 6. El paso que toca reclamar ahora. */
-  paso: number;
+  /**
+   * Cuántos premios se reclamaron en total. **No es el escalón**: es la cuenta
+   * que sigue subiendo.
+   *
+   * De acá salen las dos cosas: en qué escalón de la pirámide está —el resto de
+   * dividir por siete— y qué número de día mostrar. Con un contador que se
+   * reiniciaba cada vuelta, la segunda semana volvía a decir "Día 1" a alguien
+   * que llevaba ocho días jugando.
+   */
+  dias: number;
   /** El día del último premio reclamado, en ISO. `null` si nunca reclamó. */
   ultimo: string | null;
 };
 
-export const senderoNuevo = (): Sendero => ({ paso: 0, ultimo: null });
+export const senderoNuevo = (): Sendero => ({ dias: 0, ultimo: null });
 
-/** El premio que toca en un paso. Da la vuelta al llegar al final. */
-export const premioDe = (paso: number): Premio => CAMINO[paso % PASOS];
+/** El premio que toca en un día. El ciclo de siete se repite. */
+export const premioDe = (dias: number): Premio => CAMINO[dias % PASOS];
+
+/** El escalón de la pirámide en el que está: de 0 a 6. */
+export const escalonDe = (dias: number): number => dias % PASOS;
+
+/**
+ * El primer día de la vuelta en curso.
+ *
+ * Con ocho días cobrados la vuelta va del 8 al 14, así que esto da 8. Es lo que
+ * hace que la pirámide numere de corrido en vez de volver a empezar de uno.
+ */
+export const primerDiaDeLaVuelta = (dias: number): number =>
+  Math.floor(dias / PASOS) * PASOS + 1;
 
 /**
  * El día calendario de una fecha, en la zona del teléfono.
@@ -130,7 +150,7 @@ export function hayPremio(s: Sendero, ahora = Date.now()): boolean {
 
 /** El sendero después de reclamar el premio del día. */
 export function reclamado(s: Sendero, ahora = Date.now()): Sendero {
-  return { paso: (s.paso + 1) % PASOS, ultimo: new Date(ahora).toISOString() };
+  return { dias: s.dias + 1, ultimo: new Date(ahora).toISOString() };
 }
 
 /**

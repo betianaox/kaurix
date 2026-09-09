@@ -434,7 +434,7 @@ export const useJuego = create<Estado>((set, get) => {
       aplicar((j) => {
         if (!hayPremio(j.sendero)) return j;
 
-        const premio = premioDe(j.sendero.paso);
+        const premio = premioDe(j.sendero.dias);
         const inventario = { ...j.inventario };
 
         if (premio.tipo === 'ingredientes') {
