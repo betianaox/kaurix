@@ -51,7 +51,8 @@
         {
           "android": {
             "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "# ML Kit carga sus modelos por reflexión y R8 no lo ve.\n# `image-labeling`, que es el que usa el reconocedor, no trae reglas propias\n# en su AAR —`barcode-scanning` sí—, así que van acá.\n-keep class com.google.mlkit.** { *; }\n-keep class com.google.android.gms.internal.mlkit_** { *; }\n-dontwarn com.google.mlkit.**\n\n# El módulo nativo del color dominante, la otra mitad del reconocedor.\n-keep class com.reactnativeimagecolors.** { *; }"
           }
         }
       ],

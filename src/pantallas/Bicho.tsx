@@ -717,6 +717,34 @@ function Etapas({
   );
 }
 
+/**
+ * ───────────────────────────────────────────────────────────────────────────
+ * LAS MEDIDAS DE LA FICHA SALEN UNA DE OTRA
+ * ───────────────────────────────────────────────────────────────────────────
+ * El retrato manda y el resto se calcula a partir de él.
+ *
+ * Estuvieron escritas cada una por su lado y **se desfasaron dos veces**: el
+ * bicho creció, el huevo se quedó donde estaba, y la diferencia que era
+ * jerarquía pasó a leerse como un huevo chico. Con los números atados, mover el
+ * retrato mueve lo demás y ese error no se puede cometer.
+ */
+
+/** Lo más ancho que se pone el retrato de crianza. El tope es para tablets. */
+const RETRATO_ANCHO = 332;
+/** Achatado, porque va en un header fijo y abajo hay una lista que leer. */
+const RETRATO_RATIO = 1.75;
+/** Lo que ocupa a lo alto. De acá salen las demás medidas. */
+const RETRATO_ALTO = Math.round(RETRATO_ANCHO / RETRATO_RATIO);
+
+/**
+ * El huevo, tres cuartos del bicho.
+ *
+ * Deliberadamente más chico: con el header fijo los dos se ven a la vez, y del
+ * mismo tamaño competían. El huevo es un recuerdo de dónde salió, no la otra
+ * mitad de la pantalla; a tres cuartos queda cerca sin igualarlo.
+ */
+const HUEVO_ALTO = Math.round(RETRATO_ALTO * 0.76);
+
 const estilos = StyleSheet.create({
   /**
    * El aire de la hoja.
@@ -764,12 +792,12 @@ const estilos = StyleSheet.create({
    * entera podía permitirse ser casi cuadrada.
    */
   retrato: {
-    aspectRatio: 1.75,
+    aspectRatio: RETRATO_RATIO,
     // El tope es lo que lo salva en pantallas anchas. Con solo la proporción,
     // en una tablet de 900 puntos el header medía más de quinientos de alto y
     // se comía la hoja entera. Va por ancho y no por alto para que la caja no
     // se deforme: el alto sale de la proporción.
-    maxWidth: 332,
+    maxWidth: RETRATO_ANCHO,
     alignSelf: 'center',
     width: '100%',
     borderWidth: 1,
@@ -900,19 +928,8 @@ const estilos = StyleSheet.create({
   etapaCaja: { height: 110, width: '100%', alignItems: 'center', justifyContent: 'flex-end' },
   etapaNombre: { color: colors.textFaint, fontSize: 11, letterSpacing: 0.4 },
 
-  /**
-   * El huevo, deliberadamente más chico que el bicho.
-   *
-   * Con el header fijo los dos se ven a la vez, y del mismo tamaño competían: el
-   * huevo es un recuerdo de dónde salió, no la otra mitad de la pantalla.
-   *
-   * **Este número va detrás del alto del retrato**, y ya se desfasó una vez: el
-   * bicho creció a 190 de caja y el huevo se quedó en 118, con lo que la
-   * diferencia dejó de leerse como jerarquía y pasó a leerse como un huevo
-   * chico. A 145 contra los ~167 que ocupa el bicho vuelve a estar cerca sin
-   * igualarlo.
-   */
-  huevoCaja: { height: 145, alignItems: 'center', justifyContent: 'center' },
+  /** Ver `HUEVO_ALTO`: sale del alto del retrato y lo sigue solo. */
+  huevoCaja: { height: HUEVO_ALTO, alignItems: 'center', justifyContent: 'center' },
   huevo: { width: '100%', height: '100%' },
 
   boton: {
