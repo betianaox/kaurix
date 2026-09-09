@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { senderoNuevo, type Sendero } from './sendero';
 
 import {
   esIdiomaSoportado,
@@ -124,6 +125,15 @@ export type Guardado = {
   inventario: Inventario;
   /** Cuándo se abrió la app por última vez, en ISO. */
   visto: string;
+  /**
+   * Si ya se mostró el saludo de la primera vez.
+   *
+   * Se escribe al **cerrarlo**, no al abrirlo: si la app se muere mientras está
+   * en pantalla, la próxima vez se vuelve a ofrecer en lugar de perderse.
+   */
+  saludado: boolean;
+  /** El camino de los días: en qué paso va y cuándo reclamó el último premio. */
+  sendero: Sendero;
 };
 
 export function partidaNueva(): Guardado {
@@ -140,6 +150,8 @@ export function partidaNueva(): Guardado {
     cartas: [],
     inventario: { ingredientes: {}, comidas: {}, pociones: {} },
     visto: new Date().toISOString(),
+    saludado: false,
+    sendero: senderoNuevo(),
   };
 }
 
@@ -205,6 +217,12 @@ function migrar(viejo: Guardado): Guardado {
 function completar(j: Guardado): Guardado {
   return {
     ...j,
+    // Una partida anterior al saludo ya vio la app: mostrárselo ahora sería
+    // darle la bienvenida a alguien que lleva semanas jugando.
+    saludado: j.saludado ?? true,
+    // Una partida anterior al camino empieza por el primer paso, con el premio
+    // del día disponible: es lo mismo que ve alguien que instala hoy.
+    sendero: j.sendero ?? senderoNuevo(),
     // Una partida anterior a los idiomas no tiene ninguno elegido, así que se
     // resuelve como si fuera la primera vez: mirando el teléfono.
     idioma: j.idioma && esIdiomaSoportado(j.idioma) ? j.idioma : idiomaDelDispositivo(),

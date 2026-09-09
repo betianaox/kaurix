@@ -48,3 +48,15 @@ export const RECONOCEDOR_MANDA = false;
  * **Se apaga** para probar el ritmo real, y antes de mandar a testing cerrado.
  */
 export const TODO_CERCA = true;
+
+/**
+ * El premio del camino, sin esperar al día siguiente.
+ *
+ * **Encendido.** Con esto en `true` el escalón de hoy se puede reclamar una y
+ * otra vez, así se recorren los siete pasos de un saque y se ve cómo queda cada
+ * premio sin tener que esperar una semana.
+ *
+ * **Se apaga** apenas esté probado. Dejarlo puesto rompe lo único que el camino
+ * tiene para dar: que mañana haya algo.
+ */
+export const PREMIO_SIEMPRE = true;

@@ -3,13 +3,15 @@ import { create } from 'zustand';
 import { listoParaAdulto, recienNacida, MAX_CRIANZA, TRAMOS } from './crianza';
 import { cartaAlCrecer, doradaPorCompletar, type Premio } from '../album/sorteo';
 import { NIVELES } from './datos';
+import { hayPremio, premioDe, reclamado, type Reclamo } from './sendero';
+import { deClase } from './recetas';
 import { avanceDe, faltanDe, menuDe, pocionDe, tramoCompleto, type Pedido } from './menu';
 import { cuanto, saleDe, type Mezcla } from './caldero';
 import type { CodigoIdioma } from '../i18n/idiomas';
 import type { Region } from '../i18n/region';
 import { multiplicadorDe, nuevoImpulso, puedeGirarGratis, type Casilla } from './ruleta';
 import { recetaPorId, type Receta } from './recetas';
-import { ingredientePorId } from './ingredientes';
+import { ingredienteAlAzar, ingredientePorId } from './ingredientes';
 import {
   carta,
   cargar as leer,
@@ -72,6 +74,10 @@ type Estado = {
    * teléfono no vuelve a opinar.
    */
   setIdioma: (idioma: CodigoIdioma) => void;
+  /** Dar por visto el saludo de la primera vez. Se llama al cerrarlo. */
+  saludar: () => void;
+  /** Volver a ofrecerlo. Herramienta de desarrollo. */
+  olvidarSaludo: () => void;
   /**
    * Cambia de qué región se usan los nombres.
    *
@@ -119,6 +125,14 @@ type Estado = {
 
   /** Suma lo encontrado con la cámara. */
   sumarIngrediente: (id: string, cantidad?: number) => void;
+  /**
+   * Reclamar el premio del día y avanzar un paso del camino.
+   *
+   * Devuelve lo que salió, para que la pantalla pueda anunciarlo, o `null` si
+   * hoy ya se reclamó. La comprobación se hace acá y no solo en la pantalla: el
+   * store no puede confiar en que se lo pregunten.
+   */
+  reclamarDelDia: () => Reclamo;
 };
 
 /** Hay lugar para empezar otra criatura. */
@@ -398,6 +412,60 @@ export const useJuego = create<Estado>((set, get) => {
     },
     setIdioma(idioma) {
       aplicar((j) => ({ ...j, idioma }));
+    },
+    saludar() {
+      aplicar((j) => ({ ...j, saludado: true }));
+    },
+    olvidarSaludo() {
+      aplicar((j) => ({ ...j, saludado: false }));
+    },
+
+    /**
+     * El premio del día, resuelto a cosas concretas.
+     *
+     * El camino dice de qué clase es el premio y acá se decide cuál sale: los
+     * ingredientes se sortean entre los setenta y cuatro, y la comida y la
+     * poción entre las de su nivel. Sortear en el store y no en el camino es lo
+     * que deja al camino puro y probable sin teléfono.
+     */
+    reclamarDelDia() {
+      let dado: Reclamo = null;
+
+      aplicar((j) => {
+        if (!hayPremio(j.sendero)) return j;
+
+        const premio = premioDe(j.sendero.paso);
+        const inventario = { ...j.inventario };
+
+        if (premio.tipo === 'ingredientes') {
+          // Uno solo, repetido: es lo que hace que el premio sirva para cocinar
+          // algo. Sorteando uno por unidad salían tres cosas distintas y sueltas.
+          const cual = ingredienteAlAzar().id;
+          inventario.ingredientes = {
+            ...inventario.ingredientes,
+            [cual]: (inventario.ingredientes[cual] ?? 0) + premio.cuantos,
+          };
+          dado = { tipo: 'ingredientes', id: cual, cuantos: premio.cuantos };
+        } else {
+          const clase = premio.tipo === 'pocion' ? 'pocion' : 'comida';
+          const nivel = premio.tipo === 'pocion' ? 1 : premio.nivel;
+          const posibles = deClase(clase).filter((r) => r.nivel === nivel);
+          // Si algún día no hubiera ninguna de ese nivel, el día no se cobra:
+          // mejor que no pase nada a que se gaste el paso sin dar nada.
+          if (!posibles.length) return j;
+
+          const cual = posibles[Math.floor(Math.random() * posibles.length)];
+          const bolsa = clase === 'pocion' ? { ...inventario.pociones } : { ...inventario.comidas };
+          bolsa[cual.id] = (bolsa[cual.id] ?? 0) + 1;
+          if (clase === 'pocion') inventario.pociones = bolsa;
+          else inventario.comidas = bolsa;
+          dado = { tipo: clase, id: cual.id };
+        }
+
+        return { ...j, inventario, sendero: reclamado(j.sendero) };
+      });
+
+      return dado;
     },
 
     sumarIngrediente(id, cantidad = 1) {

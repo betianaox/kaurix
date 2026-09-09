@@ -4,6 +4,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { colorDeNivel } from '../juego/datos';
+import { pendientesDe } from '../juego/sendero';
 import { useJuego } from '../juego/store';
 import type { Rutas } from '../navegacion/rutas';
 import { colors } from '../theme';
@@ -56,6 +57,14 @@ const DESTINO: Record<Seccion, 'Coleccion' | 'Inventario' | 'Cocina' | 'Album'> 
 };
 
 export function Pantalla({ titulo, marca, seccion = null, encima = false, children }: Props) {
+  /**
+   * Cuántas cosas hay para hacer, para el globo de la campana.
+   *
+   * Se lee acá y no en cada pantalla porque el armazón es el mismo en todas: el
+   * aviso tiene que verse desde donde sea que estés, igual que la ayuda.
+   */
+  const sendero = useJuego((e) => e.juego.sendero);
+  const pendientes = pendientesDe(sendero);
   const nav = useNavigation<NativeStackNavigationProp<Rutas>>();
   const juego = useJuego((e) => e.juego);
   const tinte = colorDeNivel(juego.nivel);
@@ -67,9 +76,10 @@ export function Pantalla({ titulo, marca, seccion = null, encima = false, childr
         marca={marca}
         accion={encima ? 'cerrar' : 'ayuda'}
         onAccion={() => (encima ? cerrar(nav) : nav.navigate('Ayuda'))}
-        // Todavía no está el motor de avisos: hasta que exista, la campana no
-        // miente diciendo que hay algo.
-        pendientes={0}
+        // Hoy es solo el premio del camino: uno o ninguno. Cuando haya más
+        // avisos —un bicho listo, una receta que ya se puede armar— se suman en
+        // `pendientesDe` y acá no hay que tocar nada.
+        pendientes={pendientes}
         onPendientes={() => nav.navigate('Pendientes')}
         // En una hoja que se abre encima, la única acción del header es salir.
         avisos={!encima}
