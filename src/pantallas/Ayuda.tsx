@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import React from 'react';
@@ -17,6 +18,7 @@ import { useT } from '../i18n';
 import { IDIOMAS } from '../i18n/idiomas';
 import { colorDeNivel } from '../juego/datos';
 import { useJuego } from '../juego/store';
+import type { Rutas } from '../navegacion/rutas';
 import { Pantalla } from '../shell/Pantalla';
 import { colors, radius, spacing } from '../theme';
 
@@ -34,6 +36,8 @@ import { colors, radius, spacing } from '../theme';
  * Cada bloque lleva **el icono que esa sección tiene en el footer**. Así lo que
  * se lee acá se reconoce después ahí abajo sin tener que leer nada, y la ayuda
  * deja de ser una pared de texto.
+ *
+ * El icono y el nombre van juntos arriba, y el párrafo abajo a todo el ancho.
  *
  * ## El idioma y los enlaces van acá y no en una pantalla propia
  *
@@ -63,11 +67,12 @@ const CORREO = 'support@imagostack.com';
 
 export function AyudaScreen() {
   const t = useT();
-  const nav = useNavigation();
+  const nav = useNavigation<NativeStackNavigationProp<Rutas>>();
   const idioma = useJuego((e) => e.juego.idioma);
   const nivel = useJuego((e) => e.juego.nivel);
   const setIdioma = useJuego((e) => e.setIdioma);
   const olvidarSaludo = useJuego((e) => e.olvidarSaludo);
+  const completarAlbum = useJuego((e) => e.completarAlbum);
   const tinte = colorDeNivel(nivel);
 
   const abrir = (url: string) => {
@@ -81,7 +86,7 @@ export function AyudaScreen() {
   return (
     <Pantalla titulo={t('ayuda.titulo')} encima>
       <ScrollView contentContainerStyle={estilos.hoja}>
-        <Text style={estilos.rotulo}>{t('ayuda.comoSeJuega')}</Text>
+        <Text style={[estilos.rotulo, estilos.rotuloPrimero]}>{t('ayuda.comoSeJuega')}</Text>
 
         <View style={estilos.grupo}>
           {/* Buscar lleva dos párrafos y es el único: uno para la criatura y
@@ -177,23 +182,45 @@ export function AyudaScreen() {
 
         <Text style={estilos.version}>{t('ayuda.version', { v: version })}</Text>
 
-        {/* Herramienta de desarrollo: `__DEV__` es falso en el build de
-            producción, así que este botón no existe allí. Deja la app como la ve
-            alguien que la acaba de instalar. */}
+        {/* Herramientas de desarrollo: `__DEV__` es falso en el build de
+            producción, así que estos botones no existen allí. Las dos puntas
+            del juego —cómo se ve al abrirlo por primera vez y cómo se ve al
+            terminarlo— son justamente las que no se pueden mirar jugando, una
+            porque ya pasó y la otra porque está a sesenta y cuatro crianzas. */}
         {__DEV__ ? (
-          <Pressable
-            // Cierra la ayuda además de reactivar el saludo: el saludo vive
-            // sobre el navegador, así que dejando esta hoja abierta aparecía
-            // detrás de ella y parecía que el botón no hacía nada.
-            onPress={() => {
-              olvidarSaludo();
-              nav.goBack();
-            }}
-            style={({ pressed }) => [estilos.dev, pressed && { opacity: 0.6 }]}
-            accessibilityRole="button"
-          >
-            <Text style={estilos.devTexto}>{t('ayuda.verSaludo')}</Text>
-          </Pressable>
+          <>
+            <Pressable
+              // Cierra la ayuda además de reactivar el saludo: el saludo vive
+              // sobre el navegador, así que dejando esta hoja abierta aparecía
+              // detrás de ella y parecía que el botón no hacía nada.
+              onPress={() => {
+                olvidarSaludo();
+                nav.goBack();
+              }}
+              style={({ pressed }) => [estilos.dev, pressed && { opacity: 0.6 }]}
+              accessibilityRole="button"
+            >
+              <Text style={estilos.devTexto}>{t('ayuda.verSaludo')}</Text>
+            </Pressable>
+
+            <Pressable
+              // Llena el álbum y lleva ahí, que es donde vive el festejo. No
+              // abre una maqueta: deja las mismas cartas que dejaría terminar
+              // el juego, así que lo que aparece es la pantalla de verdad.
+              //
+              // `replace` y no `navigate`: la ayuda es una hoja modal encima de
+              // la pantalla anterior, y navegando quedaba apilada debajo del
+              // álbum — al volver atrás se caía otra vez en la ayuda.
+              onPress={() => {
+                completarAlbum();
+                nav.replace('Album');
+              }}
+              style={({ pressed }) => [estilos.dev, pressed && { opacity: 0.6 }]}
+              accessibilityRole="button"
+            >
+              <Text style={estilos.devTexto}>{t('ayuda.verFinal')}</Text>
+            </Pressable>
+          </>
         ) : null}
       </ScrollView>
     </Pantalla>
@@ -205,9 +232,21 @@ export function AyudaScreen() {
 /**
  * Una sección del juego: su icono, su nombre y qué se hace ahí.
  *
- * El icono va arriba a la izquierda y el texto al lado, no debajo: leídos en
- * fila, los cinco iconos forman una columna que se recorre de un vistazo, y esa
- * columna es la misma que está en el footer.
+ * ## El icono y el nombre arriba, el texto abajo
+ *
+ * Los tres estuvieron en una fila —icono a la izquierda, título y párrafo en una
+ * columna al lado—, y ahí el texto arrancaba corrido a la derecha en una caja
+ * más angosta que la hoja. Con cinco bloques seguidos eso es una canaleta de
+ * texto flaca al lado de una fila de dibujos, y cada renglón entraba menos
+ * palabras de las que entran.
+ *
+ * Ahora el icono y el nombre forman el encabezado —se leen como una sola cosa,
+ * que es lo que son: el nombre de esa sección— y el párrafo va debajo ocupando
+ * todo el ancho.
+ *
+ * Los iconos siguen alineados a la izquierda uno abajo del otro, así que la
+ * columna que se recorre de un vistazo —la misma que está en el footer— no se
+ * pierde.
  */
 function Bloque({
   icono,
@@ -224,15 +263,15 @@ function Bloque({
 }) {
   return (
     <View style={[estilos.bloque, borde && estilos.filaBorde]}>
-      <Image source={ICONOS[icono]} style={estilos.icono} resizeMode="contain" fadeDuration={0} />
-      <View style={estilos.dicho}>
+      <View style={estilos.encabezado}>
+        <Image source={ICONOS[icono]} style={estilos.icono} resizeMode="contain" fadeDuration={0} />
         <Text style={[estilos.bloqueTitulo, { color: tinte }]}>{titulo}</Text>
-        {textos.map((texto, i) => (
-          <Text key={i} style={estilos.bloqueTexto}>
-            {texto}
-          </Text>
-        ))}
       </View>
+      {textos.map((texto, i) => (
+        <Text key={i} style={estilos.bloqueTexto}>
+          {texto}
+        </Text>
+      ))}
     </View>
   );
 }
@@ -244,8 +283,18 @@ const estilos = StyleSheet.create({
     color: colors.textFaint,
     fontSize: 10.5,
     letterSpacing: 2,
+    // Aire antes de cada rótulo, que es lo que separa un grupo del siguiente.
     marginTop: spacing.md,
   },
+  /**
+   * El primero no lo lleva.
+   *
+   * La hoja ya trae su propio margen arriba, así que el de más caía encima y
+   * el primer rótulo quedaba al doble de distancia del header que del borde de
+   * al lado. Ese aire separa grupos entre sí; arriba del primero no hay ningún
+   * grupo del que separarse.
+   */
+  rotuloPrimero: { marginTop: 0 },
 
   grupo: {
     borderRadius: radius.md,
@@ -257,14 +306,19 @@ const estilos = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  bloque: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    padding: spacing.md,
-  },
+  /** El encabezado arriba y los párrafos abajo, uno tras otro. */
+  bloque: { padding: spacing.md, gap: 8 },
+
+  /**
+   * El icono y el nombre, en la misma línea.
+   *
+   * Centrados entre sí y no alineados por arriba: el dibujo es más alto que la
+   * palabra, y colgados del mismo techo el nombre quedaba pegado al borde de
+   * arriba del icono en vez de a su altura.
+   */
+  encabezado: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   /** El dibujo del footer, del tamaño en que se lo ve allá. */
-  icono: { width: 34, height: 34, marginTop: 2 },
-  dicho: { flex: 1, gap: 6 },
+  icono: { width: 34, height: 34 },
   bloqueTitulo: { fontSize: 15.5, fontWeight: '700', letterSpacing: 0.2 },
   /**
    * El párrafo, liviano.

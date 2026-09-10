@@ -23,11 +23,49 @@ export const colors = {
   text: '#2C2418',
   /** Texto secundario. */
   textMuted: '#6B6050',
-  /** Texto terciario / notas al pie. */
-  textFaint: '#9A8E79',
+  /**
+   * Texto terciario: los párrafos de la ayuda, los rótulos de sección, las
+   * notas al pie.
+   *
+   * Era `#9A8E79` y se leía lavado. Sobre el papel daba 3,04 de contraste y
+   * sobre el fondo 2,76, cuando el mínimo para leer un párrafo es 4,5: no era
+   * una impresión, estaba abajo del piso. Ahora da **4,72 sobre el papel** —que
+   * es donde vive el texto largo— y 4,29 sobre el fondo, donde solo quedan
+   * rótulos cortos.
+   *
+   * No se oscureció más a propósito. Un paso más lo dejaba pegado a
+   * `textMuted` y los dos tonos pasaban a ser el mismo: se ganaba contraste y
+   * se perdía la escala de tres niveles, que es lo que ordena cada pantalla.
+   */
+  textFaint: '#7A6E5A',
 
   /** Acento base del juego mientras no haya elemento elegido. */
   accent: '#6E44A0',
+
+  /**
+   * El oro de lo que se gana una vez cada muchas: las doradas y el final.
+   *
+   * No sigue al color de la vuelta, y es a propósito. Lo dorado es dorado en
+   * las ocho vueltas —la carta viene dibujada con su marco de oro— y teñir su
+   * resplandor de violeta o de verde según en qué ciclo estés le sacaba
+   * justamente lo que la distingue de las otras ocho de la hoja.
+   *
+   * Viejo y no brillante: la paleta entera es marfil y tierra, y un dorado de
+   * medalla se leía como una pieza de otra app.
+   */
+  dorado: '#C9A227',
+  /**
+   * El mismo oro, para **escribir**.
+   *
+   * `dorado` es un relleno: sobre el crema da 2,08 de contraste, así que de
+   * texto se lee lavado —el mínimo para un título grande es 3—. Este da 4,17
+   * y sigue siendo oro.
+   *
+   * Son dos tokens y no uno porque son dos trabajos: el que pinta un botón
+   * tiene que ser vistoso, y el que se lee encima del papel tiene que ser
+   * legible. Un solo valor no puede hacer las dos cosas.
+   */
+  doradoTinta: '#8A6E17',
 
   /**
    * Lo que va **encima** de un color de nivel: el reloj del impulso, el 2x, el

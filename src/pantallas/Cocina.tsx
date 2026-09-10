@@ -59,6 +59,17 @@ import { colors, columnasDeIngredientes, radius, spacing } from '../theme';
 /** El aire de la despensa: el mismo a los costados y entre cajitas que el bolso. */
 const AIRE = 10;
 
+/**
+ * El caldero más grande que se dibuja, y la medida contra la que se ajustó todo
+ * lo que va encima.
+ *
+ * En una pantalla ancha el caldero llega hasta acá y no sigue creciendo; en una
+ * angosta sale de `width * 0.62` y queda más chico. Los botones se midieron con
+ * el caldero en este tamaño, así que este número es también el denominador de
+ * `escala`.
+ */
+const CALDERO = 250;
+
 export function CocinaScreen() {
   const juego = useJuego((e) => e.juego);
   const cocinar = useJuego((e) => e.cocinar);
@@ -240,7 +251,27 @@ export function CocinaScreen() {
   const huecos = salio ? 0 : Math.max(0, TIPOS_MINIMOS - tipos);
 
   /** El ancho del caldero. Lo usan el dibujo y la caja que le pone los botones encima. */
-  const anchoCaldero = Math.min(250, width * 0.62);
+  const anchoCaldero = Math.min(CALDERO, width * 0.62);
+
+  /**
+   * Cuánto se achicó el caldero respecto del tamaño con el que se midió todo.
+   *
+   * Las medidas de los botones —cuánto miden y cuánto se separan del borde— se
+   * ajustaron mirando un caldero de `CALDERO` puntos, que es el que entra en la
+   * tablet. En un teléfono de 360 el caldero mide 223, pero esas medidas seguían
+   * siendo las mismas: los dos botones sumaban más ancho del que quedaba libre
+   * entre los dos márgenes, se desbordaban hacia un lado y el par entero se veía
+   * corrido.
+   *
+   * Por eso todo lo que va encima del caldero se multiplica por esto. En la
+   * tablet vale 1 y nada cambia; en el teléfono achica el conjunto igual que se
+   * achicó la olla, que es lo único que hace que sigan cayendo donde deben.
+   *
+   * Los dos botones y sus márgenes suman un par de puntos más que el caldero, así
+   * que la fila se desborda apenas. Es así desde que se ajustó y no se nota, pero
+   * el margen es ese: subir `lado` sin bajar el 68 vuelve a correr el par.
+   */
+  const escala = anchoCaldero / CALDERO;
 
   return (
     <Pantalla titulo={t('cocina.titulo')} seccion="cocina">
@@ -269,7 +300,14 @@ export function CocinaScreen() {
           <View style={{ width: anchoCaldero }}>
             <Caldero ancho={anchoCaldero} tinte={tinte} encendido={hayAlgo} />
 
-            <View style={estilos.acciones} pointerEvents="box-none">
+            <View
+              style={[
+                estilos.acciones,
+                // Los márgenes acompañan al caldero. Ver `escala`.
+                { paddingHorizontal: 68 * escala, paddingTop: 22 * escala },
+              ]}
+              pointerEvents="box-none"
+            >
               {/* Con algo servido en la mesa —salga bien o se queme— no hay
                   nada que cocinar hasta que se levante: la llama se apaga. */}
               <Accion
@@ -277,6 +315,7 @@ export function CocinaScreen() {
                 etiqueta={t('cocina.cocinar')}
                 onPress={prender}
                 puede={!enResultado && alcanza}
+                escala={escala}
               />
 
               {/* El de la derecha cambia de oficio según lo que haya en la olla.
@@ -295,6 +334,7 @@ export function CocinaScreen() {
                 // alta y angosta, y al mismo lado pesaba más en pantalla. El
                 // check es redondo y va del tamaño de la llama.
                 lado={enResultado ? 46 : 41}
+                escala={escala}
               />
             </View>
           </View>
@@ -481,6 +521,7 @@ function Accion({
   onPress,
   puede,
   lado = 46,
+  escala = 1,
 }: {
   /** Los dos dibujos: el de color y el blanco. */
   arte: { si: ImageSourcePropType; no: ImageSourcePropType };
@@ -496,6 +537,11 @@ function Accion({
    * Lo que tiene que verse parejo es el peso en pantalla, no el número.
    */
   lado?: number;
+  /**
+   * Cuánto se achicó el caldero. Multiplica al dibujo y a su área de toque
+   * para que el par siga entrando entre los márgenes. Ver `escala` arriba.
+   */
+  escala?: number;
 }) {
   return (
     <Pressable
@@ -503,6 +549,7 @@ function Accion({
       disabled={!puede}
       style={({ pressed }) => [
         estilos.accion,
+        { padding: 6 * escala },
         !puede && estilos.apagada,
         pressed && puede && estilos.apretada,
       ]}
@@ -515,7 +562,7 @@ function Accion({
           la que sí se puede tocar. */}
       <Image
         source={puede ? arte.si : arte.no}
-        style={{ width: lado, height: lado }}
+        style={{ width: lado * escala, height: lado * escala }}
         resizeMode="contain"
         fadeDuration={0}
       />
@@ -601,14 +648,16 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    // Bien adentro del caldero, no contra sus bordes: en los extremos quedaban
-    // sobre las asas, medio salidos de la olla, y se leían como dos cosas
-    // apoyadas al lado en vez de dos botones de ella.
-    paddingHorizontal: 68,
-    // Y un poco más abajo del centro. Con `alignItems: center`, quitarle alto
-    // por arriba es lo que corre el punto medio hacia abajo: quedan sobre la
-    // panza de la olla y no sobre su boca, que es por donde entran las cosas.
-    paddingTop: 22,
+    // Los dos márgenes —el de los costados y el de arriba— los pone quien
+    // dibuja, multiplicados por `escala`. Acá no van fijos: con 68 puntos de
+    // costado en un teléfono, los dos botones no entraban en lo que quedaba
+    // libre y el par se veía corrido hacia un lado.
+    //
+    // De costado van bien adentro del caldero y no contra sus bordes: en los
+    // extremos quedaban sobre las asas, medio salidos de la olla. Y arriba
+    // llevan un poco de alto de menos, que con `alignItems: center` es lo que
+    // corre el punto medio hacia abajo: quedan sobre la panza de la olla y no
+    // sobre su boca, que es por donde entran las cosas.
   },
   /**
    * El área de toque de cada acción.
@@ -618,7 +667,7 @@ const estilos = StyleSheet.create({
    * y borde blanco propios —del mismo material que los botones de la ruleta— y
    * se leen solos sobre cualquier fondo.
    */
-  accion: { padding: 6 },
+  accion: {},
   /** Se hunde apenas, como una pieza que se aprieta de verdad. */
   apretada: { opacity: 0.75, transform: [{ scale: 0.92 }] },
   /** A media tinta: está, se ve qué es, y se ve que ahora no. */

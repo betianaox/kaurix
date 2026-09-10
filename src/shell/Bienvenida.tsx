@@ -1,9 +1,10 @@
 import React from 'react';
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { porId } from '../art';
 import { useT } from '../i18n';
-import { TUTORIAL } from '../juego/datos';
+import { colorDeNivel, TUTORIAL } from '../juego/datos';
+import { useJuego } from '../juego/store';
 import { colors, radius, spacing } from '../theme';
 
 /**
@@ -80,17 +81,54 @@ export function Bienvenida({
   const criatura = porId(TUTORIAL);
 
   /**
+   * El color de la vuelta, que en el saludo es siempre el primero.
+   *
+   * Se lee del juego igual que en el resto de la app en vez de clavar el color
+   * uno: si algún día el saludo se vuelve a ofrecer con la partida empezada
+   * —hoy pasa con la herramienta de desarrollo—, se tiñe de la vuelta en la que
+   * está y no de una que ya quedó atrás.
+   */
+  const tinte = colorDeNivel(useJuego((e) => e.juego.nivel));
+
+  /**
    * La frase, partida donde va el dibujo.
    *
    * El texto trae un `{icono}` y acá se corta en dos para meter la imagen en el
    * medio. Anidada dentro del `<Text>`, fluye con el renglón como una palabra
    * más: al costado, en una fila aparte, se leía como un adorno del párrafo.
+   *
+   * ## El dibujo va pegado a la palabra que lo precede
+   *
+   * El espacio de antes se cambia por uno **duro**. Sin eso, el corte de línea
+   * puede caer justo ahí y el dibujo arranca un renglón solo, con el punto
+   * detrás: deja de leerse como una palabra de la frase y pasa a parecer una
+   * viñeta. Pasaba en la tablet y no en el teléfono, porque la caja es más
+   * ancha y la frase corta en otro lado.
+   *
+   * Se hace acá y no en el diccionario para que valga en los cuatro idiomas y
+   * para que no se pierda al retocar una traducción: un espacio duro es
+   * invisible y nadie lo repone si lo borra sin querer.
    */
-  const [antes, despues] = t('bienvenida.texto').split('{icono}');
+  const [crudoAntes, despues] = t('bienvenida.texto').split('{icono}');
+  const antes = crudoAntes.replace(/ $/, '\u00A0');
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCerrar}>
-      <View style={estilos.fondo}>
+      {/* La tarjeta va adentro de un scroll que la centra.
+
+          Centrada a secas, en un teléfono bajo o con la letra del sistema en
+          grande, lo que sobra se corta por arriba y por abajo: se pierden el
+          bicho y los dos botones, que son la única salida. Con
+          `justifyContent: center` en el contenido, mientras entra se ve igual
+          que antes —centrada— y cuando no entra rueda en vez de recortarse.
+
+          Es la primera pantalla de la app: si algo se va a romper en un
+          teléfono raro, que no sea esta. */}
+      <ScrollView
+        style={estilos.fondo}
+        contentContainerStyle={estilos.centrado}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={estilos.tarjeta}>
           {/* El bebé del tutorial, en grande y sin marco: se asoma, no se
               explica. Es el mismo que va a aparecer primero cuando salga a
@@ -121,6 +159,18 @@ export function Bienvenida({
 
           <View style={estilos.acciones}>
             <Pressable
+              onPress={onCerrar}
+              style={({ pressed }) => [
+                estilos.boton,
+                { backgroundColor: tinte },
+                pressed && estilos.apretado,
+              ]}
+              accessibilityRole="button"
+            >
+              <Text style={estilos.principalTexto}>{t('bienvenida.empezar')}</Text>
+            </Pressable>
+
+            <Pressable
               onPress={onAyuda}
               style={({ pressed }) => [estilos.boton, pressed && estilos.apretado]}
               accessibilityRole="button"
@@ -133,32 +183,27 @@ export function Bienvenida({
               />
               <Text style={estilos.secundario}>{t('bienvenida.ayuda')}</Text>
             </Pressable>
-
-            <Pressable
-              onPress={onCerrar}
-              style={({ pressed }) => [
-                estilos.boton,
-                estilos.principal,
-                pressed && estilos.apretado,
-              ]}
-              accessibilityRole="button"
-            >
-              <Text style={estilos.principalTexto}>{t('bienvenida.empezar')}</Text>
-            </Pressable>
           </View>
         </View>
-      </View>
+      </ScrollView>
     </Modal>
   );
 }
 
 const estilos = StyleSheet.create({
-  fondo: {
-    flex: 1,
+  fondo: { flex: 1, backgroundColor: colors.velo },
+  /**
+   * Centra la tarjeta mientras entra, y la deja rodar cuando no.
+   *
+   * `flexGrow` y no `flex`: con `flex: 1` el contenido queda clavado al alto
+   * de la ventana y el scroll no tiene adónde ir, que es justamente el caso
+   * que hay que resolver.
+   */
+  centrado: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     padding: spacing.lg,
-    backgroundColor: colors.velo,
   },
   tarjeta: {
     width: '100%',
@@ -203,22 +248,35 @@ const estilos = StyleSheet.create({
     textAlign: 'center',
     color: colors.textFaint,
     fontSize: 14.5,
-    lineHeight: 30,
+    /**
+     * Alto de renglón: **lo que necesitan los piecitos**, no lo que necesita
+     * la letra.
+     *
+     * El dibujo va metido en el párrafo y mide 31, así que el renglón tiene
+     * que darle lugar o se nota el escalón entre líneas. Estuvo en 30 —casi el
+     * doble del cuerpo— y con eso el párrafo se estiraba tanto que la tarjeta
+     * llegaba al borde de la pantalla. 26 sigue conteniendo al dibujo y
+     * devuelve un párrafo que se lee como un párrafo.
+     */
+    lineHeight: 26,
     fontWeight: '400',
   },
 
   /**
-   * Empezar a la derecha y la ayuda a la izquierda.
+   * Uno debajo del otro, y Empezar arriba.
    *
-   * El pulgar cae más cómodo a la derecha y ahí va lo que la mayoría quiere
-   * hacer: entrar. La ayuda queda a mano para quien la busca, sin ponerse
-   * delante de quien no.
+   * Estuvieron en fila, con la ayuda a la izquierda y Empezar a la derecha
+   * porque el pulgar cae más cómodo de ese lado. **No entraban.** En un teléfono
+   * de 360 puntos, a la tarjeta le quedan 232 de ancho útil y los dos botones
+   * con su separación piden 314: se desbordaban 82 y "Empezar" quedaba cortado
+   * contra el borde. No era cuestión de apretarlos un poco, faltaba un tercio.
+   *
+   * En columna cada uno usa el ancho entero, así que no hay largo de texto ni
+   * idioma que los pueda romper. Y arriba va el que la mayoría quiere tocar,
+   * igual que en los carteles del juego: primero la acción, después la salida.
    */
   acciones: {
-    flexDirection: 'row',
-    // Del mismo alto los dos: uno lleva icono y el otro no, y sin esto el de la
-    // ayuda quedaba más alto y los dos parecían puestos a distinta altura.
-    alignItems: 'stretch',
+    alignSelf: 'stretch',
     gap: spacing.sm,
     marginTop: spacing.sm,
   },
@@ -235,8 +293,19 @@ const estilos = StyleSheet.create({
   },
   /** Del tamaño en que se ve arriba a la derecha, para que sea el mismo objeto. */
   iconoAyuda: { width: 30, height: 30 },
-  principal: { backgroundColor: colors.text },
-  principalTexto: { color: colors.surface, fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
+  /**
+   * El botón de entrar, del color de la vuelta.
+   *
+   * Era marrón tinta, el color del texto. Se leía como un botón de sistema
+   * pegado en una tarjeta del juego: el único negro de una pantalla que es toda
+   * marfil, dragón y colores. El color de la vuelta es el que tiñe el resto de
+   * la app, así que el saludo termina pareciéndose a lo que hay detrás.
+   *
+   * El texto va en marfil, que es el token de lo que se apoya encima de un
+   * tinte: los ocho colores de vuelta son medios y saturados, y sobre ellos la
+   * tinta oscura se empasta.
+   */
+  principalTexto: { color: colors.sobreTinte, fontSize: 16, fontWeight: '700', letterSpacing: 0.3 },
   secundario: { color: colors.textMuted, fontSize: 16, fontWeight: '500' },
   apretado: { opacity: 0.7 },
 });
