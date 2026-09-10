@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   Animated,
+  Easing,
   Image,
   Pressable,
   StyleSheet,
@@ -10,7 +11,7 @@ import {
 } from 'react-native';
 
 import { RATIO as RATIO_CARD } from '../album/cards';
-import { Destello } from './Destello';
+import { CUANTAS_PUNTAS, Destello } from './Destello';
 import { Cerrar } from '../shell/Cerrar';
 import { colors, radius, spacing } from '../theme';
 
@@ -25,18 +26,24 @@ import { colors, radius, spacing } from '../theme';
  * los botones del juego. Por eso acá no se los tiñe ni se los enmarca: ya son
  * el botón.
  */
+/** Cuánto ocupa una figurita del álbum. */
+const ANCHO_CARTA = 176;
+/** Cuánto ocupa un dibujo suelto: un ingrediente, un bicho, un icono. */
+const ANCHO_ICONO = 104;
+
 /**
- * Cuánto mide el estallido de rayos de atrás.
+ * Cuánto mide el estallido de rayos de atrás, **en veces lo que tapa**.
  *
- * Bastante más que la carta —que mide 176 de ancho— para que las puntas salgan
- * por los cuatro lados. Contenida dentro de la carta no se vería, y ahí no
- * habría estrella sino un fondo.
+ * Bastante más que el dibujo, para que las puntas salgan por los cuatro lados.
+ * Contenido adentro no se vería, y ahí no habría estrella sino un fondo. Las
+ * puntas asoman contra el velo a propósito; recortada contra el borde,
+ * agrandarla no mostraba más estrella sino más relleno.
  *
- * Más ancha que la tarjeta a propósito: las puntas salen por los cuatro lados y
- * se ven contra el velo. Recortada contra el borde, agrandarla no mostraba más
- * estrella sino más relleno.
+ * Es una proporción y no una medida en puntos porque detrás de una carta y
+ * detrás de un icono —que mide bastante menos— la misma cifra fija da dos
+ * cosas distintas: al icono le quedaba nadando en el medio.
  */
-const DESTELLO = 300;
+const DESTELLO = 1.85;
 
 /**
  * Cuánto se estira el destello a lo alto.
@@ -82,6 +89,8 @@ export function Conseguido({
   rechazar,
   sobreCamara = false,
   formato = 'icono',
+  fondo,
+  varios,
   festejo = false,
 }: {
   arte: ImageSourcePropType;
@@ -152,6 +161,26 @@ export function Conseguido({
    */
   formato?: 'icono' | 'carta';
   /**
+   * Qué va detrás del dibujo, cuando no alcanza con lo que dice `formato`.
+   *
+   * Normalmente no se pasa: un icono lleva halo y una carta lleva estrella, y
+   * esa es la regla. Existe para el final del juego, que muestra un icono
+   * —el del álbum— y necesita la estrella de las doradas detrás, porque lo que
+   * se está festejando es de ese tamaño y no el de haber juntado algo.
+   */
+  fondo?: 'halo' | 'estrella';
+  /**
+   * Cuando lo que se ganó son **varias cosas distintas**.
+   *
+   * En lugar del dibujo grande se dibuja una fila de discos chicos, cada uno con
+   * su cuenta, como las cajitas del bolso. Es lo que hace falta para el premio
+   * del camino, que da tres, cuatro o seis clases diferentes de una vez.
+   *
+   * `arte` sigue siendo obligatorio y se usa como respaldo: si la lista llegara
+   * vacía, el cartel muestra ese dibujo en vez de un hueco.
+   */
+  varios?: { arte: ImageSourcePropType; cuantos: number }[];
+  /**
    * El festejo grande, para lo que se gana una vez cada muchas.
    *
    * Sube el halo y lo hace latir. Se guarda para las doradas: si todo festejara
@@ -180,14 +209,28 @@ export function Conseguido({
   const hayOferta = !!multiplicar && multiplicar.listo;
   const esCarta = formato === 'carta';
 
+  /** Estrella o halo. Manda `fondo` si lo pasaron; si no, lo dice el formato. */
+  const conEstrella = fondo ? fondo === 'estrella' : esCarta;
+
+  /** Se ganaron varias cosas distintas y se dibujan en fila. Ver `varios`. */
+  const hayVarios = !!varios && varios.length > 0;
+
+  /** Cuánto ocupa lo que se muestra: la carta es más grande que un icono. */
+  const anchoArte = esCarta ? ANCHO_CARTA : ANCHO_ICONO;
+
   /**
    * Cuánto mide la estrella de atrás.
+   *
+   * Se mide **contra lo que hay adelante** y no en puntos fijos: la misma
+   * estrella detrás de una carta de 176 y detrás de un icono de 104 se lee como
+   * dos cosas distintas, y con el número clavado el icono le quedaba nadando en
+   * el medio.
    *
    * En la dorada va más chica que en una carta común, no más grande: la carta
    * dorada tiene su propio resplandor dibujado y una estrella que la desborda le
    * agrega ruido alrededor en vez de destacarla.
    */
-  const ladoDestello = festejo ? Math.round(DESTELLO * 0.95) : DESTELLO;
+  const ladoDestello = Math.round(anchoArte * (festejo ? DESTELLO * 0.95 : DESTELLO));
 
   /**
    * El latido del halo en el festejo.
@@ -207,6 +250,43 @@ export function Conseguido({
     ciclo.start();
     return () => ciclo.stop();
   }, [festejo, brillo]);
+
+  /**
+   * La vuelta lenta de la estrella.
+   *
+   * Gira **una punta**, no una vuelta entera: la estrella tiene dieciséis y
+   * cada 22,5 grados vuelve a verse igual, así que con ese recorrido el giro no
+   * tiene principio ni final visible y puede repetirse sin saltar.
+   *
+   * Lento a propósito. Lo que se mira es el dibujo de adelante; la estrella
+   * tiene que dar la sensación de que algo pasa, no llamar la atención. A esta
+   * velocidad se nota mirándola y se olvida leyendo el cartel.
+   *
+   * Va junto con el latido y no en su lugar: uno respira y la otra gira, y las
+   * dos cosas a la vez son las que hacen que no se lea como una imagen quieta.
+   */
+  const vuelta = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!festejo) return;
+    const ciclo = Animated.loop(
+      Animated.timing(vuelta, {
+        toValue: 1,
+        duration: 6500,
+        // Sin curva: una vuelta con aceleración y frenada se nota al empalmar,
+        // y lo que tiene que parecer es que nunca dejó de girar.
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    );
+    ciclo.start();
+    return () => ciclo.stop();
+  }, [festejo, vuelta]);
+
+  /** De 0 a una punta. Ver `vuelta`. */
+  const giro = vuelta.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', `${360 / CUANTAS_PUNTAS}deg`],
+  });
 
   return (
     <Animated.View
@@ -242,26 +322,45 @@ export function Conseguido({
             se lee como una mancha mal puesta. Los rayos salen del centro y no
             tienen forma propia que respetar. */}
         <View style={estilos.retrato}>
-          {esCarta ? (
+          {conEstrella ? (
             <Animated.View
               style={[
                 estilos.destello,
-                { width: ladoDestello, height: Math.round(ladoDestello * DESTELLO_ALTO) },
-                festejo && { transform: [{ scale: brillo }] },
+                {
+                  width: ladoDestello,
+                  height: Math.round(ladoDestello * (esCarta ? DESTELLO_ALTO : 1)),
+                },
+                festejo && { transform: [{ scale: brillo }, { rotate: giro }] },
               ]}
               pointerEvents="none"
             >
               <Destello
                 lado={ladoDestello}
-                // Acompaña la forma de la carta sin copiarla. Ver DESTELLO_ALTO.
-                proporcion={DESTELLO_ALTO}
-                color={tinte}
+                // Acompaña la forma de lo que tapa sin copiarla: estirada para
+                // la carta, redonda para un icono, que es cuadrado.
+                proporcion={esCarta ? DESTELLO_ALTO : 1}
+                // Dorada cuando lo que se gana es dorado —una legendaria, o el
+                // final del juego—, y del color de la vuelta el resto del tiempo.
+                // Lo dorado es dorado en las ocho vueltas: teñirlo del ciclo le
+                // sacaba justamente lo que lo distingue. Ver `colors.dorado`.
+                color={festejo ? colors.dorado : tinte}
                 // Menos, no más: la carta dorada ya brilla sola y con la
                 // estrella al mismo peso que en una carta común el fondo se le
                 // sumaba encima. En la que hay que mirar, el fondo se corre.
                 intensidad={festejo ? 0.85 : 1}
               />
             </Animated.View>
+          ) : hayVarios ? (
+            /*
+             * Con varias cosas no va nada atrás.
+             *
+             * El halo es un disco, y detrás de una fila de tres o seis
+             * ingredientes queda una mancha redonda que no acompaña a nada: ni
+             * los contiene ni sigue su forma. Lo que hace que eso se lea como un
+             * premio es que sean varios y que cada uno traiga su cuenta, no que
+             * haya algo brillando atrás.
+             */
+            null
           ) : (
             <Animated.View
               style={[
@@ -272,12 +371,35 @@ export function Conseguido({
               ]}
             />
           )}
-          <Image
-            source={arte}
-            style={esCarta ? estilos.carta : estilos.arte}
-            resizeMode="contain"
-            fadeDuration={0}
-          />
+          {/* Varias cosas distintas, o una sola. Ver `varios`. */}
+          {hayVarios && varios ? (
+            <View style={estilos.varios}>
+              {varios.map((x, i) => (
+                <View key={i} style={estilos.uno}>
+                  <Image
+                    source={x.arte}
+                    style={estilos.artePequeno}
+                    resizeMode="contain"
+                    fadeDuration={0}
+                  />
+                  {/* La cuenta solo cuando hay más de una: un "×1" en cada cosa es
+                      ruido, y lo que importa ahí es cuántas clases salieron. */}
+                  {x.cuantos > 1 ? (
+                    <View style={[estilos.cuenta, { backgroundColor: tinte }]}>
+                      <Text style={estilos.cuentaTexto}>×{x.cuantos}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Image
+              source={arte}
+              style={esCarta ? estilos.carta : estilos.arte}
+              resizeMode="contain"
+              fadeDuration={0}
+            />
+          )}
         </View>
 
         <View style={[estilos.dicho, esCarta && estilos.dichoCarta]}>
@@ -296,22 +418,27 @@ export function Conseguido({
             porque así los dos ocupan el mismo ancho, y con o sin multiplicar el
             de aceptar queda del mismo tamaño.
 
-            El multiplicar va a la izquierda: el pulgar cae más cómodo a la
-            derecha, y ahí tiene que estar el que cierra, no el que gasta. */}
+            ## PRIMERO EL QUE ACEPTA, ÚLTIMO EL QUE CANCELA
+
+            Es una convención, no una preferencia de esta pantalla: en toda la
+            app la acción va primero y la salida al final. Estuvo al revés
+            —cancelar a la izquierda— con el argumento de que el pulgar cae más
+            cómodo a la derecha y ahí tenía que estar el que cierra. El costo era
+            peor que el beneficio: cada cartel obligaba a leer los dos botones
+            para saber cuál era cuál, porque el orden no era el de siempre.
+
+            El multiplicar queda en el medio: no es ni la acción ni la salida,
+            es una oferta aparte, y en una punta se leía como una de las dos. */}
         <View style={estilos.botones}>
-          {rechazar ? (
-            <Pressable
-              onPress={rechazar.onPress}
-              style={({ pressed }) => [estilos.boton, pressed && estilos.apretado]}
-              accessibilityRole="button"
-              accessibilityLabel={rechazar.texto}
-            >
-              {/* La misma ficha con la que se cierra todo lo demás del juego:
-                  decir que no y cerrar una hoja se hacen con el mismo gesto. */}
-              <Cerrar lado={64} />
-              <Text style={[estilos.botonTexto, { color: tinte }]}>{rechazar.texto}</Text>
-            </Pressable>
-          ) : null}
+          <Pressable
+            onPress={onAceptar}
+            style={({ pressed }) => [estilos.boton, pressed && estilos.apretado]}
+            accessibilityRole="button"
+            accessibilityLabel={aceptar}
+          >
+            <Image source={ACEPTAR} style={estilos.icono} resizeMode="contain" fadeDuration={0} />
+            <Text style={[estilos.botonTexto, { color: tinte }]}>{aceptar}</Text>
+          </Pressable>
 
           {hayOferta ? (
             <Pressable
@@ -325,15 +452,19 @@ export function Conseguido({
             </Pressable>
           ) : null}
 
-          <Pressable
-            onPress={onAceptar}
-            style={({ pressed }) => [estilos.boton, pressed && estilos.apretado]}
-            accessibilityRole="button"
-            accessibilityLabel={aceptar}
-          >
-            <Image source={ACEPTAR} style={estilos.icono} resizeMode="contain" fadeDuration={0} />
-            <Text style={[estilos.botonTexto, { color: tinte }]}>{aceptar}</Text>
-          </Pressable>
+          {rechazar ? (
+            <Pressable
+              onPress={rechazar.onPress}
+              style={({ pressed }) => [estilos.boton, pressed && estilos.apretado]}
+              accessibilityRole="button"
+              accessibilityLabel={rechazar.texto}
+            >
+              {/* La misma ficha con la que se cierra todo lo demás del juego:
+                  decir que no y cerrar una hoja se hacen con el mismo gesto. */}
+              <Cerrar lado={64} />
+              <Text style={[estilos.botonTexto, { color: tinte }]}>{rechazar.texto}</Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
     </Animated.View>
@@ -386,7 +517,38 @@ const estilos = StyleSheet.create({
     height: 136,
     borderRadius: 68,
   },
-  arte: { width: 104, height: 104 },
+  arte: { width: ANCHO_ICONO, height: ANCHO_ICONO },
+
+  /**
+   * La fila de cosas, cuando se ganó más de una.
+   *
+   * Envuelve: con seis u ocho ingredientes una sola línea los achicaría hasta
+   * que no se distinga cuál es cuál, y lo que se está mostrando es justamente
+   * qué te tocó. Ancho topado al del dibujo grande para que el cartel no se
+   * ensanche según cuántas salieron.
+   */
+  varios: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 10,
+    maxWidth: ANCHO_ICONO * 2.6,
+  },
+  /** Cada cosa, con lugar para que su cuenta asome por la esquina. */
+  uno: { width: 52, height: 52, alignItems: 'center', justifyContent: 'center' },
+  artePequeno: { width: 46, height: 46 },
+  cuenta: {
+    position: 'absolute',
+    right: -4,
+    bottom: -4,
+    minWidth: 24,
+    paddingHorizontal: 5,
+    height: 19,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cuentaTexto: { color: colors.sobreTinte, fontSize: 11, fontWeight: '700' },
   /**
    * Una figurita del álbum: alta y bastante más grande que un icono.
    *
@@ -394,7 +556,7 @@ const estilos = StyleSheet.create({
    * cartel y la de la hoja son la misma forma. Y va grande porque es lo que se
    * ganó: una figurita chiquita no se mira, se cierra.
    */
-  carta: { width: 176, height: Math.round(176 * RATIO_CARD) },
+  carta: { width: ANCHO_CARTA, height: Math.round(ANCHO_CARTA * RATIO_CARD) },
   /** La caja del destello. El SVG va centrado adentro y no ocupa lugar. */
   destello: {
     position: 'absolute',

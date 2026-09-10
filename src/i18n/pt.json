@@ -102,7 +102,7 @@
     "seQuemo": "Queimou",
     "buscarDespensa": "Procurar na despensa",
     "borrarBusqueda": "Limpar a busca",
-    "despensaVacia": "A despensa está vazia. Saia à procura de ingredientes com as pegadas.",
+    "despensaVacia": "A despensa está vazia. Saia à procura de ingredientes.",
     "sinResultado": "Você não tem nada com esse nome.",
     "esIngrediente": "ingrediente",
     "esComida": "comida · nível {nivel}",
@@ -155,7 +155,12 @@
     "cartaNueva": "Carta nova!",
     "deQuien": "{bicho} {accion}",
     "ganasteLegendaria": "Lendária!",
-    "porCompletar": "Você completou a página de\n{bicho}"
+    "porCompletar": "Você completou a página de\n{bicho}",
+    "completaste": "Você terminou o jogo!",
+    "albumLleno": "O álbum está cheio.",
+    "volverAEmpezar": "Jogar de novo",
+    "ahoraNo": "Agora não",
+    "felicitaciones": "Parabéns!"
   },
   "ayuda": {
     "titulo": "AJUDA",
@@ -170,26 +175,27 @@
     "inventarioTitulo": "A bolsa",
     "inventarioTexto": "Um inventário do que você juntou, do que cozinhou e das poções que preparou. Aqui pode consultar as receitas e onde se consegue cada ingrediente, tocando nele.",
     "albumTitulo": "O álbum",
-    "albumTexto": "Cada criatura que cresce lhe dá uma figurinha nova. Complete uma página para ganhar a lendária.",
+    "albumTexto": "Cada criatura que cresce lhe dá uma figurinha nova. Complete uma página para ganhar a lendária, e as oito páginas para terminar o jogo.",
     "acerca": "SOBRE",
     "valorar": "Avaliar o app",
     "privacidad": "Privacidade",
     "contacto": "Contato",
     "version": "Versão {v}",
-    "verSaludo": "Ver as boas-vindas de novo"
+    "verSaludo": "Ver as boas-vindas de novo",
+    "verFinal": "Ver a tela final"
   },
   "avisos": {
     "titulo": "AVISOS",
     "camino": "CAMINHO DOS DIAS",
     "hoy": "Hoje",
     "reclamar": "Pegar",
-    "vuelveManana": "Volte amanhã para o próximo",
     "dia": "Dia {n}",
-    "ingredientes": "{cuantos} ingredientes",
-    "comida": "Um prato",
-    "pocion": "Uma poção",
+    "ingredientes": "Ingredientes",
+    "comida": "Prato",
+    "pocion": "Poção",
     "ganaste": "Prêmio do dia!",
-    "cuantas": "{cosa} ×{cuantos}"
+    "cuantas": "{cosa} ×{cuantos}",
+    "final": "FIM DO JOGO"
   },
   "enObra": {
     "encabezado": "Em obras"
@@ -366,8 +372,8 @@
   },
   "bienvenida": {
     "titulo": "Kaurix",
-    "texto": "Há criaturas escondidas no mundo real. Aponte a câmera {icono} para encontrá-las, junte ingredientes do que está à sua volta, cozinhe e crie-as até crescerem.",
+    "texto": "Há criaturas escondidas no mundo real. Aponte a câmera {icono}. Junte ingredientes, cozinhe e faça-as crescer.",
     "empezar": "Começar",
-    "ayuda": "Como se joga"
+    "ayuda": "Ajuda"
   }
 }

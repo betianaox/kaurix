@@ -58,10 +58,18 @@ const SEMILLA = 'kaurix.demo.1';
 /**
  * Cuántas criaturas se están criando.
  *
- * Van **la primera y la última** sí o sí, y una del medio sorteada. Las dos
- * puntas porque son las que hay que poder mostrar: la primera es la del
- * tutorial, la que todo el mundo va a ver, y la última es la de la vuelta 8, la
- * que nadie llega a ver jugando dos minutos.
+ * Va **la última** sí o sí —es la de la vuelta 8, la que nadie llega a ver
+ * jugando dos minutos— y el resto sorteado del medio.
+ *
+ * ## La del tutorial queda afuera, para poder encontrarla
+ *
+ * Estuvo adentro, con el argumento de que es la que todo el mundo va a ver.
+ * El costo era que **la demo no podía mostrar la búsqueda**: con la primera ya
+ * criándose, salir a buscar sorteaba cualquier otra, y la del tutorial es
+ * justamente la que aparece enseguida y la que está pensada para eso.
+ *
+ * Dejándola libre, la demo muestra las dos mitades del juego: la crianza,
+ * que ya está empezada, y el hallazgo, que se puede hacer en vivo.
  */
 const BICHOS = 3;
 
@@ -73,7 +81,7 @@ const BICHOS = 3;
  * bebé y crecido, una al lado de la otra—, que es una pantalla distinta de la
  * de criar y no se ve nunca con la barra a medio llenar.
  *
- * El gato porque es la segunda de las ocho: la primera es la del tutorial y
+ * tiene que quedar criándose, que es como la va a ver quien recién empieza.
  * tiene que quedar criándose, que es como la va a ver quien recién empieza.
  */
 const CRECIDO = 'gato-bruma';
@@ -134,23 +142,26 @@ function repartir<T extends { id: string }>(
 }
 
 /**
- * Las tres criaturas de la demo: la primera, la última y una del medio.
+ * Las tres criaturas de la demo: la última y dos del medio.
  *
  * En tres estados distintos y no las tres iguales, porque lo que hay que poder
  * mostrar es la escalera entera: una empezando, una a mitad de camino y una a
  * un paso del final. Con las tres en el mismo punto, la ficha de una es la
  * ficha de las tres.
+ *
+ * **La primera nunca entra**: queda libre para salir a encontrarla. Ver
+ * `BICHOS`.
  */
 function elegirBichos(azar: () => number): string[] {
-  const primera = criaturas[0].id;
   const ultima = criaturas[criaturas.length - 1].id;
-  // Sin la crecida en el pozo: criándose y ya criada son dos estados y no
-  // pueden ser la misma criatura. La colección la dibujaría de las dos formas.
+  // Sin la primera —la del tutorial, que queda para buscar— y sin la crecida:
+  // criándose y ya criada son dos estados y no pueden ser la misma criatura,
+  // porque la colección la dibujaría de las dos formas.
   const medio = barajar(
     criaturas.slice(1, -1).map((c) => c.id).filter((id) => id !== CRECIDO),
     azar
-  ).slice(0, BICHOS - 2);
-  return [primera, ...medio, ultima];
+  ).slice(0, BICHOS - 1);
+  return [...medio, ultima];
 }
 
 /**
@@ -303,5 +314,26 @@ export function partidaDemo(base: Guardado, ahora = Date.now()): Guardado {
     completadas: [CRECIDO],
     cartas,
     inventario: { ingredientes, comidas, pociones },
+    /**
+     * El camino, ya empezado y con las dos colas desparejas.
+     *
+     * Una partida recién instalada tiene **un solo día abierto**, así que la
+     * escalera se ve con un escalón vivo y seis apagados, y en cuanto se
+     * cobran sus dos premios queda entera en gris hasta mañana. Es correcto
+     * y no se puede mostrar: no se ve ni cómo queda un día cobrado, ni la
+     * cola del video atrasada, ni la diferencia entre lo que ya pasó y lo
+     * que falta.
+     *
+     * Con esto se ven los cuatro estados a la vez: los días 1 y 2 con su
+     * gratis cobrado, el 3 esperando, el video del 1 todavía sin tomar —la
+     * cola de atrás— y del 4 en adelante todo por venir.
+     *
+     * **Tres abiertos y no cuatro.** Con cuatro, el globo decía 6 —ocho
+     * premios menos los dos cobrados— pero en pantalla solo tres días se ven
+     * alcanzables: el cuarto queda apagado porque no se puede saltear. La
+     * cuenta era correcta y no coincidía con lo que se ve, que para un globo
+     * es lo mismo que estar mal. Con tres, dice 4: un gratis y tres videos.
+     */
+    sendero: { abiertos: 3, ultimo: null, base: 1, gratis: [1, 2], videos: [] },
   };
 }

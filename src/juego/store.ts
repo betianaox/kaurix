@@ -1,9 +1,23 @@
 import { create } from 'zustand';
 
 import { listoParaAdulto, recienNacida, MAX_CRIANZA, TRAMOS } from './crianza';
-import { cartaAlCrecer, doradaPorCompletar, type Premio } from '../album/sorteo';
+import { cartaAlCrecer, doradaPorCompletar, todasLasCartas, type Premio } from '../album/sorteo';
 import { NIVELES } from './datos';
-import { hayPremio, premioDe, reclamado, type Reclamo } from './sendero';
+import {
+  abrirElDia,
+  cobradoGratis,
+  cobradoVideo,
+  gratisDisponible,
+  MULTIPLICADOR,
+  premioDe,
+  videoDisponible,
+  type Reclamo,
+} from './sendero';
+// En su propia linea y no como `type X as Y` adentro del import de arriba:
+// `sorteo.ts` ya exporta un `Premio` —el del album— y hay que renombrar uno
+// de los dos, pero el babel de Metro no digiere el alias en linea aunque
+// `tsc` lo acepte. Los dos nombres son correctos en su modulo.
+import type { Premio as PremioDelCamino } from './sendero';
 import { deClase } from './recetas';
 import { avanceDe, faltanDe, menuDe, pocionDe, tramoCompleto, type Pedido } from './menu';
 import { cuanto, saleDe, type Mezcla } from './caldero';
@@ -11,7 +25,8 @@ import type { CodigoIdioma } from '../i18n/idiomas';
 import type { Region } from '../i18n/region';
 import { multiplicadorDe, nuevoImpulso, puedeGirarGratis, type Casilla } from './ruleta';
 import { recetaPorId, type Receta } from './recetas';
-import { ingredienteAlAzar, ingredientePorId } from './ingredientes';
+import { barajar } from './azar';
+import { INGREDIENTES, ingredienteAlAzar, ingredientePorId } from './ingredientes';
 import {
   carta,
   cargar as leer,
@@ -79,6 +94,24 @@ type Estado = {
   /** Volver a ofrecerlo. Herramienta de desarrollo. */
   olvidarSaludo: () => void;
   /**
+   * Llenar el álbum de un saque. Herramienta de desarrollo.
+   *
+   * Es la única forma de ver la pantalla del final sin jugar sesenta y cuatro
+   * crianzas. No inventa un estado falso: deja exactamente las mismas cartas
+   * que dejaría haber terminado el juego, así que lo que se ve después es la
+   * pantalla de verdad y no una maqueta.
+   */
+  completarAlbum: () => void;
+  /**
+   * Empezar de nuevo con el álbum completo.
+   *
+   * Borra la partida entera —bichos, bolso, cartas, vuelta, camino— y deja
+   * el juego como recién instalado. **Menos el idioma y la región**, que no
+   * son progreso sino cómo quiere leer la app quien la usa: reiniciarlos
+   * sería castigar el haber terminado el juego con una app en otro idioma.
+   */
+  volverAEmpezar: () => void;
+  /**
    * Cambia de qué región se usan los nombres.
    *
    * Existe porque la detección puede errar y porque hay a quien simplemente le
@@ -132,11 +165,93 @@ type Estado = {
    * hoy ya se reclamó. La comprobación se hace acá y no solo en la pantalla: el
    * store no puede confiar en que se lo pregunten.
    */
-  reclamarDelDia: () => Reclamo;
+  /**
+   * Cobra el premio gratis de un día y avanza esa cola.
+   *
+   * Recibe qué día porque los de atrás siguen abiertos y se pueden cobrar en
+   * cualquier orden. Lo único que el store comprueba es que ese día haya
+   * llegado y que no esté cobrado ya.
+   */
+  reclamarDelDia: (dia: number) => Reclamo;
+  /**
+   * Cobra el premio por video de un día, al doble, y avanza esa cola.
+   *
+   * **Es una cola aparte de la del gratis y ninguna apaga a la otra.** Se puede
+   * tomar el gratis sin el video, el video sin el gratis, o los dos; y quedarse
+   * atrás en una no frena la otra.
+   *
+   * Acá no se sabe nada de anuncios y no corresponde: la pantalla llama a esto
+   * recién cuando el video terminó de verse.
+   */
+  reclamarVideo: (dia: number) => Reclamo;
 };
 
 /** Hay lugar para empezar otra criatura. */
 export const hayLugar = (j: Guardado) => j.crianza.length < MAX_CRIANZA;
+
+/**
+ * Qué sale de un premio del camino, y cómo queda el bolso.
+ *
+ * Lo usan los dos cobros —el del día y el del video— y por eso vive afuera del
+ * store: lo único que cambia entre ellos es `veces`, y tener el reparto escrito
+ * dos veces era la forma segura de que el del video se olvidara de un arreglo
+ * hecho en el del día.
+ *
+ * Devuelve `null` cuando no hay nada que dar: ahí el escalón no se cobra, que es
+ * mejor que gastarlo sin entregar nada.
+ */
+function repartirPremio(
+  actual: Guardado['inventario'],
+  premio: PremioDelCamino,
+  veces: number
+): { inventario: Guardado['inventario']; dado: NonNullable<Reclamo> } | null {
+  const inventario = { ...actual };
+
+  if (premio.tipo === 'ingredientes') {
+    /**
+     * Clases **distintas**, no unidades de una sola.
+     *
+     * Ninguna de las cincuenta y dos recetas repite ingrediente, así que tres
+     * frutillas no cocinan nada y tres cosas distintas son la forma exacta de una
+     * receta. Con el video son las mismas clases con el doble de cada una, que es
+     * lo que piden las pociones —dos unidades de cada cosa—.
+     *
+     * Se barajan las del lugar que pide el día y se toman las primeras: es la
+     * forma más corta de sacar varias sin repetir. Sortear de a una obligaba a
+     * reintentar cada vez que salía una ya sorteada.
+     */
+    const pozo = INGREDIENTES.filter((i) => i.lugar === premio.lugar);
+    const elegidas = barajar(pozo, Math.random).slice(0, premio.cuantos);
+    if (!elegidas.length) return null;
+
+    const ingredientes = { ...inventario.ingredientes };
+    for (const i of elegidas) ingredientes[i.id] = (ingredientes[i.id] ?? 0) + veces;
+    inventario.ingredientes = ingredientes;
+
+    return {
+      inventario,
+      dado: {
+        tipo: 'ingredientes',
+        cosas: elegidas.map((i) => ({ id: i.id, cuantos: veces })),
+      },
+    };
+  }
+
+  const clase = premio.tipo === 'pocion' ? 'pocion' : 'comida';
+  const nivel = premio.tipo === 'pocion' ? 1 : premio.nivel;
+  const posibles = deClase(clase).filter((r) => r.nivel === nivel);
+  if (!posibles.length) return null;
+
+  const cual = posibles[Math.floor(Math.random() * posibles.length)];
+  const bolsa = clase === 'pocion' ? { ...inventario.pociones } : { ...inventario.comidas };
+  // La misma preparación repetida, no dos distintas: dos pociones iguales
+  // sirven para dos criaturas, y dos sueltas de distinto nivel para ninguna.
+  bolsa[cual.id] = (bolsa[cual.id] ?? 0) + veces;
+  if (clase === 'pocion') inventario.pociones = bolsa;
+  else inventario.comidas = bolsa;
+
+  return { inventario, dado: { tipo: clase, id: cual.id, cuantos: veces } };
+}
 
 export const useJuego = create<Estado>((set, get) => {
   /** Aplica un cambio y lo deja escrito. */
@@ -185,6 +300,18 @@ export const useJuego = create<Estado>((set, get) => {
       const juego: Guardado = {
         ...guardado,
         crianza: guardado.crianza,
+        /**
+         * El día del camino se abre acá, y queda escrito.
+         *
+         * También se abre al cobrar, pero eso no alcanza: quien abre la app
+         * tres días seguidos sin cobrar nada tiene que juntar tres días, y si
+         * lo único que lo anotara fuera el cobro, la cuenta se quedaría
+         * clavada en el último día en que tocó algo.
+         *
+         * `abrirElDia` devuelve el mismo objeto cuando no hay nada que abrir,
+         * así que abrir la app diez veces en un día no cambia nada.
+         */
+        sendero: abrirElDia(guardado.sendero, ahora),
         visto: new Date(ahora).toISOString(),
       };
 
@@ -419,6 +546,22 @@ export const useJuego = create<Estado>((set, get) => {
     olvidarSaludo() {
       aplicar((j) => ({ ...j, saludado: false }));
     },
+    completarAlbum() {
+      aplicar((j) => ({ ...j, cartas: todasLasCartas() }));
+    },
+    volverAEmpezar() {
+      // Se arma desde `partidaNueva` y no borrando campos a mano: así un
+      // campo que se agregue mañana arranca en su valor inicial sin que haya
+      // que acordarse de sumarlo también acá.
+      aplicar((j) => ({
+        ...partidaNueva(),
+        idioma: j.idioma,
+        region: j.region,
+        // Quien terminó el juego ya conoce la app: darle otra vez la
+        // bienvenida sería tratarlo como si acabara de instalarla.
+        saludado: true,
+      }));
+    },
 
     /**
      * El premio del día, resuelto a cosas concretas.
@@ -428,46 +571,43 @@ export const useJuego = create<Estado>((set, get) => {
      * poción entre las de su nivel. Sortear en el store y no en el camino es lo
      * que deja al camino puro y probable sin teléfono.
      */
-    reclamarDelDia() {
+    reclamarDelDia(dia) {
       let dado: Reclamo = null;
 
       aplicar((j) => {
-        if (!hayPremio(j.sendero)) return j;
+        // Se abre el día antes de preguntar: si la app quedó abierta pasada la
+        // medianoche, el premio de hoy tiene que estar aunque nadie la reinició.
+        const sendero = abrirElDia(j.sendero);
+        if (!gratisDisponible(sendero, dia)) return j;
 
-        const premio = premioDe(j.sendero.dias);
-        const inventario = { ...j.inventario };
+        const salida = repartirPremio(j.inventario, premioDe(dia), 1);
+        if (!salida) return j;
 
-        if (premio.tipo === 'ingredientes') {
-          // Uno solo, repetido: es lo que hace que el premio sirva para cocinar
-          // algo. Sorteando uno por unidad salían tres cosas distintas y sueltas.
-          const cual = ingredienteAlAzar().id;
-          inventario.ingredientes = {
-            ...inventario.ingredientes,
-            [cual]: (inventario.ingredientes[cual] ?? 0) + premio.cuantos,
-          };
-          dado = { tipo: 'ingredientes', id: cual, cuantos: premio.cuantos };
-        } else {
-          const clase = premio.tipo === 'pocion' ? 'pocion' : 'comida';
-          const nivel = premio.tipo === 'pocion' ? 1 : premio.nivel;
-          const posibles = deClase(clase).filter((r) => r.nivel === nivel);
-          // Si algún día no hubiera ninguna de ese nivel, el día no se cobra:
-          // mejor que no pase nada a que se gaste el paso sin dar nada.
-          if (!posibles.length) return j;
-
-          const cual = posibles[Math.floor(Math.random() * posibles.length)];
-          const bolsa = clase === 'pocion' ? { ...inventario.pociones } : { ...inventario.comidas };
-          bolsa[cual.id] = (bolsa[cual.id] ?? 0) + 1;
-          if (clase === 'pocion') inventario.pociones = bolsa;
-          else inventario.comidas = bolsa;
-          dado = { tipo: clase, id: cual.id };
-        }
-
-        return { ...j, inventario, sendero: reclamado(j.sendero) };
+        dado = salida.dado;
+        return { ...j, inventario: salida.inventario, sendero: cobradoGratis(sendero, dia) };
       });
 
       return dado;
     },
 
+    reclamarVideo(dia) {
+      let dado: Reclamo = null;
+
+      aplicar((j) => {
+        const sendero = abrirElDia(j.sendero);
+        if (!videoDisponible(sendero, dia)) return j;
+
+        // El premio del día que se está cobrando, no el de hoy: los de atrás
+        // siguen abiertos y cada uno da lo suyo.
+        const salida = repartirPremio(j.inventario, premioDe(dia), MULTIPLICADOR);
+        if (!salida) return j;
+
+        dado = salida.dado;
+        return { ...j, inventario: salida.inventario, sendero: cobradoVideo(sendero, dia) };
+      });
+
+      return dado;
+    },
     sumarIngrediente(id, cantidad = 1) {
       aplicar((j) => ({
         ...j,

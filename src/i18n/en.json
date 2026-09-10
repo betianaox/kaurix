@@ -102,7 +102,7 @@
     "seQuemo": "It burned",
     "buscarDespensa": "Search the pantry",
     "borrarBusqueda": "Clear the search",
-    "despensaVacia": "The pantry is empty. Go find ingredients with the paw prints.",
+    "despensaVacia": "The pantry is empty. Go find ingredients.",
     "sinResultado": "You don't have anything by that name.",
     "esIngrediente": "ingredient",
     "esComida": "food · level {nivel}",
@@ -155,7 +155,12 @@
     "cartaNueva": "New card!",
     "deQuien": "{bicho} {accion}",
     "ganasteLegendaria": "Legendary!",
-    "porCompletar": "You completed the page of\n{bicho}"
+    "porCompletar": "You completed the page of\n{bicho}",
+    "completaste": "You finished the game!",
+    "albumLleno": "The album is full.",
+    "volverAEmpezar": "Play again",
+    "ahoraNo": "Not now",
+    "felicitaciones": "Congratulations!"
   },
   "ayuda": {
     "titulo": "HELP",
@@ -170,26 +175,27 @@
     "inventarioTitulo": "The bag",
     "inventarioTexto": "An inventory of what you gathered, what you cooked and the potions you made. Here you can check the recipes and where each ingredient is found, by tapping on it.",
     "albumTitulo": "The album",
-    "albumTexto": "Every creature that grows gives you a new card. Complete a page to win its legendary one.",
+    "albumTexto": "Every creature that grows gives you a new card. Complete a page to win its legendary one, and all eight pages to finish the game.",
     "acerca": "ABOUT",
     "valorar": "Rate the app",
     "privacidad": "Privacy",
     "contacto": "Contact",
     "version": "Version {v}",
-    "verSaludo": "Show the welcome again"
+    "verSaludo": "Show the welcome again",
+    "verFinal": "See the ending"
   },
   "avisos": {
     "titulo": "NEWS",
     "camino": "PATH OF DAYS",
     "hoy": "Today",
     "reclamar": "Claim",
-    "vuelveManana": "Come back tomorrow for the next one",
     "dia": "Day {n}",
-    "ingredientes": "{cuantos} ingredients",
-    "comida": "A dish",
-    "pocion": "A potion",
+    "ingredientes": "Ingredients",
+    "comida": "Dish",
+    "pocion": "Potion",
     "ganaste": "Daily reward!",
-    "cuantas": "{cosa} ×{cuantos}"
+    "cuantas": "{cosa} ×{cuantos}",
+    "final": "END OF THE GAME"
   },
   "enObra": {
     "encabezado": "Under construction"
@@ -366,8 +372,8 @@
   },
   "bienvenida": {
     "titulo": "Kaurix",
-    "texto": "There are creatures hidden in the real world. Point your camera {icono} to find them, gather ingredients from what is around you, cook, and raise them until they grow.",
+    "texto": "There are creatures hidden in the real world. Point the camera {icono}. Gather ingredients, cook and help them grow.",
     "empezar": "Start",
-    "ayuda": "How to play"
+    "ayuda": "Help"
   }
 }

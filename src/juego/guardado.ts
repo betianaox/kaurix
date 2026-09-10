@@ -223,16 +223,30 @@ function completar(j: Guardado): Guardado {
     /**
      * El camino.
      *
-     * Una partida anterior a él empieza de cero, con el premio del día
-     * disponible: es lo mismo que ve alguien que instala hoy.
+     * Se comprueba que traiga `abiertos`, que es el campo de la forma de ahora:
+     * dos colas —`gratis` y `videos`— avanzando por separado sobre los días que
+     * se fueron abriendo.
      *
-     * Y se comprueba que traiga `dias`, porque la primera versión del camino
-     * guardaba `paso` —el escalón, que se reiniciaba cada vuelta— en vez de la
-     * cuenta corrida. Un guardado de esos deja `dias` en `undefined` y la
-     * pantalla escribe "Día NaN".
+     * Las formas anteriores no se migran, **se descartan**. Hubo dos: una con
+     * `paso`, que se reiniciaba cada vuelta, y otra con `dias`, que contaba los
+     * cobros y por eso no distinguía un día abierto de un día cobrado. De
+     * ninguna de las dos se puede deducir cuánto llevaba cada cola, así que
+     * cualquier conversión sería inventarle un pasado a la partida. Empieza de
+     * cero, que es lo mismo que ve alguien que instala hoy.
+     *
+     * Se puede porque el juego no está publicado. El día que lo esté, esto pasa
+     * a ser un `migrar` de verdad y sube la `VERSION`.
      */
     sendero:
-      j.sendero && typeof j.sendero.dias === 'number' ? j.sendero : senderoNuevo(),
+      j.sendero &&
+      typeof j.sendero.abiertos === 'number' &&
+      typeof j.sendero.base === 'number' &&
+      // Y con las dos colas como listas de días. Hubo una forma intermedia que
+      // las guardaba como contadores, de cuando cada cola se cobraba en orden.
+      Array.isArray(j.sendero.gratis) &&
+      Array.isArray(j.sendero.videos)
+        ? j.sendero
+        : senderoNuevo(),
     // Una partida anterior a los idiomas no tiene ninguno elegido, así que se
     // resuelve como si fuera la primera vez: mirando el teléfono.
     idioma: j.idioma && esIdiomaSoportado(j.idioma) ? j.idioma : idiomaDelDispositivo(),

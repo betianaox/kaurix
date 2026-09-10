@@ -23,6 +23,7 @@ import { useAparicion } from '../buscar/useAparicion';
 import { useReconocer } from '../buscar/useReconocer';
 import { CADA, useIngredientes } from '../buscar/useIngredientes';
 import { CriaturaView, medida } from '../components/CriaturaView';
+import { juegoTerminado } from '../juego/avisos';
 import { hayLugar, useJuego } from '../juego/store';
 import { colorDeNivel, criaturaABuscar, dificultadDe, fallosAntesDeRomper } from '../juego/datos';
 import type { Rutas } from '../navegacion/rutas';
@@ -115,12 +116,31 @@ export function BuscarScreen({ navigation }: Props) {
   /** La vista de la cámara, para poder pedirle una foto y mirar qué hay. */
   const camara = useRef<CameraView | null>(null);
   const lleno = !hayLugar(juego);
+
+  /**
+   * EL JUEGO ESTÁ TERMINADO: NO APARECE NADA MÁS.
+   *
+   * Con el álbum lleno la cámara sigue abriéndose y se puede mirar todo lo que
+   * ya se juntó, pero **no sale ni una criatura ni un ingrediente** hasta que se
+   * empiece de nuevo. Cocinar sigue andando con lo que haya en el bolso: eso no
+   * hace avanzar nada, así que no hay motivo para trabarlo.
+   *
+   * Es lo que hace que terminar el juego signifique algo. Sin esto, el final es
+   * un cartel y después todo sigue igual: se juntan ingredientes que no llevan
+   * a ninguna carta nueva, porque no quedan cartas. Encontrar cosas que ya no
+   * sirven para nada no es un premio por haber terminado, es ruido.
+   *
+   * No se avisa con un cartel encima de la imagen: **sobre la cámara no va
+   * texto**, que es la regla de esta pantalla. Lo dice la campana, que con el
+   * juego terminado muestra ese único aviso y el botón de volver a empezar.
+   */
+  const terminado = juegoTerminado(juego);
   const tinte = colorDeNivel(juego.nivel);
 
   // Se elige una sola vez al entrar: el sorteo no se puede rehacer en cada
   // render, o la criatura cambiaría sola mientras la estás mirando.
   useEffect(() => {
-    if (lleno) return;
+    if (lleno || terminado) return;
     const id = criaturaABuscar(
       juego.completadas,
       juego.crianza.map((c) => c.criatura)
@@ -244,7 +264,8 @@ export function BuscarScreen({ navigation }: Props) {
      * hallazgo ya esperando convierte el momento de encontrar algo en una cinta
      * que no para.
      */
-    activo: !!permiso?.granted && !conseguido,
+    // Y nada cuando el juego terminó. Ver `terminado`.
+    activo: !!permiso?.granted && !conseguido && !terminado,
     /**
      * Con un bicho dado vuelta, más espaciados.
      *

@@ -1,6 +1,6 @@
 import { ORDEN_DE_VUELTAS } from '../juego/datos';
-import { carta } from '../juego/guardado';
-import { ACCIONES, hojaCompleta } from './casillas';
+import { carta, LEGENDARIA } from '../juego/guardado';
+import { ACCIONES, accionesDe, hojaCompleta } from './casillas';
 
 /**
  * ───────────────────────────────────────────────────────────────────────────
@@ -155,3 +155,29 @@ export function doradaPorCompletar(
   if (!hojaCompleta(criaturaDeLaCarta, ganadas)) return null;
   return criaturaDeLaCarta;
 }
+
+/**
+ * Si el álbum está entero: las ocho hojas completas.
+ *
+ * Es el final del juego. No hace falta mirar las doradas: una dorada solo se
+ * gana completando su hoja y nunca se sortea, así que con las ocho hojas
+ * cerradas las ocho doradas están puestas. Preguntar por las dos cosas sería
+ * pedir dos veces lo mismo y dejar abierta la puerta a que se contradigan.
+ */
+export const albumCompleto = (ganadas: readonly string[]): boolean =>
+  ORDEN_DE_VUELTAS.every((criatura) => hojaCompleta(criatura, ganadas));
+
+
+/**
+ * Las setenta y dos cartas: las ocho acciones de cada bicho más su dorada.
+ *
+ * **Solo la usa una herramienta de desarrollo**, para poder mirar la pantalla
+ * del final sin jugar sesenta y cuatro crianzas. Deja el álbum exactamente como
+ * lo dejaría terminar el juego —incluidas las doradas, que en el juego se ganan
+ * al cerrar cada hoja—, así que lo que se ve después es la pantalla de verdad.
+ */
+export const todasLasCartas = (): string[] =>
+  ORDEN_DE_VUELTAS.flatMap((criatura) => [
+    ...accionesDe(criatura),
+    carta(criatura, LEGENDARIA),
+  ]);

@@ -102,7 +102,7 @@
     "seQuemo": "Si è bruciato",
     "buscarDespensa": "Cerca nella dispensa",
     "borrarBusqueda": "Cancella la ricerca",
-    "despensaVacia": "La dispensa è vuota. Esci a cercare ingredienti con le impronte.",
+    "despensaVacia": "La dispensa è vuota. Esci a cercare ingredienti.",
     "sinResultado": "Non hai niente con quel nome.",
     "esIngrediente": "ingrediente",
     "esComida": "cibo · livello {nivel}",
@@ -155,7 +155,12 @@
     "cartaNueva": "Carta nuova!",
     "deQuien": "{bicho} {accion}",
     "ganasteLegendaria": "Leggendaria!",
-    "porCompletar": "Hai completato la pagina di\n{bicho}"
+    "porCompletar": "Hai completato la pagina di\n{bicho}",
+    "completaste": "Hai finito il gioco!",
+    "albumLleno": "L’album è pieno.",
+    "volverAEmpezar": "Gioca di nuovo",
+    "ahoraNo": "Non ora",
+    "felicitaciones": "Congratulazioni!"
   },
   "ayuda": {
     "titulo": "AIUTO",
@@ -170,26 +175,27 @@
     "inventarioTitulo": "La borsa",
     "inventarioTexto": "Un inventario di quello che hai raccolto, di quello che hai cucinato e delle pozioni che hai preparato. Qui puoi consultare le ricette e dove si trova ogni ingrediente, toccandolo.",
     "albumTitulo": "L’album",
-    "albumTexto": "Ogni creatura che cresce ti dà una figurina nuova. Completa una pagina per vincere la leggendaria.",
+    "albumTexto": "Ogni creatura che cresce ti dà una figurina nuova. Completa una pagina per vincere la leggendaria, e tutte e otto per finire il gioco.",
     "acerca": "INFORMAZIONI",
     "valorar": "Valuta l’app",
     "privacidad": "Privacy",
     "contacto": "Contatti",
     "version": "Versione {v}",
-    "verSaludo": "Rivedi il benvenuto"
+    "verSaludo": "Rivedi il benvenuto",
+    "verFinal": "Vedi la schermata finale"
   },
   "avisos": {
     "titulo": "AVVISI",
     "camino": "CAMMINO DEI GIORNI",
     "hoy": "Oggi",
     "reclamar": "Riscuoti",
-    "vuelveManana": "Torna domani per il prossimo",
     "dia": "Giorno {n}",
-    "ingredientes": "{cuantos} ingredienti",
-    "comida": "Un piatto",
-    "pocion": "Una pozione",
+    "ingredientes": "Ingredienti",
+    "comida": "Piatto",
+    "pocion": "Pozione",
     "ganaste": "Premio del giorno!",
-    "cuantas": "{cosa} ×{cuantos}"
+    "cuantas": "{cosa} ×{cuantos}",
+    "final": "FINE DEL GIOCO"
   },
   "enObra": {
     "encabezado": "In lavorazione"
@@ -366,8 +372,8 @@
   },
   "bienvenida": {
     "titulo": "Kaurix",
-    "texto": "Ci sono creature nascoste nel mondo reale. Punta la fotocamera {icono} per trovarle, raccogli ingredienti da ciò che hai intorno, cucina e allevale finché non crescono.",
+    "texto": "Ci sono creature nascoste nel mondo reale. Punta la fotocamera {icono}. Raccogli ingredienti, cucina e falle crescere.",
     "empezar": "Inizia",
-    "ayuda": "Come si gioca"
+    "ayuda": "Aiuto"
   }
 }

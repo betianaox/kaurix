@@ -20,6 +20,25 @@ import Svg, { Path } from 'react-native-svg';
  * cartas y en todas las partidas. Sorteada, cada premio tendría un fondo
  * distinto y se notaría que es un adorno generado.
  */
+/**
+ * Qué tan larga es cada punta, en fracción del radio. Ver `CUANTAS_PUNTAS`.
+ */
+const LARGOS = [
+  1, 0.88, 0.95, 0.87, // arriba → derecha
+  1, 0.89, 0.96, 0.86, // derecha → abajo
+  1, 0.9, 0.94, 0.87, // abajo → izquierda
+  1, 0.88, 0.96, 0.86, // izquierda → arriba
+];
+
+/**
+ * Cuántas puntas tiene.
+ *
+ * Se exporta para poder **girarla sin que se note el empalme**: cada
+ * `360 / CUANTAS_PUNTAS` grados la figura vuelve a verse igual, así que una
+ * vuelta de ese tamaño se puede repetir para siempre sin salto.
+ */
+export const CUANTAS_PUNTAS = LARGOS.length;
+
 export function Destello({
   lado,
   proporcion = 1,
@@ -67,12 +86,6 @@ export function Destello({
    * puntas se alargaban mucho y la figura se volvía una araña; lo que se busca
    * es una masa con el borde irregular, no una estrella de puntas largas.
    */
-  const PUNTAS = [
-    1, 0.88, 0.95, 0.87, // arriba → derecha
-    1, 0.89, 0.96, 0.86, // derecha → abajo
-    1, 0.9, 0.94, 0.87, // abajo → izquierda
-    1, 0.88, 0.96, 0.86, // izquierda → arriba
-  ];
 
   /**
    * Hasta dónde se hunde entre punta y punta.
@@ -83,7 +96,7 @@ export function Destello({
    */
   const VALLE = 0.62;
 
-  const paso = 360 / PUNTAS.length;
+  const paso = 360 / CUANTAS_PUNTAS;
   /**
    * Un punto de la vuelta, a `parte` del radio.
    *
@@ -98,7 +111,7 @@ export function Destello({
 
   // Se recorre la vuelta alternando punta y valle, y se cierra sola.
   const d =
-    PUNTAS.map((largo, i) => {
+    LARGOS.map((largo, i) => {
       const cabeza = punto(i * paso, largo);
       const hueco = punto(i * paso + paso / 2, VALLE);
       return `${i === 0 ? 'M' : 'L'} ${cabeza} L ${hueco}`;
