@@ -1,0 +1,566 @@
+{
+  "clases": [
+    {
+      "clase": "manzana",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Apple",
+          "id": "/m/014j1m"
+        }
+      ]
+    },
+    {
+      "clase": "banana",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Banana",
+          "id": "/m/09qck"
+        }
+      ]
+    },
+    {
+      "clase": "naranja",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Orange (fruit)",
+          "id": "/m/0cyhj_"
+        }
+      ]
+    },
+    {
+      "clase": "tomate",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Tomato",
+          "id": "/m/07j87"
+        }
+      ]
+    },
+    {
+      "clase": "pera",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Pear",
+          "id": "/m/061_f"
+        }
+      ]
+    },
+    {
+      "clase": "frutilla",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Strawberry",
+          "id": "/m/07fbm7"
+        }
+      ]
+    },
+    {
+      "clase": "uva",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Grape",
+          "id": "/m/0388q"
+        }
+      ]
+    },
+    {
+      "clase": "durazno",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Peach",
+          "id": "/m/0dj6p"
+        }
+      ]
+    },
+    {
+      "clase": "lima",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Lime (Fruit)",
+          "id": "/m/01mt0b"
+        }
+      ]
+    },
+    {
+      "clase": "kiwi",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Kiwi",
+          "id": "/m/04f85"
+        }
+      ]
+    },
+    {
+      "clase": "arandanos",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Blueberry",
+          "id": "/m/0ftbs"
+        }
+      ]
+    },
+    {
+      "clase": "frambuesa",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Raspberry",
+          "id": "/m/01pd2g"
+        }
+      ]
+    },
+    {
+      "clase": "sandia",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Watermelon",
+          "id": "/m/0kpqd"
+        }
+      ]
+    },
+    {
+      "clase": "mango",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Mango",
+          "id": "/m/0fldg"
+        }
+      ]
+    },
+    {
+      "clase": "anana",
+      "grupo": "fruta",
+      "oi": [
+        {
+          "nombre": "Pineapple",
+          "id": "/m/0fp6w"
+        }
+      ]
+    },
+    {
+      "clase": "papa",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Potato",
+          "id": "/m/05vtc"
+        }
+      ]
+    },
+    {
+      "clase": "cebolla",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Onion",
+          "id": "/m/0dj75"
+        }
+      ]
+    },
+    {
+      "clase": "zanahoria",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Carrot",
+          "id": "/m/0fj52s"
+        }
+      ]
+    },
+    {
+      "clase": "zucchini",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Zucchini",
+          "id": "/m/027pcv"
+        }
+      ]
+    },
+    {
+      "clase": "palta",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Avocado",
+          "id": "/m/01645p"
+        }
+      ]
+    },
+    {
+      "clase": "espinaca",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Spinach",
+          "id": "/m/016rh7"
+        }
+      ]
+    },
+    {
+      "clase": "apio",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Celery",
+          "id": "/m/01xj_"
+        }
+      ]
+    },
+    {
+      "clase": "morron",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Bell pepper",
+          "id": "/m/0jg57"
+        }
+      ]
+    },
+    {
+      "clase": "brocoli",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Broccoli",
+          "id": "/m/0hkxq"
+        }
+      ]
+    },
+    {
+      "clase": "maiz",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Corn",
+          "id": "/m/053wn"
+        }
+      ]
+    },
+    {
+      "clase": "arvejas",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Pea",
+          "id": "/m/0g5s7"
+        }
+      ]
+    },
+    {
+      "clase": "boniato",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Sweet potato",
+          "id": "/m/0dm32"
+        }
+      ]
+    },
+    {
+      "clase": "kale",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Kale",
+          "id": "/m/02r5_b"
+        }
+      ]
+    },
+    {
+      "clase": "champinon",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Mushroom",
+          "id": "/m/052sf"
+        }
+      ]
+    },
+    {
+      "clase": "coliflor",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Cauliflower",
+          "id": "/m/015w7p"
+        }
+      ]
+    },
+    {
+      "clase": "lechuga",
+      "grupo": "verdura",
+      "oi": [
+        {
+          "nombre": "Lettuce",
+          "id": "/m/0fqlj"
+        }
+      ]
+    },
+    {
+      "clase": "carne-roja",
+      "grupo": "proteina",
+      "oi": [
+        {
+          "nombre": "Steak",
+          "id": "/m/0grtl"
+        },
+        {
+          "nombre": "Beef",
+          "id": "/m/0971v"
+        }
+      ]
+    },
+    {
+      "clase": "pollo",
+      "grupo": "proteina",
+      "oi": [
+        {
+          "nombre": "Chicken",
+          "id": "/m/09b5t"
+        }
+      ]
+    },
+    {
+      "clase": "embutido",
+      "grupo": "proteina",
+      "oi": [
+        {
+          "nombre": "Sausage",
+          "id": "/m/0kdzn"
+        }
+      ]
+    },
+    {
+      "clase": "camaron",
+      "grupo": "proteina",
+      "oi": [
+        {
+          "nombre": "Shrimp",
+          "id": "/m/0ll1f78"
+        },
+        {
+          "nombre": "Prawn",
+          "id": "/m/0m0kxjl"
+        }
+      ]
+    },
+    {
+      "clase": "manzanilla",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Chamomile",
+          "id": "/m/02_nmy"
+        }
+      ]
+    },
+    {
+      "clase": "diente-de-leon",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Dandelion",
+          "id": "/m/0fr19"
+        }
+      ]
+    },
+    {
+      "clase": "lavanda",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Lavender (Plant)",
+          "id": "/m/04gth"
+        }
+      ]
+    },
+    {
+      "clase": "sauco",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Elder",
+          "id": "/m/027v9wk"
+        }
+      ]
+    },
+    {
+      "clase": "brezo",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Heather",
+          "id": "/m/02z7y5"
+        }
+      ]
+    },
+    {
+      "clase": "petalos",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Rose",
+          "id": "/m/06m11"
+        }
+      ]
+    },
+    {
+      "clase": "hibisco-rojo",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Hibiscus",
+          "id": "/m/01h5yp"
+        }
+      ]
+    },
+    {
+      "clase": "hibisco-violeta",
+      "grupo": "flor",
+      "oi": [
+        {
+          "nombre": "Hibiscus",
+          "id": "/m/01h5yp"
+        }
+      ]
+    },
+    {
+      "clase": "albahaca",
+      "grupo": "planta",
+      "oi": [
+        {
+          "nombre": "Basil",
+          "id": "/m/01yt8c"
+        }
+      ]
+    },
+    {
+      "clase": "romero",
+      "grupo": "planta",
+      "oi": [
+        {
+          "nombre": "Rosemary",
+          "id": "/m/06cd7"
+        }
+      ]
+    },
+    {
+      "clase": "perejil",
+      "grupo": "planta",
+      "oi": [
+        {
+          "nombre": "Parsley",
+          "id": "/m/05s28"
+        }
+      ]
+    },
+    {
+      "clase": "salvia",
+      "grupo": "planta",
+      "oi": [
+        {
+          "nombre": "Sage",
+          "id": "/m/06p4j"
+        }
+      ]
+    },
+    {
+      "clase": "hinojo",
+      "grupo": "planta",
+      "oi": [
+        {
+          "nombre": "Fennel",
+          "id": "/m/017dqv"
+        }
+      ]
+    },
+    {
+      "clase": "jengibre",
+      "grupo": "tierra",
+      "oi": [
+        {
+          "nombre": "Ginger",
+          "id": "/m/0f9n3"
+        }
+      ]
+    },
+    {
+      "clase": "ajo",
+      "grupo": "tierra",
+      "oi": [
+        {
+          "nombre": "Garlic",
+          "id": "/m/0dbrl"
+        }
+      ]
+    },
+    {
+      "clase": "piedras",
+      "grupo": "escena",
+      "oi": [
+        {
+          "nombre": "Rock",
+          "id": "/m/01cbzq"
+        }
+      ]
+    },
+    {
+      "clase": "ladrillo",
+      "grupo": "escena",
+      "oi": [
+        {
+          "nombre": "Brick",
+          "id": "/m/01g0g"
+        }
+      ]
+    },
+    {
+      "clase": "arena",
+      "grupo": "escena",
+      "oi": [
+        {
+          "nombre": "Sand",
+          "id": "/m/099fz"
+        }
+      ]
+    },
+    {
+      "clase": "alacena",
+      "grupo": "escena",
+      "oi": [
+        {
+          "nombre": "Pantry",
+          "id": "/m/02p413"
+        },
+        {
+          "nombre": "Cupboard",
+          "id": "/m/0642b4"
+        }
+      ]
+    },
+    {
+      "clase": "carne",
+      "grupo": "escena",
+      "oi": [
+        {
+          "nombre": "Meat",
+          "id": "/m/04scj"
+        }
+      ]
+    }
+  ]
+}
