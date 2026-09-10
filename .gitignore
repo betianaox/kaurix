@@ -39,3 +39,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Lo que compila Gradle adentro de un modulo propio.
+#
+# `android/` entero ya esta ignorado mas arriba, pero los modulos de
+# `modules/` tienen su propio `android/` y ese no cae en la misma regla. Sin
+# esto, un `git add modules` se lleva los .dex y las cachés de transforms, que
+# ademas tienen nombres tan largos que Windows ni siquiera los puede indexar.
+modules/*/android/build/
+modules/*/android/.cxx/

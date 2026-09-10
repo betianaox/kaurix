@@ -52,7 +52,7 @@
           "android": {
             "enableProguardInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRules": "# ML Kit carga sus modelos por reflexión y R8 no lo ve.\n# `image-labeling`, que es el que usa el reconocedor, no trae reglas propias\n# en su AAR —`barcode-scanning` sí—, así que van acá.\n-keep class com.google.mlkit.** { *; }\n-keep class com.google.android.gms.internal.mlkit_** { *; }\n-dontwarn com.google.mlkit.**\n\n# El módulo nativo del color dominante, la otra mitad del reconocedor.\n-keep class com.reactnativeimagecolors.** { *; }"
+            "extraProguardRules": "# ML Kit carga sus modelos por reflexion y R8 no lo ve. Ni image-labeling ni\n# image-labeling-custom traen reglas propias en su AAR —barcode-scanning si—,\n# asi que van aca. Los usa el modulo modules/reconocedor.\n-keep class com.google.mlkit.** { *; }\n-keep class com.google.android.gms.internal.mlkit_** { *; }\n-dontwarn com.google.mlkit.**\n\n# El interprete de TensorFlow Lite, que es lo que corre el modelo propio por\n# debajo de image-labeling-custom. Entra por JNI, asi que para R8 nadie lo usa.\n-keep class org.tensorflow.lite.** { *; }\n-dontwarn org.tensorflow.lite.**\n\n# El modulo nativo del color dominante, la otra mitad del reconocedor.\n-keep class com.reactnativeimagecolors.** { *; }"
           }
         }
       ],

@@ -1,0 +1,34 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+// El plugin de Expo pide versión aunque este módulo no se publique en ningún
+// lado: sin `versionName` la configuración del proyecto falla entera, con un
+// error que habla de `:expo` y no de acá.
+group = 'com.imagostack.kaurix'
+version = '1.0.0'
+
+android {
+  namespace 'expo.modules.reconocedor'
+  defaultConfig {
+    versionCode 1
+    versionName '1.0.0'
+  }
+}
+
+dependencies {
+  // El etiquetador con modelo propio: es el que hace falta y el que ninguna
+  // librería de las que hay en npm sabe usar.
+  implementation 'com.google.mlkit:image-labeling-custom:17.0.3'
+
+  // El modelo base, que se usa mientras el propio no esté entrenado. Se va de
+  // acá el día que `modelo.tflite` entre en `src/main/assets` — son unos megas
+  // de APK y cuatrocientas etiquetas que no sirven para este juego.
+  implementation 'com.google.mlkit:image-labeling:17.0.9'
+}
+
+// El `.tflite` no necesita `noCompress`: desde AGP 4.1 la extensión está en la
+// lista por defecto, y este proyecto va por la 8. Un modelo comprimido en el APK
+// no se puede mapear en memoria y ML Kit falla al abrirlo, así que el día que
+// eso pase el culpable es este comentario.

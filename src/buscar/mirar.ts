@@ -1,5 +1,6 @@
 import type { CameraView } from 'expo-camera';
 
+import { etiquetar, hayEtiquetador, modeloPropio } from '../../modules/reconocedor';
 import { escenasDe } from './etiquetas';
 import type { Lectura } from './resolver';
 import { tonoDe, type Rgb } from './tonos';
@@ -15,11 +16,16 @@ import { tonoDe, type Rgb } from './tonos';
  *
  * Igual que AdMob en `anuncios/publicidad.ts`: son **módulos nativos**, así que
  * en Expo Go no existen y un `import` arriba de todo tiraría la app entera al
- * abrirla. Con `require` adentro de un `try`, si no están, `disponible` queda en
- * false y el juego sigue andando con los ingredientes al azar de siempre.
+ * abrirla. Si no están, `disponible` queda en false y el juego sigue andando
+ * con los ingredientes al azar de siempre.
  *
  * Eso es lo que permite escribir todo esto sin poder compilarlo: la app no se
  * rompe mientras tanto.
+ *
+ * El etiquetador ya no necesita el `require` adentro de un `try`: es un módulo
+ * propio, en `modules/reconocedor`, y Expo tiene una forma de pedirlo que
+ * devuelve `null` en vez de tirar. El color todavía viene de una librería de
+ * afuera, así que ese sigue como estaba.
  *
  * ## Por qué una foto y no el video
  *
@@ -33,10 +39,6 @@ import { tonoDe, type Rgb } from './tonos';
  * tirar veintinueve.
  */
 
-type ModuloEtiquetas = {
-  default: { label: (uri: string) => Promise<{ text: string; confidence: number }[]> };
-};
-
 type ModuloColores = {
   getColors: (
     uri: string,
@@ -46,19 +48,15 @@ type ModuloColores = {
 
 type ModuloImagen = typeof import('expo-image-manipulator');
 
-let etiquetador: ModuloEtiquetas | null = null;
 let colores: ModuloColores | null = null;
 let imagen: ModuloImagen | null = null;
 
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  etiquetador = require('@react-native-ml-kit/image-labeling') as ModuloEtiquetas;
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   colores = require('react-native-image-colors') as ModuloColores;
   // eslint-disable-next-line @typescript-eslint/no-require-imports
   imagen = require('expo-image-manipulator') as ModuloImagen;
 } catch (e) {
-  etiquetador = null;
   colores = null;
   imagen = null;
   // Casi siempre es "estas corriendo un binario sin estos modulos": Expo Go, o
@@ -68,7 +66,31 @@ try {
 }
 
 /** Si la cámara puede reconocer algo en este binario. */
-export const disponible = etiquetador !== null && colores !== null;
+export const disponible = hayEtiquetador && colores !== null;
+
+/**
+ * Qué modelo está mirando.
+ *
+ * Mientras sea `false` las etiquetas son las 447 genéricas del modelo base, que
+ * no nombran ni una fruta: todo lo que aparece sale de la escena y el color, y
+ * apuntar a algo verde es una lotería. Con el modelo del juego adentro pasa a
+ * ser `true` y `objetivos.ts` puede pedir clases por nombre.
+ */
+export const conModeloPropio = modeloPropio;
+
+// Con qué está mirando, una vez al arrancar.
+//
+// No es un log de andar tirando: es la única forma de saber si el etiquetador
+// entró en el binario y cuál de los dos modelos quedó, y este teléfono no
+// devuelve nada por `logcat` —ni una línea, ni del arranque—, así que la consola
+// de Metro es el único lugar donde se puede leer.
+if (__DEV__) {
+  console.log(
+    `[mirar] etiquetador: ${hayEtiquetador ? 'sí' : 'no'} · modelo: ${
+      modeloPropio ? 'propio' : 'base'
+    } · color: ${colores ? 'sí' : 'no'}`
+  );
+}
 
 /**
  * Cuánta confianza hace falta para dar una etiqueta por buena.
@@ -122,10 +144,9 @@ async function foto(camara: CameraView): Promise<string | null> {
 
 /** Las etiquetas que pasaron el umbral, en texto. */
 async function etiquetasDe(uri: string): Promise<string[]> {
-  if (!etiquetador) return [];
   try {
-    const crudas = await etiquetador.default.label(uri);
-    return crudas.filter((e) => e.confidence >= CONFIANZA).map((e) => e.text);
+    const crudas = await etiquetar(uri);
+    return crudas.filter((e) => e.confianza >= CONFIANZA).map((e) => e.texto);
   } catch {
     return [];
   }
