@@ -86,10 +86,7 @@ export function DondeSeEncuentra({ ingrediente, cuantos, tinte, onCerrar }: Prop
 
           <Text style={estilos.titulo}>{t('ingrediente.dondeSeEncuentra')}</Text>
           <Text style={estilos.instruccion}>{t(COMO_BUSCARLO[ingrediente.lugar])}</Text>
-          <Text style={estilos.pendiente}>
-            Por ahora aparece en cualquier lado: la cámara todavía no distingue qué está
-            mirando.
-          </Text>
+          <Text style={estilos.pendiente}>{t('ingrediente.porAhoraEnCualquierLugar')}</Text>
 
           <View style={estilos.separador} />
 
@@ -99,7 +96,7 @@ export function DondeSeEncuentra({ ingrediente, cuantos, tinte, onCerrar }: Prop
               {recetas.map((r) => r.nombre).join(' · ')}
             </Text>
           ) : (
-            <Text style={estilos.sirve}>Todavía no lo pide ninguna receta.</Text>
+            <Text style={estilos.sirve}>{t('ingrediente.ningunaReceta')}</Text>
           )}
         </Pressable>
       </Pressable>

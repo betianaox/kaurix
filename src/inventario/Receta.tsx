@@ -95,8 +95,6 @@ export function Receta({ receta, ingredientes, preparadas, tinte, onVer, onCerra
           <Text style={[estilos.estado, lista && { color: tinte }]}>
             {lista ? t('receta.tenesTodo') : t('receta.teFaltaAlgo')}
           </Text>
-
-          <Text style={estilos.pendiente}>{t('receta.pendiente')}</Text>
         </Pressable>
       </Pressable>
     </Modal>
@@ -214,5 +212,4 @@ const estilos = StyleSheet.create({
   estado: { color: colors.textMuted, fontSize: 13, textAlign: 'center' },
 
 
-  pendiente: { color: colors.textFaint, fontSize: 11, textAlign: 'center', fontStyle: 'italic' },
 });

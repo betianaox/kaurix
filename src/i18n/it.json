@@ -118,14 +118,15 @@
     "verReceta": "vedi ricetta",
     "tenesTodo": "Hai tutto per prepararla.",
     "teFaltaAlgo": "Ti manca qualcosa qui sopra.",
-    "pendiente": "Cosa fa ciascuna non è ancora deciso.",
     "renglon": "{nombre}, ne hai {tenes} di {pide}"
   },
   "ingrediente": {
     "dondeSeEncuentra": "DOVE SI TROVA",
     "paraQueSirve": "A COSA SERVE",
     "tenes": "Ne hai {cantidad}",
-    "noTenesNinguno": "Non ne hai nessuno"
+    "noTenesNinguno": "Non ne hai nessuno",
+    "porAhoraEnCualquierLugar": "Per ora compare ovunque: la fotocamera non distingue ancora cosa sta guardando.",
+    "ningunaReceta": "Nessuna ricetta lo richiede ancora."
   },
   "lugares": {
     "planta": "Piante",

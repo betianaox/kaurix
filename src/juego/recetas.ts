@@ -38,8 +38,10 @@ import { ingredientePorId, type Ingrediente } from './ingredientes';
  * una tarde en vez de una semana. El video sigue sin habilitar nada que no se
  * pueda conseguir a mano.
  *
- * **Qué hace cada una todavía no está decidido.** Los nombres describen cómo se
- * ven, no qué provocan.
+ * ## Para qué sirven
+ *
+ * Las comidas llenan los tramos de la barra de cada criatura, y la poción es la
+ * que abre el salto a adulto. Las reglas están en `crianza.ts`.
  */
 
 export type Clase = 'pocion' | 'comida';

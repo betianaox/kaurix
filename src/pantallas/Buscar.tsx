@@ -15,7 +15,7 @@ import {
 import { porId, type Criatura, type Pieza } from '../art';
 import { RECONOCEDOR_MANDA } from '../flags';
 import { ingredienteAlAzar, type Ingrediente } from '../juego/ingredientes';
-import { useAnuncioRecompensado } from '../anuncios/useAnuncioRecompensado';
+import { useAnuncioRecompensado, useReintentarAlOfrecer } from '../anuncios/useAnuncioRecompensado';
 import { Conseguido } from '../components/Conseguido';
 import { useT } from '../i18n';
 import { queAparece } from '../buscar/resolver';
@@ -256,6 +256,7 @@ export function BuscarScreen({ navigation }: Props) {
    * prometido.
    */
   const anuncio = useAnuncioRecompensado();
+  useReintentarAlOfrecer(anuncio, conseguido !== null);
 
   // La otra mitad del botón de buscar: la misma cámara junta ingredientes.
   const { hallazgos, juntar } = useIngredientes({

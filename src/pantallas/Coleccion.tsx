@@ -23,7 +23,7 @@ import {
   puedeGirarGratis,
   restanteMs,
 } from '../juego/ruleta';
-import { useAnuncioRecompensado } from '../anuncios/useAnuncioRecompensado';
+import { useAnuncioRecompensado, useReintentarAlOfrecer } from '../anuncios/useAnuncioRecompensado';
 import { useJuego } from '../juego/store';
 import type { Rutas } from '../navegacion/rutas';
 import { Pantalla } from '../shell/Pantalla';
@@ -227,6 +227,7 @@ export function ColeccionScreen({ navigation }: Props) {
    * delante de un cartel que ya le prometió el premio.
    */
   const anuncio = useAnuncioRecompensado();
+  useReintentarAlOfrecer(anuncio, abierta);
   const gratis = puedeGirarGratis(juego.ultimoGiro);
   const impulso = impulsoVigente(juego.impulso);
 

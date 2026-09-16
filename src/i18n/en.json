@@ -118,14 +118,15 @@
     "verReceta": "see recipe",
     "tenesTodo": "You have everything to make it.",
     "teFaltaAlgo": "You're missing something above.",
-    "pendiente": "What each one does hasn't been decided yet.",
     "renglon": "{nombre}, you have {tenes} of {pide}"
   },
   "ingrediente": {
     "dondeSeEncuentra": "WHERE TO FIND IT",
     "paraQueSirve": "WHAT IT'S FOR",
     "tenes": "You have {cantidad}",
-    "noTenesNinguno": "You have none"
+    "noTenesNinguno": "You have none",
+    "porAhoraEnCualquierLugar": "For now it shows up anywhere: the camera can’t tell yet what it’s looking at.",
+    "ningunaReceta": "No recipe calls for it yet."
   },
   "lugares": {
     "planta": "Plants",

@@ -37,8 +37,8 @@ export const adsDisponible = modulo !== null;
  * menos mala de las dos: sin unidad no hay anuncio, y sin anuncio la app queda
  * trabada sin forma de sumar gemas. Pero ojo, porque esta caida NO SE VE — el
  * video aparece, la gema se suma y todo parece andar, solo que no genera un
- * peso. Por eso el valor vive en `eas.json`, dentro del perfil de produccion:
- * ahi no se puede olvidar, porque va con el perfil.
+ * peso. Por eso el valor vive en las variables de entorno de EAS, en el
+ * entorno `production`: ahi no se puede olvidar, porque va con cada build.
  *
  * Como conseguir la unidad real: AdMob → Apps → Kaurix → Bloques de anuncios
  * → Crear → Bonificado. Devuelve un id con la forma

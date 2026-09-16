@@ -48,24 +48,3 @@ export const RECONOCEDOR_MANDA = false;
  * **Se apaga** para probar el ritmo real, y antes de mandar a testing cerrado.
  */
 export const TODO_CERCA = true;
-
-/**
- * El premio del camino, sin esperar al día siguiente.
- *
- * **Apagado.** Estuvo en `true` para recorrer los siete pasos de un saque sin
- * esperar una semana, y para mirar la escalera con todo encendido mientras se
- * ajustaba cómo se ve. Las dos cosas ya se hicieron.
- *
- * Ahora vale la regla de verdad, que además es la que se quiere ver: **solo el
- * próximo de cada cola se puede tocar**. Los ya cobrados quedan con su tilde a
- * pleno color y los que faltan, apagados. Con el flag encendido los siete se
- * veían cobrables y la escalera perdía el orden.
- *
- * **Este se borra** —él y sus dos `if` en `sendero.ts`— cuando se limpien los
- * flags antes de publicar.
- *
- * **Este se borra** —él y su `if` en `sendero.ts`— cuando se limpien los flags
- * antes de publicar. Queda escrito mientras los otros dos sigan vivos, para que
- * el archivo diga la verdad completa de qué se probó y cómo.
- */
-export const PREMIO_SIEMPRE = false;

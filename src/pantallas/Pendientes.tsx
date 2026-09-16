@@ -9,7 +9,7 @@ import {
   type ImageSourcePropType,
 } from 'react-native';
 
-import { useAnuncioRecompensado } from '../anuncios/useAnuncioRecompensado';
+import { useAnuncioRecompensado, useReintentarAlOfrecer } from '../anuncios/useAnuncioRecompensado';
 import { Conseguido } from '../components/Conseguido';
 import { juegoTerminado } from '../juego/avisos';
 import { useT } from '../i18n';
@@ -88,6 +88,8 @@ export function PendientesScreen() {
    * después no está es peor que no ofrecerlo.
    */
   const anuncio = useAnuncioRecompensado();
+  // Acá el video está a la vista mientras la pantalla está abierta.
+  useReintentarAlOfrecer(anuncio, true);
 
 
   /** Lo que salió al reclamar, mientras se anuncia. */

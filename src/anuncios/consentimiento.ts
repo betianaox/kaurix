@@ -29,6 +29,25 @@ import { ads } from './publicidad';
  * Nadie se queda sin gemas por no aceptar.
  */
 
+/**
+ * Cuánto se espera la consulta de red del UMP antes de seguir sin ella.
+ *
+ * Tres segundos: desde fuera de Europa contesta en menos de uno, y con red
+ * mala esperar más no cambia el resultado, solo retrasa el video.
+ */
+const ESPERA_CONSULTA_MS = 3000;
+
+/**
+ * Espera una promesa hasta un plazo. No la cancela —no se puede— pero deja de
+ * esperarla: si contesta tarde, el SDK se queda con el dato igual.
+ */
+function conPlazo<T>(promesa: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([
+    promesa,
+    new Promise<null>((resolver) => setTimeout(() => resolver(null), ms)),
+  ]);
+}
+
 /** Si algo falla, se sigue igual: sin anuncios personalizados, pero sin trabar. */
 type Resultado = { pudo: boolean; error?: string };
 
@@ -61,11 +80,22 @@ async function pedir(): Promise<Resultado> {
 
     // En desarrollo se puede fingir estar en Europa para poder ver el
     // formulario desde acá. Ver `DISPOSITIVOS_DE_PRUEBA`.
-    await AdsConsent.requestInfoUpdate(prueba);
+    //
+    // CON PLAZO, porque es una llamada de red y nadie está mirando: si Google
+    // no contesta, esperar más solo deja el botón del video muerto. Vencido el
+    // plazo se sigue con lo que el SDK ya sepa.
+    await conPlazo(AdsConsent.requestInfoUpdate(prueba), ESPERA_CONSULTA_MS);
 
-    // Muestra el formulario SOLO si Google dice que corresponde. Si no,
-    // no hace nada y vuelve enseguida.
-    await AdsConsent.loadAndShowConsentFormIfRequired();
+    // El formulario, en cambio, NO LLEVA PLAZO: si está en pantalla hay una
+    // persona leyendo y decidiendo. Cortarla a los tres segundos para pedir el
+    // anuncio igual es exactamente lo que Google no permite.
+    //
+    // Por eso se pregunta antes si hay formulario: sin él no hay nada que
+    // esperar, y con él se espera lo que haga falta.
+    const { isConsentFormAvailable } = await AdsConsent.getConsentInfo();
+    if (isConsentFormAvailable) {
+      await AdsConsent.loadAndShowConsentFormIfRequired();
+    }
 
     if (__DEV__) {
       const info = await AdsConsent.getConsentInfo();
@@ -84,9 +114,9 @@ async function pedir(): Promise<Resultado> {
 
     return { pudo: true };
   } catch (e) {
-    // Sin internet no se puede resolver, y eso NO puede trabar la app: las
-    // lecturas funcionan sin conexión y el consejo del día también. Se sigue,
-    // y en la próxima sesión se vuelve a intentar.
+    // Sin internet no se puede resolver, y eso NO puede trabar la app: la
+    // cámara, la cocina y el bolso andan sin conexión. Se sigue, y en la
+    // próxima sesión se vuelve a intentar.
     const error = e instanceof Error ? e.message : String(e);
     console.warn('[ads] no se pudo resolver el consentimiento:', error);
     // Se limpia para que el próximo intento no reciba este fracaso cacheado.
