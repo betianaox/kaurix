@@ -588,7 +588,7 @@ function Anuncio({
         varios={cosas}
         texto={t('avisos.ganaste')}
         tinte={tinte}
-        aceptar={t('conseguido.aceptar')}
+        aceptar={t('conseguido.reclamar')}
         onAceptar={onCerrar}
       />
     );
@@ -609,7 +609,7 @@ function Anuncio({
         cosa: t(claveDe(receta)),
       })}
       tinte={tinte}
-      aceptar={t('conseguido.aceptar')}
+      aceptar={t('conseguido.reclamar')}
       onAceptar={onCerrar}
     />
   );

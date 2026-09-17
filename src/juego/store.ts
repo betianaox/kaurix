@@ -322,7 +322,11 @@ export const useJuego = create<Estado>((set, get) => {
     nacer(criatura) {
       aplicar((j) => {
         if (!hayLugar(j) || j.crianza.some((c) => c.criatura === criatura)) return j;
-        return { ...j, crianza: [...j.crianza, recienNacida(criatura)] };
+        return {
+          ...j,
+          crianza: [...j.crianza, recienNacida(criatura)],
+          ultimaCriatura: new Date().toISOString(),
+        };
       });
     },
 

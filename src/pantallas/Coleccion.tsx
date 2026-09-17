@@ -499,6 +499,7 @@ export function ColeccionScreen({ navigation }: Props) {
           ganasteIngrediente: t('ruleta.ganasteIngrediente'),
           ganasteBicho: t('ruleta.ganasteBicho'),
           aceptar: t('conseguido.aceptar'),
+          reclamar: t('conseguido.reclamar'),
           multiplicar: t('conseguido.multiplicar'),
           rechazar: t('conseguido.rechazar'),
         }}

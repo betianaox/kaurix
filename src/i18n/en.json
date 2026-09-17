@@ -65,7 +65,10 @@
     "igualBusca": "Keep looking for ingredients anyway.",
     "encontrasteIngrediente": "You found {cantidad} {cosa}!",
     "encontrasteBicho": "You found {bicho}!",
-    "daleDeComer": "Feed it so it grows"
+    "daleDeComer": "Feed it so it grows",
+    "modoBichos": "Look for creatures",
+    "modoIngredientes": "Look for ingredients",
+    "hayBicho": "There is a creature to find. Tap to look for it."
   },
   "inventario": {
     "titulo": "SATCHEL",
@@ -125,8 +128,7 @@
     "paraQueSirve": "WHAT IT'S FOR",
     "tenes": "You have {cantidad}",
     "noTenesNinguno": "You have none",
-    "porAhoraEnCualquierLugar": "For now it shows up anywhere: the camera can’t tell yet what it’s looking at.",
-    "ningunaReceta": "No recipe calls for it yet.",
+    "ningunaReceta": "No recipe uses it.",
     "apuntaA": "Point the camera at the real thing:",
     "compartenAzar": "The camera can't tell these apart: which one you get is luck.",
     "compartenColor": "The camera can't tell these apart: you get this one if what you see is {color}.",
@@ -203,9 +205,6 @@
     "ganaste": "Daily reward!",
     "cuantas": "{cosa} ×{cuantos}",
     "final": "END OF THE GAME"
-  },
-  "enObra": {
-    "encabezado": "Under construction"
   },
   "ingredientes": {
     "albahaca": "Basil",
@@ -364,6 +363,7 @@
   },
   "conseguido": {
     "aceptar": "Accept",
+    "reclamar": "Claim",
     "multiplicar": "Triple it",
     "rechazar": "Decline"
   },

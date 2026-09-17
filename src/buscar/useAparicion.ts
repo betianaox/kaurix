@@ -107,6 +107,28 @@ export const CERCA = 0.75;
  */
 const LECTURAS_CONGELADAS = 75;
 
+/**
+ * Cuánto tarda en aparecer la criatura, en milisegundos: un minuto y medio.
+ *
+ * Vale para los dos motores y también en desarrollo. Sin esto, en deriva la
+ * criatura estaba en pantalla apenas se entraba a la cámara, y con sensores
+ * alcanzaba con girar un poco: encontrarla no costaba nada. La espera es lo que
+ * la hace un hallazgo.
+ *
+ * Cuenta solo el tiempo con la cámara en modo bichos, y no se pierde al
+ * cambiar de modo ni al salir de la cámara y volver.
+ */
+const ESPERA_ANTES_DE_APARECER = 90_000;
+
+/**
+ * Lo que le falta a cada espera para terminar, por su clave, en milisegundos.
+ *
+ * Vive fuera del hook para sobrevivir a salir de la cámara y volver a entrar:
+ * si la espera empezara de cero en cada entrada, quien entra y sale a ver si ya
+ * está no la encontraría nunca. Dura mientras la app esté abierta.
+ */
+const ESPERAS = new Map<string, number>();
+
 /** Debajo de esto dos lecturas se consideran la misma. */
 const EPSILON = 1e-7;
 
@@ -144,6 +166,11 @@ type Opciones = {
    * —un intento fallido, la eclosión—: no corresponde que se aleje justo ahí.
    */
   congelado?: boolean;
+  /**
+   * De quién es la espera. Con la misma clave, salir de la cámara y volver a
+   * entrar sigue la espera donde quedó. Ver `ESPERAS`.
+   */
+  clave?: string;
 };
 
 export type Aparicion = {
@@ -168,6 +195,8 @@ export type Aparicion = {
    * saberlo. Va sobre un `Animated.View`, que acepta los dos.
    */
   estiloPosicion: object;
+  /** TEMPORAL, para probar: milisegundos que faltan para que aparezca. */
+  faltaParaAparecer: number;
   /** Vuelve a empezar con otra criatura: nueva dirección, otra vez lejos. */
   reiniciar: () => void;
 };
@@ -192,6 +221,7 @@ export function useAparicion({
   tamano,
   dificultad = 1,
   congelado = false,
+  clave,
 }: Opciones): Aparicion {
   /**
    * La dificultad se lee por referencia y no directo.
@@ -208,6 +238,15 @@ export function useAparicion({
 
   const [motor, setMotor] = useState<Motor>('probando');
   const [listo, setListo] = useState(false);
+  /**
+   * Si ya pasó la espera y la criatura puede aparecer. Ver
+   * `ESPERA_ANTES_DE_APARECER`. Mientras no, los motores corren igual pero la
+   * criatura no se dibuja ni se acerca.
+   */
+  const [habilitada, setHabilitada] = useState(false);
+  // TEMPORAL, para probar: cuánto falta, refrescado cada segundo.
+  const [falta, setFalta] = useState(ESPERA_ANTES_DE_APARECER);
+  const habilitadaRef = useRef(false);
   const [offset, setOffset] = useState({ dYaw: 0, dPitch: 0 });
   const [cercania, setCercania] = useState(0);
   const [generacion, setGeneracion] = useState(0);
@@ -263,6 +302,38 @@ export function useAparicion({
       }
     };
   }, [activo]);
+
+  /**
+   * La espera antes de que aparezca.
+   *
+   * Corre solo mientras el hook está activo: si se sale del modo bichos o de la
+   * cámara, se guarda lo que faltaba en `ESPERAS` y al volver sigue desde ahí.
+   */
+  useEffect(() => {
+    if (!activo || habilitadaRef.current) return;
+    const llave = clave ?? '';
+    const falta = ESPERAS.get(llave) ?? ESPERA_ANTES_DE_APARECER;
+    const habilitar = () => {
+      ESPERAS.set(llave, 0);
+      habilitadaRef.current = true;
+      setHabilitada(true);
+    };
+    if (falta <= 0) {
+      habilitar();
+      return;
+    }
+    const inicio = Date.now();
+    const reloj = setTimeout(habilitar, falta);
+    setFalta(falta);
+    const cuenta = setInterval(() => setFalta(Math.max(0, falta - (Date.now() - inicio))), 1000);
+    return () => {
+      clearTimeout(reloj);
+      clearInterval(cuenta);
+      if (!habilitadaRef.current) {
+        ESPERAS.set(llave, Math.max(0, falta - (Date.now() - inicio)));
+      }
+    };
+  }, [activo, clave, generacion]);
 
   // Elige el motor según lo que el dispositivo sepa hacer.
   useEffect(() => {
@@ -356,7 +427,8 @@ export function useAparicion({
       const enElCentro =
         Math.abs(px - width / 2) / width < 0.28 && Math.abs(py - height / 2) / height < 0.24;
 
-      if (!congeladoRef.current) {
+      // Mientras dura la espera no se acerca: todavía no apareció.
+      if (!congeladoRef.current && habilitadaRef.current) {
         // La dificultad divide lo que se acerca, no lo que se aleja: lo que
         // cambia entre un bicho y otro es cuánto hay que seguirlo, no cuánto
         // castiga perderlo de vista. Dividiendo los dos, un bicho difícil sería
@@ -428,7 +500,7 @@ export function useAparicion({
     // que valga la pena esperarla.
     let destino = 0.8;
     const profundidad = setInterval(() => {
-      if (congeladoRef.current) return;
+      if (congeladoRef.current || !habilitadaRef.current) return;
       if (Math.abs(cercaniaRef.current - destino) < 0.04) {
         destino = 0.25 + Math.random() * 0.75;
       }
@@ -467,8 +539,11 @@ export function useAparicion({
   // sentido preguntarse si está centrada.
   const enDeriva = motor === 'deriva';
 
+  // Lo que ve quien usa esto: lista y además pasada la espera.
+  const visible = listo && habilitada;
+
   const aLaVista =
-    listo &&
+    visible &&
     (enDeriva ||
       (posX + cw * asomo < width &&
         posX + cw * (1 - asomo) > 0 &&
@@ -476,7 +551,7 @@ export function useAparicion({
         posY + ch * (1 - asomo) > 0));
 
   const centrada =
-    listo &&
+    visible &&
     (enDeriva ||
       (Math.abs(posX + cw / 2 - width / 2) / width < 0.28 &&
         Math.abs(posY + ch / 2 - height / 2) / height < 0.24));
@@ -486,6 +561,8 @@ export function useAparicion({
     : { left: posX, top: posY };
 
   function reiniciar() {
+    habilitadaRef.current = false;
+    setHabilitada(false);
     calibrado.current = false;
     cercaniaRef.current = 0;
     visibleRef.current = 0;
@@ -499,7 +576,8 @@ export function useAparicion({
 
   return {
     motor,
-    listo,
+    listo: visible,
+    faltaParaAparecer: habilitada ? 0 : falta,
     cercania,
     profundidad,
     centrada,

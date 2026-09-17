@@ -65,7 +65,10 @@
     "igualBusca": "Continua a cercare ingredienti.",
     "encontrasteIngrediente": "Hai trovato {cantidad} {cosa}!",
     "encontrasteBicho": "Hai trovato {bicho}!",
-    "daleDeComer": "Dagli da mangiare per farlo crescere"
+    "daleDeComer": "Dagli da mangiare per farlo crescere",
+    "modoBichos": "Cerca creature",
+    "modoIngredientes": "Cerca ingredienti",
+    "hayBicho": "C'è una creatura da trovare. Tocca per cercarla."
   },
   "inventario": {
     "titulo": "SACCA",
@@ -125,8 +128,7 @@
     "paraQueSirve": "A COSA SERVE",
     "tenes": "Ne hai {cantidad}",
     "noTenesNinguno": "Non ne hai nessuno",
-    "porAhoraEnCualquierLugar": "Per ora compare ovunque: la fotocamera non distingue ancora cosa sta guardando.",
-    "ningunaReceta": "Nessuna ricetta lo richiede ancora.",
+    "ningunaReceta": "Nessuna ricetta lo usa.",
     "apuntaA": "Punta la fotocamera sulla cosa vera:",
     "compartenAzar": "La fotocamera non le distingue: quale esce lo decide la fortuna.",
     "compartenColor": "La fotocamera non le distingue: esce questa se ciò che vedi è di colore {color}.",
@@ -203,9 +205,6 @@
     "ganaste": "Premio del giorno!",
     "cuantas": "{cosa} ×{cuantos}",
     "final": "FINE DEL GIOCO"
-  },
-  "enObra": {
-    "encabezado": "In lavorazione"
   },
   "ingredientes": {
     "albahaca": "Basilico",
@@ -364,6 +363,7 @@
   },
   "conseguido": {
     "aceptar": "Accetta",
+    "reclamar": "Riscatta",
     "multiplicar": "Moltiplica x3",
     "rechazar": "Rifiuta"
   },

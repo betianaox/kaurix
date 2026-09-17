@@ -11,6 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { porId, type Criatura, type Pieza } from '../art';
 import { RECONOCEDOR_MANDA } from '../flags';
@@ -24,6 +25,7 @@ import { useReconocer } from '../buscar/useReconocer';
 import { CADA, useIngredientes } from '../buscar/useIngredientes';
 import { CriaturaView, medida } from '../components/CriaturaView';
 import { juegoTerminado } from '../juego/avisos';
+import { esperaParaCriatura } from '../juego/crianza';
 import { hayLugar, useJuego } from '../juego/store';
 import { colorDeNivel, criaturaABuscar, dificultadDe, fallosAntesDeRomper } from '../juego/datos';
 import type { Rutas } from '../navegacion/rutas';
@@ -42,12 +44,36 @@ import { colors, radius, spacing } from '../theme';
  * acá es la imagen real con las cosas apoyadas encima, y cualquier texto sobre
  * eso es la app hablando por arriba de la escena que se armó.
  *
- * Lo único que queda es el botón de cerrar. Lo que decían esos renglones va a
- * volver de otra forma, fuera de la cámara.
+ * Lo único que queda es el botón de cerrar, el aviso de bicho y el selector de
+ * abajo. Lo que decían esos renglones va a volver de otra forma, fuera de la
+ * cámara.
+ *
+ * ## Dos modos, y nunca los dos a la vez
+ *
+ * La cámara sirve para dos cosas —encontrar una criatura y juntar
+ * ingredientes— y **se elige cuál abajo**. Antes corrían juntas y se pisaban:
+ * cada vez que salía un ingrediente la criatura se escondía, y al volver
+ * reiniciaba la animación y el lugar. Si justo estaba rompiendo el huevo, la
+ * eclosión se cortaba y el bicho aparecía nacido sin que se viera nada.
+ *
+ * Con un modo por vez, cada uno tiene la pantalla entera:
+ *
+ * - **Bichos**: corren los sensores y la criatura. Ni ingredientes ni fotos del
+ *   reconocedor.
+ * - **Ingredientes**: corren el reconocedor y los hallazgos.
+ *
+ * Si hay una criatura para encontrar, el aviso de arriba lo dice en los dos
+ * modos; en ingredientes, tocarlo pasa a bichos.
  *
  * Toda la parte difícil —dónde aparece, cómo se acerca, qué motor corre— vive en
  * `useAparicion`. Acá solo está la secuencia del huevo y qué pasa cuando sale.
  */
+
+type Modo = 'bicho' | 'ingredientes';
+
+const ARTE_BICHOS = require('../../assets/ui/coleccion.webp');
+const ARTE_INGREDIENTES = require('../../assets/ui/inventario.webp');
+
 
 type Props = NativeStackScreenProps<Rutas, 'Buscar'>;
 
@@ -79,20 +105,6 @@ type Fase = 'huevo' | 'falla' | 'eclosion' | 'nacido';
  * Con los 160 de antes quedaba en 140 y se leía casi igual de grande que el
  * bicho.
  */
-/**
- * Cada cuánto aparece un ingrediente mientras hay un bicho dado vuelta.
- *
- * Más del triple de lo normal. Los dos no se dibujan a la vez —abajo la
- * criatura se esconde mientras hay un hallazgo en pantalla— así que este número
- * es, en la práctica, cuánto del tiempo le toca a cada uno: con esto la
- * criatura tiene la pantalla la mayor parte del rato y el ingrediente pasa cada
- * tanto.
- *
- * Al ritmo normal el ingrediente estaría en pantalla más de la mitad del
- * tiempo y buscar la criatura se volvería esperar a que se despeje.
- */
-const CADA_CON_BICHO = 12000;
-
 const HALLAZGO = 112;
 
 /** Ancho de la criatura como proporción del ancho de pantalla. */
@@ -136,26 +148,80 @@ export function BuscarScreen({ navigation }: Props) {
    */
   const terminado = juegoTerminado(juego);
   const tinte = colorDeNivel(juego.nivel);
+  const insets = useSafeAreaInsets();
 
-  // Se elige una sola vez al entrar: el sorteo no se puede rehacer en cada
-  // render, o la criatura cambiaría sola mientras la estás mirando.
+  /**
+   * La hora, para saber si ya pasó la espera entre criaturas.
+   *
+   * Se refresca cada quince segundos: con la cámara abierta en modo
+   * ingredientes, la espera puede terminar y el aviso de bicho tiene que
+   * aparecer sin salir y volver a entrar.
+   */
+  const [ahora, setAhora] = useState(() => Date.now());
   useEffect(() => {
-    if (lleno || terminado) return;
+    const reloj = setInterval(() => setAhora(Date.now()), 15000);
+    return () => clearInterval(reloj);
+  }, []);
+
+  const espera = esperaParaCriatura(juego.ultimaCriatura, ahora);
+  const quedanPorEncontrar =
+    criaturaABuscar(juego.completadas, juego.crianza.map((c) => c.criatura)) !== null;
+
+  /**
+   * Si hay una criatura para buscar ahora: queda alguna, hay lugar para criarla
+   * y ya pasó la espera desde la última.
+   *
+   * Cuando no, **no se explica por qué** sobre la cámara —ni cuánto falta para
+   * la próxima—: el aviso de arriba simplemente no aparece. Lo que dice la
+   * cámara es si hay bicho, no un reloj.
+   */
+  const sinBicho = terminado || !quedanPorEncontrar || lleno || espera > 0;
+
+  const [modo, setModo] = useState<Modo>(() => (sinBicho ? 'ingredientes' : 'bicho'));
+
+  /**
+   * La criatura se sortea cuando hay una para buscar, y una sola vez: el sorteo
+   * no se puede rehacer en cada render, o cambiaría sola mientras la estás
+   * mirando.
+   *
+   * Depende de `sinBicho` y no corre solo al entrar porque la espera puede
+   * terminar con la cámara abierta.
+   */
+  useEffect(() => {
+    if (sinBicho || criatura) return;
     const id = criaturaABuscar(
       juego.completadas,
       juego.crianza.map((c) => c.criatura)
     );
     const elegida = id ? porId(id) : null;
-    if (!elegida) return;
+    if (!elegida) {
+      // Tocaba una pero no tiene arte: que no quede la cámara en modo bichos
+      // mirando la nada.
+      setModo('ingredientes');
+      return;
+    }
 
     setCriatura(elegida);
     fallosRestantes.current = elegida.falla ? fallosAntesDeRomper(elegida.id) : 0;
     const inicial: Fase = elegida.huevo ? 'huevo' : 'nacido';
     faseRef.current = inicial;
     setFase(inicial);
-    // Sin dependencias a propósito: se sortea al entrar y no se vuelve a tocar.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sinBicho]);
+
+  /**
+   * Cambiar de modo.
+   *
+   * Mientras el huevo intenta romperse no se cambia: es el momento que no hay
+   * que cortar. A bichos se puede pasar siempre, haya o no: si hay uno lo dice
+   * el aviso de arriba, no el selector.
+   */
+  function elegirModo(nuevo: Modo) {
+    if (nuevo === modo) return;
+    if (fase === 'falla' || fase === 'eclosion') return;
+    void Haptics.selectionAsync();
+    setModo(nuevo);
+  }
 
   const size = Math.round(width * ANCHO);
 
@@ -192,12 +258,15 @@ export function BuscarScreen({ navigation }: Props) {
   // Mientras pasa algo que hay que mirar, la distancia se congela: no
   // corresponde que se aleje justo en ese momento.
   const aparicion = useAparicion({
-    activo: !!permiso?.granted && !!criatura,
+    activo: !!permiso?.granted && !!criatura && modo === 'bicho',
     tamano,
     // Cuánto cuesta encontrar a esta: el tutorial aparece encima casi enseguida
     // y las demás varían. Ver `dificultadDe`.
     dificultad: criatura ? dificultadDe(criatura.id) : 1,
     congelado: fase === 'falla' || fase === 'eclosion',
+    // La espera es de 'la próxima criatura', no de una en particular: al
+    // entrar se sortea cuál, y sin esto cada entrada empezaría de cero.
+    clave: juego.ultimaCriatura ?? 'primera',
   });
 
   /**
@@ -210,11 +279,12 @@ export function BuscarScreen({ navigation }: Props) {
    *
    * Con `RECONOCEDOR_MANDA` apagado ni siquiera arranca el reloj: no se saca
    * ninguna foto, no se gasta batería y la imagen no se toca. Un reconocedor
-   * mirando para nada mientras se prueba otra cosa es puro costo.
+   * mirando para nada mientras se prueba otra cosa es puro costo. Por lo mismo,
+   * en modo bichos tampoco mira: no hay ingredientes que decidir.
    */
   const { lectura, disponible } = useReconocer(
     camara,
-    !!permiso?.granted && RECONOCEDOR_MANDA
+    !!permiso?.granted && RECONOCEDOR_MANDA && modo === 'ingredientes'
   );
 
   /**
@@ -265,20 +335,9 @@ export function BuscarScreen({ navigation }: Props) {
      * hallazgo ya esperando convierte el momento de encontrar algo en una cinta
      * que no para.
      */
-    // Y nada cuando el juego terminó. Ver `terminado`.
-    activo: !!permiso?.granted && !conseguido && !terminado,
-    /**
-     * Con un bicho dado vuelta, más espaciados.
-     *
-     * **Nunca se dibujan los dos a la vez**: mientras hay un ingrediente en
-     * pantalla la criatura se esconde, y vuelve cuando el ingrediente se va o
-     * lo juntás. Se turnan.
-     *
-     * Por eso este número no es solo un ritmo: es cuánto del tiempo le toca a
-     * cada uno. Seguir a la criatura es lo principal y se queda con la mayor
-     * parte; el ingrediente pasa cada tanto y devuelve la pantalla.
-     */
-    cada: criatura ? CADA_CON_BICHO : CADA,
+    // Y nada cuando el juego terminó —ver `terminado`— ni en modo bichos.
+    activo: !!permiso?.granted && !conseguido && !terminado && modo === 'ingredientes',
+    cada: CADA,
     /**
      * Qué aparece, decidido en el momento de aparecer y no antes: entre que se
      * abre la pantalla y que sale un ingrediente pasan segundos, y lo que la
@@ -407,10 +466,11 @@ export function BuscarScreen({ navigation }: Props) {
         animateShutter={false}
       />
 
-      {criatura && pieza && !conseguido && hallazgos.length === 0 ? (
-        // Se mantiene montada aunque esté fuera de cuadro: desmontarla reinicia
-        // la animación, y con el temblor de la brújula eso se ve como un
-        // parpadeo constante.
+      {modo === 'bicho' && criatura && pieza ? (
+        // Se mantiene montada aunque esté fuera de cuadro, y también con el
+        // cartel encima: desmontarla reinicia la animación, y con el temblor de
+        // la brújula eso se ve como un parpadeo constante. Antes se desmontaba
+        // cada vez que salía un ingrediente, y así se cortaba la eclosión.
         <Animated.View
           style={[
             estilos.criatura,
@@ -471,16 +531,18 @@ export function BuscarScreen({ navigation }: Props) {
         </Pressable>
       ))}
 
-      <View style={estilos.hud} pointerEvents="box-none">
+      <View
+        style={[estilos.hud, { paddingTop: insets.top + spacing.sm }]}
+        pointerEvents="box-none"
+      >
         {/* Arriba: el aviso de bicho a la izquierda, el cerrar a la derecha. */}
         <View style={estilos.arriba} pointerEvents="box-none">
           {/*
             HAY UN BICHO DADO VUELTA POR ACÁ.
 
-            Aparece cuando el juego te asignó una criatura, esté cerca o lejos
-            —no mide distancia, avisa que hay algo que buscar—. Sin eso, salir a
-            caminar veinte metros es un acto de fe: no hay forma de saber si
-            estás buscando algo o si esta vuelta no tocó ninguna.
+            Siempre que haya una criatura para encontrar, en los dos modos: es
+            lo que dice que hay algo que buscar. Sin criatura no se muestra,
+            porque mentiría. En modo ingredientes, tocarlo pasa a bichos.
 
             **Sin palabras**, que es la regla de esta pantalla: sobre la imagen
             real no va texto. Se muestra la silueta de la criatura, teñida del
@@ -492,8 +554,15 @@ export function BuscarScreen({ navigation }: Props) {
             pulsa alrededor y la silueta se queda quieta.
           */}
           {criatura && !conseguido ? (
-            <View style={estilos.avisoBicho} pointerEvents="none">
+            <Pressable
+              onPress={() => elegirModo('bicho')}
+              hitSlop={16}
+              style={estilos.avisoBicho}
+              accessibilityRole="button"
+              accessibilityLabel={t('buscar.hayBicho')}
+            >
               <Animated.View
+                pointerEvents="none"
                 style={[
                   estilos.avisoAro,
                   { borderColor: tinte, transform: [{ scale: latido }] },
@@ -504,7 +573,7 @@ export function BuscarScreen({ navigation }: Props) {
                 style={[estilos.avisoBichoArte, { tintColor: tinte }]}
                 resizeMode="contain"
               />
-            </View>
+            </Pressable>
           ) : (
             // Sin aviso, el hueco se mantiene igual: sin él, el botón de cerrar
             // se corre de lugar según haya bicho o no.
@@ -521,6 +590,54 @@ export function BuscarScreen({ navigation }: Props) {
             <Cerrar lado={42} />
           </Pressable>
         </View>
+
+        {/* TEMPORAL, para probar: cuánto falta para que aparezca la criatura. */}
+        {__DEV__ && modo === 'bicho' && criatura && aparicion.faltaParaAparecer > 0 ? (
+          <Text style={estilos.pruebaReloj}>
+            {Math.floor(aparicion.faltaParaAparecer / 60000)}:
+            {String(Math.floor((aparicion.faltaParaAparecer % 60000) / 1000)).padStart(2, '0')}
+          </Text>
+        ) : null}
+
+        {/*
+          ABAJO: QUÉ SE ESTÁ BUSCANDO.
+
+          Dos fichas, las mismas que el pie de la app usa para la colección y
+          el bolso: se reconocen sin leer. La elegida lleva un borde del color
+          de la vuelta. Las dos se pueden elegir siempre y no hay texto: si hay
+          bicho lo dice el aviso de arriba, y si no, nada.
+        */}
+        {!conseguido ? (
+          <View style={[estilos.abajo, { paddingBottom: insets.bottom }]} pointerEvents="box-none">
+            <View style={estilos.selector}>
+              {(
+                [
+                  { es: 'bicho', arte: ARTE_BICHOS, etiqueta: t('buscar.modoBichos') },
+                  { es: 'ingredientes', arte: ARTE_INGREDIENTES, etiqueta: t('buscar.modoIngredientes') },
+                ] as const
+              ).map((o) => {
+                const elegido = modo === o.es;
+                return (
+                  <Pressable
+                    key={o.es}
+                    onPress={() => elegirModo(o.es)}
+                    hitSlop={6}
+                    style={[estilos.opcion, elegido && { borderColor: tinte }]}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: elegido }}
+                    accessibilityLabel={o.etiqueta}
+                  >
+                    <Image
+                      source={o.arte}
+                      style={estilos.opcionArte}
+                      resizeMode="contain"
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+        ) : null}
       </View>
 
       {/*
@@ -538,7 +655,7 @@ export function BuscarScreen({ navigation }: Props) {
             })}
             tinte={tinte}
             sobreCamara
-            aceptar={t('conseguido.aceptar')}
+            aceptar={t('conseguido.reclamar')}
             onAceptar={() => setConseguido(null)}
             multiplicar={{
               texto: t('conseguido.multiplicar'),
@@ -627,6 +744,47 @@ const estilos = StyleSheet.create({
     alignItems: 'flex-start',
   },
   salir: { padding: 4 },
+
+  abajo: { alignItems: 'center', gap: spacing.sm },
+  // TEMPORAL, para probar.
+  pruebaReloj: {
+    position: 'absolute',
+    top: '40%',
+    alignSelf: 'center',
+    color: '#fff',
+    fontSize: 28,
+    fontVariant: ['tabular-nums'],
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    paddingHorizontal: 14,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  /**
+   * El selector: una píldora de papel con las dos fichas.
+   *
+   * Papel casi opaco: esto se toca, y sobre una imagen oscura las fichas tienen
+   * que leerse enteras. La elegida se marca con un borde del color del ciclo
+   * alrededor de la ficha, sin rellenar nada.
+   */
+  selector: {
+    flexDirection: 'row',
+    gap: 5,
+    padding: 5,
+    borderRadius: 32,
+    backgroundColor: 'rgba(244,237,223,0.88)',
+  },
+  opcion: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 4,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Llena el hueco del borde: sin aire entre el aro y la ficha.
+  opcionArte: { width: 42, height: 42 },
 
   /**
    * El aviso de que hay un bicho.

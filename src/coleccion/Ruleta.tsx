@@ -174,6 +174,8 @@ export function RuletaGrande({
     ganasteIngrediente: string;
     ganasteBicho: string;
     aceptar: string;
+    /** El botón del premio de ingredientes: ya está sumado, solo se reclama. */
+    reclamar: string;
     multiplicar: string;
     rechazar: string;
   };
@@ -434,7 +436,8 @@ export function RuletaGrande({
             arte={premio.arte}
             texto={textoDelPremio(premio, textos)}
             tinte={tinte}
-            aceptar={textos.aceptar}
+            // El impulso se acepta —puede pisar otro—; el ingrediente se reclama.
+            aceptar={premio.cantidad === null ? textos.aceptar : textos.reclamar}
             onAceptar={() => {
               // El bicho es lo único que hay que aceptar; el ingrediente ya está
               // sumado desde que frenó la rueda y acá solo se cierra.

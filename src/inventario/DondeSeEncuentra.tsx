@@ -2,7 +2,6 @@ import React from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { compartenClase, OBJETIVOS } from '../buscar/objetivos';
-import { RECONOCEDOR_MANDA } from '../flags';
 import { useT } from '../i18n';
 import { LUGARES, type Ingrediente } from '../juego/ingredientes';
 import { RECETAS, claveDe, type Receta } from '../juego/recetas';
@@ -153,11 +152,6 @@ export function DondeSeEncuentra({ ingrediente, cuantos, tinte, onCerrar }: Prop
               </Text>
             </>
           )}
-          {/* Mientras el reconocedor esté apagado, lo de arriba es cómo va a
-              ser, no cómo es: hoy aparece cualquier cosa en cualquier lado. */}
-          {!RECONOCEDOR_MANDA ? (
-            <Text style={estilos.pendiente}>{t('ingrediente.porAhoraEnCualquierLugar')}</Text>
-          ) : null}
 
           <View style={estilos.separador} />
 
@@ -208,5 +202,4 @@ const estilos = StyleSheet.create({
   instruccion: { color: colors.text, fontSize: 14, lineHeight: 20 },
   cosa: { fontSize: 15, lineHeight: 21, letterSpacing: 0.2 },
   sirve: { color: colors.textMuted, fontSize: 12.5, lineHeight: 18 },
-  pendiente: { color: colors.textFaint, fontSize: 11, fontStyle: 'italic' },
 });

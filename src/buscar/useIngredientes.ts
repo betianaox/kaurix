@@ -68,14 +68,7 @@ type Opciones = {
    * que apuntar a una pared blanca no regale ingredientes.
    */
   elegir: () => Ingrediente | null;
-  /**
-   * Cada cuánto aparece uno, si no es el ritmo de siempre.
-   *
-   * Lo usa `Buscar` para espaciarlos mientras hay una criatura dada vuelta: ahí
-   * lo que se está haciendo es seguirla, y un ingrediente cada tres segundos y
-   * medio se lleva el ojo. Espaciados siguen apareciendo, pero como algo que
-   * pasa mientras buscás y no como la otra mitad de la pantalla.
-   */
+  /** Cada cuánto aparece uno, si no es el ritmo de siempre. */
   cada?: number;
   /** Se llama al tocarlo, para guardarlo. */
   onJuntar: (ingrediente: Ingrediente) => void;
@@ -108,11 +101,18 @@ export function useIngredientes({ activo, cada = CADA, elegir, onJuntar }: Opcio
         const nuevo: Hallazgo = {
           id: `${Date.now()}`,
           ingrediente,
-          x: 0.14 + Math.random() * 0.72,
+          // `x` es el centro del dibujo, que mide hasta 135 puntos con la escala
+          // mas grande. Entre 0,25 y 0,75 entra entero hasta en un telefono
+          // angosto; con 0,14 a 0,86 se salia por los costados.
+          x: 0.25 + Math.random() * 0.5,
           // De la mitad para abajo: las cosas están apoyadas en algo, y el
           // suelo de lo que ve la cámara queda en la parte baja del cuadro. Uno
           // flotando en el cielo se lee pegoteado.
-          y: 0.42 + Math.random() * 0.34,
+          //
+          // Hasta 0,66 y no más abajo: `y` es el borde de arriba del dibujo, y
+          // por debajo está el selector de modo de la cámara. Más abajo, el
+          // ingrediente cae detrás de las fichas y no se puede tocar.
+          y: 0.4 + Math.random() * 0.26,
           escala: 0.85 + Math.random() * 0.35,
           giro: -9 + Math.random() * 18,
         };

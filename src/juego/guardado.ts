@@ -134,6 +134,13 @@ export type Guardado = {
   saludado: boolean;
   /** El camino de los días: en qué paso va y cuándo reclamó el último premio. */
   sendero: Sendero;
+  /**
+   * Cuándo se encontró la última criatura, en ISO.
+   *
+   * Entre una y otra tiene que pasar `ESPERA_ENTRE_CRIATURAS`: que haya lugar
+   * para criar no quiere decir que salgan una atrás de la otra.
+   */
+  ultimaCriatura: string | null;
 };
 
 export function partidaNueva(): Guardado {
@@ -152,6 +159,7 @@ export function partidaNueva(): Guardado {
     visto: new Date().toISOString(),
     saludado: false,
     sendero: senderoNuevo(),
+    ultimaCriatura: null,
   };
 }
 
@@ -258,6 +266,8 @@ function completar(j: Guardado): Guardado {
     ultimoGiro: j.ultimoGiro ?? null,
     cambiosDeRuleta: j.cambiosDeRuleta ?? 0,
     impulso: j.impulso ?? null,
+    // Sin dato, la próxima se puede buscar ya: no hay de qué esperar.
+    ultimaCriatura: j.ultimaCriatura ?? null,
     crianza: (j.crianza ?? []).map((c) => ({ ...c, entregado: c.entregado ?? {} })),
     completadas: j.completadas ?? [],
     cartas: j.cartas ?? [],

@@ -65,7 +65,10 @@
     "igualBusca": "Sigue buscando ingredientes igual.",
     "encontrasteIngrediente": "¡Encontraste {cantidad} {cosa}!",
     "encontrasteBicho": "¡Encontraste a {bicho}!",
-    "daleDeComer": "Dale de comer para que crezca"
+    "daleDeComer": "Dale de comer para que crezca",
+    "modoBichos": "Buscar criaturas",
+    "modoIngredientes": "Buscar ingredientes",
+    "hayBicho": "Hay una criatura para encontrar. Toca para buscarla."
   },
   "inventario": {
     "titulo": "BOLSO",
@@ -125,8 +128,7 @@
     "paraQueSirve": "PARA QUÉ SIRVE",
     "tenes": "Tienes {cantidad}",
     "noTenesNinguno": "No tienes ninguno",
-    "porAhoraEnCualquierLugar": "Por ahora aparece en cualquier lugar: la cámara todavía no distingue qué está mirando.",
-    "ningunaReceta": "Todavía no lo pide ninguna receta.",
+    "ningunaReceta": "Ninguna receta lo usa.",
     "apuntaA": "Apunta la cámara a lo real:",
     "compartenAzar": "La cámara no las distingue: cuál sale, lo decide la suerte.",
     "compartenColor": "La cámara no las distingue: sale esta si lo que ves es de color {color}.",
@@ -203,9 +205,6 @@
     "ganaste": "¡Premio del día!",
     "cuantas": "{cosa} ×{cuantos}",
     "final": "FIN DEL JUEGO"
-  },
-  "enObra": {
-    "encabezado": "En obra"
   },
   "ingredientes": {
     "albahaca": "Albahaca",
@@ -364,6 +363,7 @@
   },
   "conseguido": {
     "aceptar": "Aceptar",
+    "reclamar": "Reclamar",
     "multiplicar": "Multiplicar x3",
     "rechazar": "Rechazar"
   },

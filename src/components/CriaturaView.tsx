@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 
 import { criaturas, type Pieza } from '../art';
-import { colors, elements, radius, type ElementId } from '../theme';
+import { elements, radius, type ElementId } from '../theme';
 
 type Props = {
   /** Ancho de referencia en puntos. Lo real sale de la escala de la pieza. */
@@ -61,7 +61,6 @@ export function CriaturaView({
         ]}
       >
         <Text style={[styles.nombre, { color: el.color }]}>{nombre}</Text>
-        <Text style={styles.aviso}>el arte no cargó en este equipo</Text>
       </View>
     );
   }
@@ -125,5 +124,4 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   nombre: { fontSize: 18, textAlign: 'center' },
-  aviso: { color: colors.text, fontSize: 13, textAlign: 'center' },
 });
