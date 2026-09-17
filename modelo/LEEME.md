@@ -2,71 +2,132 @@
 
 Acá vive lo que hace falta para entrenar el modelo propio de Kaurix: qué tiene
 que aprender, de dónde salen las fotos y cómo se arma el archivo que va adentro
-de la app.
+de la app. Todo corre en esta computadora, sin Colab.
 
 ## Qué hay
 
 | | |
 |---|---|
-| `clases.json` | Las 55 clases y de qué etiqueta de Open Images sale cada una. |
-| `entrenar.ipynb` | El cuaderno de Colab: baja, entrena y exporta. |
+| `clases.json` | Las clases: de qué fuentes sale cada una, cómo se la describe para filtrar y qué ingredientes del juego cubre. |
+| `fotos.py` | Junta fotos candidatas de Open Images y de iNaturalist. |
+| `filtrar.py` | Se queda, de las candidatas, con las que de verdad muestran la cosa. |
+| `entrenar.py` | Entrena, exporta el `.tflite` y lo mide con fotos propias. |
 
-El resultado final es un `modelo.tflite` que va a
+El resultado es un `modelo.tflite` que va a
 `modules/reconocedor/android/src/main/assets/`. El módulo nativo lo detecta
-solo y no hay que tocar código: si el archivo está, usa ese; si no, cae en el
-modelo base de ML Kit. Ver `ReconocedorModule.kt`.
+solo: si el archivo está, usa ese; si no, cae en el modelo base de ML Kit. Ver
+`ReconocedorModule.kt`.
 
-## Por qué 55 clases y no 74
+## Cómo se corre
 
-Porque el modelo aprende **lo que se puede ver**. Los veinticinco ingredientes
-que no tienen clase propia no son los que no llegamos a entrenar: son los que no
-se distinguen mirando.
+Dos entornos, a propósito. El de entrenar necesita Python 3.9, porque
+`tflite-support` —lo que escribe los metadatos que ML Kit lee— no tiene versión
+para Windows después de la 0.4.3. El de filtrar usa PyTorch, que sí usa la placa
+de video en Windows; TensorFlow dejó de usarla en Windows después de la 2.10.
 
-- **Despensa (12).** Harina, azúcar y sal son polvo blanco en un frasco. No hay
-  forma de separarlas con una cámara, y entrenar tres clases que se pisan no
-  falla solo en esas tres: ensucia el clasificador entero.
+```sh
+# una vez
+uv venv --python 3.9 .venv
+uv pip install --python .venv/Scripts/python.exe tensorflow==2.15.1 tflite-support==0.4.3 pillow
+uv venv --python 3.11 .venv-clip
+uv pip install --python .venv-clip/Scripts/python.exe torch torchvision --index-url https://download.pytorch.org/whl/cu124
+uv pip install --python .venv-clip/Scripts/python.exe open_clip_torch pillow
+
+# cada vez
+.venv/Scripts/python.exe fotos.py               # horas la primera vez; retoma si se corta
+.venv-clip/Scripts/python.exe filtrar.py        # minutos
+.venv/Scripts/python.exe entrenar.py entrenar   # unos 12 minutos en el procesador
+.venv/Scripts/python.exe entrenar.py exportar
+.venv/Scripts/python.exe entrenar.py propias    # con fotos en propias/<clase>/
+```
+
+Nada de lo que producen va al repo: `cache/` (las listas de Open Images, unos
+10 GB), `candidatas/`, `datos/`, `salida/` y `propias/` están en el
+`.gitignore`.
+
+## Qué aprende, y qué no
+
+El modelo aprende **lo que se puede ver**. Los ingredientes sin clase propia no
+son los que no llegamos a entrenar: son los que no se distinguen mirando, o los
+que no tienen fotos en ningún lado.
+
+- **Despensa (12).** Harina, azúcar y sal son polvo blanco en un frasco.
+  Entrenar tres clases que se pisan ensucia el clasificador entero.
 - **Gemas (9).** Ningún modelo distingue amatista de citrino en la cámara de un
   teléfono. Se resuelven por escena —`piedras`, `ladrillo`, `arena`— y color.
-- **Carne (3 de 7).** El corte, la luz y el envase cambian más que el tipo de
-  carne: una bandeja de picada y una de desmenuzada se parecen más entre sí que
-  dos fotos de la misma picada. Bife, picada y desmenuzada comparten
-  `carne-roja` y el color desempata.
-- **Tofu.** Es un cubo blanco en un envase: sale por `alacena` y color.
-
-El razonamiento largo, ingrediente por ingrediente, está en
-`docs/kaurix-clases-del-modelo.md`, fuera del repo.
+- **Tofu.** Un cubo blanco en un envase: sale por `alacena` y color.
+- **Varias en una clase**, donde la foto no alcanza para separarlas. Lo dice el
+  campo `cubre` de `clases.json`, y el juego rota entre ellas:
+  - `carne-roja`: bife, picada y desmenuzada. El color desempata.
+  - `hoja-verde`: espinaca, kale, lechuga y apio. Casi no hay fotos de cada una
+    por separado, y juntas son la clase general "Leaf vegetable".
+  - `hibisco`: rojo y violeta. Es la misma flor; el color desempata.
+- **Sin fotos suficientes.** Jengibre: menos de treinta usables entre todas las
+  fuentes. Se resuelve por escena y color, como las gemas.
 
 ## De dónde salen las fotos
 
-De **Open Images v7**, que son fotos de gente en escenas reales y no productos
-sobre fondo blanco. Eso importa: un dataset de catálogo entrena un modelo que
-anda en el catálogo y falla en una cocina, que es exactamente donde se juega.
+Tres fuentes, en orden de confianza:
 
-Las 55 clases están verificadas contra el listado real de Open Images: ninguna
-quedó sin correspondencia. Algunas necesitan más de una búsqueda —`carne-roja`
-sale de *Steak* y *Beef*, `alacena` de *Pantry* y *Cupboard*—.
+1. **Open Images v7, verificada por personas.** Fotos de gente en escenas
+   reales, no productos sobre fondo blanco: un dataset de catálogo anda en el
+   catálogo y falla en una cocina, que es donde se juega. Con recuadro, la foto
+   se recorta a la caja —dos recortes por foto como mucho— y se descartan los
+   dibujos.
+2. **Open Images, etiquetada por máquina**, solo con confianza de 0,9 o más.
+   Muchas más fotos y con errores.
+3. **iNaturalist**, solo fotos CC0 o CC-BY. Plantas donde crecen: sirven para
+   hierbas y flores, que el juego busca justamente en plantas, y de relleno
+   para frutas que casi no están en Open Images.
 
-**22 de las 55 tienen recuadro** y ahí la foto se recorta a la caja, así el
-objeto llena el cuadro como lo ve la cámara cuando le apuntás. Las otras 33 van
-enteras y se apoyan en los recortes al azar del entrenamiento. Es una asimetría
-real y conviene tenerla presente al leer los resultados: esas 22 parten con
-ventaja.
+Cada foto elegida queda anotada en `datos/<clase>/fuentes.jsonl` con su origen,
+licencia y autor.
 
-## Lo que el cuaderno no mide, y hay que medir aparte
+### Lo que salió mal antes, para no repetirlo
 
-El acierto que reporta sale de fotos de Open Images, o sea del mismo pozo del
-que salió el entrenamiento. Dice que aprendió lo que se le mostró, **no** que
-ande apuntando un teléfono a una mesada.
+- **fiftyone no sirve para esto.** Solo conoce las 601 clases de Open Images con
+  recuadro, y cuando se le pide otra no falla: avisa "Ignoring invalid classes"
+  y baja fotos cualquiera. El cuaderno de Colab que había acá lo usaba, y 33 de
+  las 55 clases originales habrían entrenado con fotos al azar. Por eso se
+  borró.
+- **Que una etiqueta exista no quiere decir que tenga fotos.** Kiwi, apio o
+  salvia estaban en la lista de Open Images con cero, cinco o siete fotos.
+- **Las etiquetas mienten.** "Chicken" es la gallina viva, "Kiwi" es el pájaro,
+  "Rock" trae montañas y "Onion" trae mercados enteros.
 
-Para saber eso hacen falta unas pocas fotos propias —veinte por clase de las que
-más importan— sacadas con el teléfono, en una cocina, con la luz de siempre. La
-última celda del cuaderno las evalúa. Si el número cae mucho, esa caída **es** la
-brecha entre la foto descargada y la foto real, y ahí se decide: más aumentos,
-más fotos propias, o sacar las clases que no se sostienen y resolverlas por
-escena y color, como ya se hace con las gemas.
+## El filtro
 
-Medirlo es la parte que no se puede saltear. Un modelo del que solo se sabe el
-número contra su propio dataset es un modelo del que no se sabe nada.
+`filtrar.py` usa CLIP, un modelo que compara una imagen con un texto, para
+preguntarle a cada candidata a cuál clase se parece más. Solo elige fotos: no va
+en la app ni en el modelo.
+
+- Cada clase se describe con **varios textos** (`clip` en `clases.json`). Uno
+  solo es frágil: para CLIP, "chicken" es el animal.
+- Todas las clases compiten a la vez, más unos **descartes** —dibujos,
+  capturas, follaje sin flor— y los propios de cada clase (`clip_no`): la
+  gallina viva para el pollo, el limón para la lima.
+- Una foto entra si su clase gana y se lleva al menos la mitad de la
+  probabilidad (`seguridad`, más alta donde las fuentes traen más ruido), y si no
+  es casi igual a otra que ya entró.
+- De cada clase deja `salida/revision/<clase>.jpg`: las últimas que entraron y
+  las primeras que quedaron afuera. **Hay que mirarlas**: si arriba hay basura,
+  el corte está flojo.
+
+## Lo que el acierto no mide, y hay que medir aparte
+
+El acierto que da `entrenar` sale de las mismas fuentes que el entrenamiento.
+Dice que aprendió lo que se le mostró, **no** que ande apuntando un teléfono a
+una mesada.
+
+Para eso hacen falta fotos propias —veinte por clase de las que más importan—
+sacadas con el teléfono, en una cocina, con la luz de siempre, en
+`propias/<clase>/`. `entrenar.py propias` las evalúa. Si el número cae mucho,
+esa caída **es** la brecha entre la foto descargada y la real, y ahí se decide:
+más aumentos, más fotos propias, o resolver por escena y color las clases que no
+se sostienen.
+
+Un modelo del que solo se sabe el número contra su propio dataset es un modelo
+del que no se sabe nada.
 
 ## Cuando el modelo esté
 
@@ -74,10 +135,7 @@ número contra su propio dataset es un modelo del que no se sabe nada.
 2. Se recompila: `npx expo run:android`.
 3. Al arrancar, `mirar.ts` escribe en la consola de Metro cuál quedó:
    `[mirar] etiquetador: sí · modelo: propio · color: sí`.
-4. Se enciende `RECONOCEDOR_MANDA` en `src/flags.ts`, que hasta entonces está
-   apagado justamente porque con el modelo base no hay nada que probar.
-5. Se reescribe `src/buscar/objetivos.ts`: las 74 entradas pasan a pedir clases
-   por nombre en vez de escena y color. `etiquetas.ts` queda como red de
-   seguridad para cuando el modelo devuelve algo genérico.
-
-Los pasos 4 y 5 son los que convierten esto en el juego que se quería hacer.
+4. Se enciende `RECONOCEDOR_MANDA` en `src/flags.ts`.
+5. Se reescribe `src/buscar/objetivos.ts` para que cada ingrediente pida su
+   clase por nombre, usando `cubre` para los que comparten clase.
+   `etiquetas.ts` queda como red para cuando el modelo no está seguro.

@@ -48,3 +48,14 @@ yarn-error.*
 # ademas tienen nombres tan largos que Windows ni siquiera los puede indexar.
 modules/*/android/build/
 modules/*/android/.cxx/
+
+# Los entornos y todo lo que producen fotos.py, filtrar.py y entrenar.py: se
+# regenera. Las fotos propias tampoco se suben.
+modelo/.venv/
+modelo/.venv-clip/
+modelo/__pycache__/
+modelo/cache/
+modelo/candidatas/
+modelo/datos/
+modelo/salida/
+modelo/propias/

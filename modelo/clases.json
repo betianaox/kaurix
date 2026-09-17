@@ -3,316 +3,720 @@
     {
       "clase": "manzana",
       "grupo": "fruta",
+      "cubre": [
+        "manzana"
+      ],
+      "clip": [
+        "a photo of apples",
+        "a close-up photo of an apple",
+        "apples in a fruit bowl"
+      ],
       "oi": [
         {
           "nombre": "Apple",
           "id": "/m/014j1m"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "banana",
       "grupo": "fruta",
+      "cubre": [
+        "banana"
+      ],
+      "clip": [
+        "a photo of bananas",
+        "a bunch of bananas",
+        "a close-up photo of a banana"
+      ],
       "oi": [
         {
           "nombre": "Banana",
           "id": "/m/09qck"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "naranja",
       "grupo": "fruta",
+      "cubre": [
+        "naranja"
+      ],
+      "clip": [
+        "a photo of oranges, the citrus fruit",
+        "a close-up photo of an orange fruit",
+        "oranges in a fruit bowl"
+      ],
       "oi": [
         {
           "nombre": "Orange (fruit)",
           "id": "/m/0cyhj_"
         }
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": [
+        "an orange colored object that is not a fruit"
       ]
     },
     {
       "clase": "tomate",
       "grupo": "fruta",
+      "cubre": [
+        "tomate"
+      ],
+      "clip": [
+        "a photo of tomatoes",
+        "a close-up photo of a red tomato",
+        "tomatoes on a kitchen counter"
+      ],
       "oi": [
         {
           "nombre": "Tomato",
           "id": "/m/07j87"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "pera",
       "grupo": "fruta",
+      "cubre": [
+        "pera"
+      ],
+      "clip": [
+        "a photo of pears",
+        "a close-up photo of a pear"
+      ],
       "oi": [
         {
           "nombre": "Pear",
           "id": "/m/061_f"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "frutilla",
       "grupo": "fruta",
+      "cubre": [
+        "frutilla"
+      ],
+      "clip": [
+        "a photo of strawberries",
+        "a close-up photo of a strawberry"
+      ],
       "oi": [
         {
           "nombre": "Strawberry",
           "id": "/m/07fbm7"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "uva",
       "grupo": "fruta",
+      "cubre": [
+        "uva"
+      ],
+      "clip": [
+        "a photo of grapes",
+        "a bunch of grapes"
+      ],
       "oi": [
         {
           "nombre": "Grape",
           "id": "/m/0388q"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "durazno",
       "grupo": "fruta",
+      "cubre": [
+        "durazno"
+      ],
+      "clip": [
+        "a photo of peaches",
+        "a close-up photo of a peach"
+      ],
       "oi": [
         {
           "nombre": "Peach",
           "id": "/m/0dj6p"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "lima",
       "grupo": "fruta",
+      "cubre": [
+        "lima"
+      ],
+      "clip": [
+        "a photo of green limes",
+        "a close-up photo of a lime fruit",
+        "sliced green limes"
+      ],
       "oi": [
         {
           "nombre": "Lime (Fruit)",
           "id": "/m/01mt0b"
         }
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Lime (Fruit)",
+          "id": "/m/01mt0b"
+        }
+      ],
+      "inat": [],
+      "clip_no": [
+        "a photo of yellow lemons"
       ]
     },
     {
       "clase": "kiwi",
       "grupo": "fruta",
+      "cubre": [
+        "kiwi"
+      ],
+      "clip": [
+        "a photo of kiwifruit",
+        "a kiwi fruit cut in half showing the green inside",
+        "brown fuzzy kiwi fruits"
+      ],
       "oi": [
         {
-          "nombre": "Kiwi",
-          "id": "/m/04f85"
+          "nombre": "Kiwifruit",
+          "id": "/m/04f8p"
         }
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Kiwifruit",
+          "id": "/m/04f8p"
+        }
+      ],
+      "inat": [
+        "Actinidia deliciosa"
+      ],
+      "clip_no": [
+        "a photo of a kiwi bird"
       ]
     },
     {
       "clase": "arandanos",
       "grupo": "fruta",
+      "cubre": [
+        "arandanos"
+      ],
+      "clip": [
+        "a photo of blueberries",
+        "a close-up photo of blueberries",
+        "a bowl of blueberries"
+      ],
       "oi": [
         {
           "nombre": "Blueberry",
           "id": "/m/0ftbs"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Blueberry",
+          "id": "/m/0ftbs"
+        }
+      ],
+      "inat": [
+        "Vaccinium corymbosum"
+      ],
+      "clip_no": []
     },
     {
       "clase": "frambuesa",
       "grupo": "fruta",
+      "cubre": [
+        "frambuesa"
+      ],
+      "clip": [
+        "a photo of raspberries",
+        "a close-up photo of red raspberries"
+      ],
       "oi": [
         {
           "nombre": "Raspberry",
           "id": "/m/01pd2g"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Raspberry",
+          "id": "/m/01pd2g"
+        }
+      ],
+      "inat": [
+        "Rubus idaeus"
+      ],
+      "clip_no": []
     },
     {
       "clase": "sandia",
       "grupo": "fruta",
+      "cubre": [
+        "sandia"
+      ],
+      "clip": [
+        "a photo of watermelon",
+        "a slice of watermelon",
+        "a whole watermelon"
+      ],
       "oi": [
         {
           "nombre": "Watermelon",
           "id": "/m/0kpqd"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "mango",
       "grupo": "fruta",
+      "cubre": [
+        "mango"
+      ],
+      "clip": [
+        "a photo of mangoes",
+        "a close-up photo of a mango fruit",
+        "a sliced mango"
+      ],
       "oi": [
         {
           "nombre": "Mango",
           "id": "/m/0fldg"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Mango",
+          "id": "/m/0fldg"
+        }
+      ],
+      "inat": [
+        "Mangifera indica"
+      ],
+      "clip_no": []
     },
     {
       "clase": "anana",
       "grupo": "fruta",
+      "cubre": [
+        "anana"
+      ],
+      "clip": [
+        "a photo of a pineapple",
+        "a close-up photo of a pineapple fruit"
+      ],
       "oi": [
         {
           "nombre": "Pineapple",
           "id": "/m/0fp6w"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "papa",
       "grupo": "verdura",
+      "cubre": [
+        "papa"
+      ],
+      "clip": [
+        "a photo of potatoes",
+        "raw potatoes on a kitchen counter",
+        "a close-up photo of potatoes"
+      ],
       "oi": [
         {
           "nombre": "Potato",
           "id": "/m/05vtc"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "cebolla",
       "grupo": "verdura",
+      "cubre": [
+        "cebolla"
+      ],
+      "clip": [
+        "a photo of onions",
+        "a close-up photo of an onion",
+        "whole onions on a kitchen counter"
+      ],
       "oi": [
         {
           "nombre": "Onion",
           "id": "/m/0dj75"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Onion",
+          "id": "/m/0dj75"
+        },
+        {
+          "nombre": "Red onion",
+          "id": "/m/0cwzg2"
+        },
+        {
+          "nombre": "Shallot",
+          "id": "/m/0c2qc"
+        }
+      ],
+      "inat": [],
+      "clip_no": [],
+      "seguridad": 0.7
     },
     {
       "clase": "zanahoria",
       "grupo": "verdura",
+      "cubre": [
+        "zanahoria"
+      ],
+      "clip": [
+        "a photo of carrots",
+        "a close-up photo of carrots"
+      ],
       "oi": [
         {
           "nombre": "Carrot",
           "id": "/m/0fj52s"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "zucchini",
       "grupo": "verdura",
+      "cubre": [
+        "zucchini"
+      ],
+      "clip": [
+        "a photo of zucchini",
+        "a close-up photo of a zucchini squash"
+      ],
       "oi": [
         {
           "nombre": "Zucchini",
           "id": "/m/027pcv"
         }
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": [
+        "a photo of cucumbers"
       ]
     },
     {
       "clase": "palta",
       "grupo": "verdura",
+      "cubre": [
+        "palta"
+      ],
+      "clip": [
+        "a photo of avocados",
+        "an avocado cut in half with the pit",
+        "a close-up photo of an avocado"
+      ],
       "oi": [
         {
           "nombre": "Avocado",
           "id": "/m/01645p"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Avocado",
+          "id": "/m/01645p"
+        }
+      ],
+      "inat": [
+        "Persea americana"
+      ],
+      "clip_no": []
     },
     {
-      "clase": "espinaca",
+      "clase": "hoja-verde",
       "grupo": "verdura",
+      "cubre": [
+        "espinaca",
+        "kale",
+        "lechuga",
+        "apio"
+      ],
+      "clip": [
+        "a photo of leafy greens like lettuce, spinach or kale",
+        "a head of lettuce",
+        "fresh spinach leaves",
+        "a bunch of kale or celery"
+      ],
       "oi": [
+        {
+          "nombre": "Leaf vegetable",
+          "id": "/m/05f725"
+        },
         {
           "nombre": "Spinach",
           "id": "/m/016rh7"
-        }
-      ]
-    },
-    {
-      "clase": "apio",
-      "grupo": "verdura",
-      "oi": [
+        },
+        {
+          "nombre": "Lettuce",
+          "id": "/m/0fqlj"
+        },
+        {
+          "nombre": "Kale",
+          "id": "/m/02r5_b"
+        },
         {
           "nombre": "Celery",
           "id": "/m/01xj_"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Leaf vegetable",
+          "id": "/m/05f725"
+        },
+        {
+          "nombre": "Spinach",
+          "id": "/m/016rh7"
+        },
+        {
+          "nombre": "Lettuce",
+          "id": "/m/0fqlj"
+        }
+      ],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "morron",
       "grupo": "verdura",
+      "cubre": [
+        "morron"
+      ],
+      "clip": [
+        "a photo of bell peppers",
+        "a close-up photo of a bell pepper"
+      ],
       "oi": [
         {
           "nombre": "Bell pepper",
           "id": "/m/0jg57"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "brocoli",
       "grupo": "verdura",
+      "cubre": [
+        "brocoli"
+      ],
+      "clip": [
+        "a photo of broccoli",
+        "a close-up photo of broccoli florets"
+      ],
       "oi": [
         {
           "nombre": "Broccoli",
           "id": "/m/0hkxq"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "maiz",
       "grupo": "verdura",
+      "cubre": [
+        "maiz"
+      ],
+      "clip": [
+        "a photo of corn on the cob",
+        "ears of corn with yellow kernels",
+        "a close-up photo of corn kernels"
+      ],
       "oi": [
         {
           "nombre": "Corn",
           "id": "/m/053wn"
         }
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Corn",
+          "id": "/m/053wn"
+        }
+      ],
+      "inat": [
+        "Zea mays"
+      ],
+      "clip_no": [
+        "a photo of a field of green corn plants"
       ]
     },
     {
       "clase": "arvejas",
       "grupo": "verdura",
+      "cubre": [
+        "arvejas"
+      ],
+      "clip": [
+        "a photo of green peas",
+        "open pea pods with green peas",
+        "a bowl of green peas"
+      ],
       "oi": [
         {
           "nombre": "Pea",
           "id": "/m/0g5s7"
         }
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Pea",
+          "id": "/m/0g5s7"
+        }
+      ],
+      "inat": [
+        "Pisum sativum"
+      ],
+      "clip_no": [
+        "a photo of a pea plant with only leaves and flowers"
       ]
     },
     {
       "clase": "boniato",
       "grupo": "verdura",
+      "cubre": [
+        "boniato"
+      ],
+      "clip": [
+        "a photo of sweet potatoes",
+        "raw sweet potatoes with reddish skin",
+        "a close-up photo of a sweet potato"
+      ],
       "oi": [
         {
           "nombre": "Sweet potato",
           "id": "/m/0dm32"
         }
-      ]
-    },
-    {
-      "clase": "kale",
-      "grupo": "verdura",
-      "oi": [
+      ],
+      "oi_maquina": [
         {
-          "nombre": "Kale",
-          "id": "/m/02r5_b"
+          "nombre": "Sweet potato",
+          "id": "/m/0dm32"
         }
+      ],
+      "inat": [
+        "Ipomoea batatas"
+      ],
+      "clip_no": [
+        "a photo of a vine with only leaves"
       ]
     },
     {
       "clase": "champinon",
       "grupo": "verdura",
+      "cubre": [
+        "champinon"
+      ],
+      "clip": [
+        "a photo of mushrooms",
+        "a close-up photo of button mushrooms"
+      ],
       "oi": [
         {
           "nombre": "Mushroom",
           "id": "/m/052sf"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "coliflor",
       "grupo": "verdura",
+      "cubre": [
+        "coliflor"
+      ],
+      "clip": [
+        "a photo of cauliflower",
+        "a close-up photo of a white cauliflower head"
+      ],
       "oi": [
         {
           "nombre": "Cauliflower",
           "id": "/m/015w7p"
         }
-      ]
-    },
-    {
-      "clase": "lechuga",
-      "grupo": "verdura",
-      "oi": [
+      ],
+      "oi_maquina": [
         {
-          "nombre": "Lettuce",
-          "id": "/m/0fqlj"
+          "nombre": "Cauliflower",
+          "id": "/m/015w7p"
         }
-      ]
+      ],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "carne-roja",
       "grupo": "proteina",
+      "cubre": [
+        "bife",
+        "carne-picada",
+        "carne-desmenuzada"
+      ],
+      "clip": [
+        "a photo of raw red meat",
+        "a photo of a steak",
+        "a photo of ground beef",
+        "a photo of cooked beef"
+      ],
       "oi": [
         {
           "nombre": "Steak",
@@ -321,32 +725,121 @@
         {
           "nombre": "Beef",
           "id": "/m/0971v"
+        },
+        {
+          "nombre": "Meat",
+          "id": "/m/04scj"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Steak",
+          "id": "/m/0grtl"
+        },
+        {
+          "nombre": "Beef",
+          "id": "/m/0971v"
+        },
+        {
+          "nombre": "Beef tenderloin",
+          "id": "/m/03jmrd"
+        },
+        {
+          "nombre": "Meatball",
+          "id": "/m/01bzmc"
+        }
+      ],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "pollo",
       "grupo": "proteina",
+      "cubre": [
+        "pollo"
+      ],
+      "clip": [
+        "a photo of cooked chicken on a plate",
+        "a photo of roast chicken",
+        "a photo of raw chicken pieces from the butcher"
+      ],
       "oi": [
+        {
+          "nombre": "Chicken meat",
+          "id": "/m/0f25w9"
+        }
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Chicken meat",
+          "id": "/m/0f25w9"
+        },
+        {
+          "nombre": "Poultry",
+          "id": "/m/05s0c"
+        },
+        {
+          "nombre": "Barbecue chicken",
+          "id": "/m/06zq8mq"
+        },
+        {
+          "nombre": "Fried chicken",
+          "id": "/m/01px4b"
+        },
         {
           "nombre": "Chicken",
           "id": "/m/09b5t"
         }
+      ],
+      "inat": [],
+      "clip_no": [
+        "a photo of chickens, the live birds",
+        "a photo of a hen or rooster",
+        "a drawing or logo of a chicken",
+        "a photo of a meal with food"
       ]
     },
     {
       "clase": "embutido",
       "grupo": "proteina",
+      "cubre": [
+        "salchicha"
+      ],
+      "clip": [
+        "a photo of sausages",
+        "a close-up photo of sausages",
+        "grilled sausages"
+      ],
       "oi": [
         {
           "nombre": "Sausage",
           "id": "/m/0kdzn"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Sausage",
+          "id": "/m/0kdzn"
+        },
+        {
+          "nombre": "Chorizo",
+          "id": "/m/01xg7s"
+        }
+      ],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "camaron",
       "grupo": "proteina",
+      "cubre": [
+        "camarones"
+      ],
+      "clip": [
+        "a photo of shrimp",
+        "a close-up photo of prawns",
+        "a plate of cooked shrimp"
+      ],
       "oi": [
         {
           "nombre": "Shrimp",
@@ -356,210 +849,446 @@
           "nombre": "Prawn",
           "id": "/m/0m0kxjl"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "manzanilla",
       "grupo": "flor",
-      "oi": [
+      "cubre": [
+        "manzanilla"
+      ],
+      "clip": [
+        "a photo of chamomile flowers",
+        "small white chamomile flowers with yellow centers"
+      ],
+      "oi": [],
+      "oi_maquina": [
         {
           "nombre": "Chamomile",
           "id": "/m/02_nmy"
         }
-      ]
+      ],
+      "inat": [
+        "Matricaria chamomilla"
+      ],
+      "clip_no": [],
+      "seguridad": 0.8,
+      "por_clase": 300
     },
     {
       "clase": "diente-de-leon",
       "grupo": "flor",
+      "cubre": [
+        "diente-de-leon"
+      ],
+      "clip": [
+        "a photo of dandelions",
+        "a yellow dandelion flower",
+        "a dandelion seed head"
+      ],
       "oi": [
         {
           "nombre": "Dandelion",
           "id": "/m/0fr19"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Dandelion",
+          "id": "/m/0fr19"
+        }
+      ],
+      "inat": [
+        "Taraxacum officinale"
+      ],
+      "clip_no": [],
+      "seguridad": 0.8,
+      "por_clase": 300
     },
     {
       "clase": "lavanda",
       "grupo": "flor",
+      "cubre": [
+        "lavanda"
+      ],
+      "clip": [
+        "a photo of lavender flowers",
+        "purple lavender plants",
+        "a close-up photo of lavender"
+      ],
       "oi": [
         {
           "nombre": "Lavender (Plant)",
           "id": "/m/04gth"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [
+        "Lavandula angustifolia"
+      ],
+      "clip_no": [],
+      "seguridad": 0.8,
+      "por_clase": 300
     },
     {
       "clase": "sauco",
       "grupo": "flor",
-      "oi": [
-        {
-          "nombre": "Elder",
-          "id": "/m/027v9wk"
-        }
-      ]
+      "cubre": [
+        "sauco"
+      ],
+      "clip": [
+        "a photo of elderflower blossoms",
+        "clusters of black elderberries",
+        "white elderflower clusters on a shrub"
+      ],
+      "oi": [],
+      "oi_maquina": [],
+      "inat": [
+        "Sambucus nigra"
+      ],
+      "clip_no": [],
+      "seguridad": 0.8,
+      "por_clase": 300
     },
     {
       "clase": "brezo",
       "grupo": "flor",
-      "oi": [
-        {
-          "nombre": "Heather",
-          "id": "/m/02z7y5"
-        }
-      ]
+      "cubre": [
+        "brezo"
+      ],
+      "clip": [
+        "a photo of heather flowers",
+        "purple heather on a moor",
+        "a close-up photo of heather plants"
+      ],
+      "oi": [],
+      "oi_maquina": [],
+      "inat": [
+        "Calluna vulgaris"
+      ],
+      "clip_no": [],
+      "seguridad": 0.8,
+      "por_clase": 300
     },
     {
       "clase": "petalos",
       "grupo": "flor",
+      "cubre": [
+        "petalos"
+      ],
+      "clip": [
+        "a photo of roses",
+        "a close-up photo of a rose flower",
+        "rose petals"
+      ],
       "oi": [
         {
           "nombre": "Rose",
           "id": "/m/06m11"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
-      "clase": "hibisco-rojo",
+      "clase": "hibisco",
       "grupo": "flor",
+      "cubre": [
+        "hibisco-rojo",
+        "hibisco-violeta"
+      ],
+      "clip": [
+        "a photo of hibiscus flowers",
+        "a close-up photo of a hibiscus flower"
+      ],
       "oi": [
         {
           "nombre": "Hibiscus",
           "id": "/m/01h5yp"
         }
-      ]
-    },
-    {
-      "clase": "hibisco-violeta",
-      "grupo": "flor",
-      "oi": [
+      ],
+      "oi_maquina": [
         {
           "nombre": "Hibiscus",
           "id": "/m/01h5yp"
         }
-      ]
+      ],
+      "inat": [
+        "Hibiscus rosa-sinensis",
+        "Hibiscus syriacus"
+      ],
+      "clip_no": [],
+      "seguridad": 0.8,
+      "por_clase": 300
     },
     {
       "clase": "albahaca",
       "grupo": "planta",
+      "cubre": [
+        "albahaca"
+      ],
+      "clip": [
+        "a photo of basil leaves",
+        "a basil plant in a pot",
+        "fresh basil herb"
+      ],
       "oi": [
         {
           "nombre": "Basil",
           "id": "/m/01yt8c"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Basil",
+          "id": "/m/01yt8c"
+        }
+      ],
+      "inat": [
+        "Ocimum basilicum"
+      ],
+      "clip_no": []
     },
     {
       "clase": "romero",
       "grupo": "planta",
+      "cubre": [
+        "romero"
+      ],
+      "clip": [
+        "a photo of rosemary",
+        "a rosemary plant with needle-like leaves",
+        "fresh rosemary sprigs"
+      ],
       "oi": [
         {
           "nombre": "Rosemary",
           "id": "/m/06cd7"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Rosemary",
+          "id": "/m/06cd7"
+        }
+      ],
+      "inat": [
+        "Salvia rosmarinus"
+      ],
+      "clip_no": []
     },
     {
       "clase": "perejil",
       "grupo": "planta",
+      "cubre": [
+        "perejil"
+      ],
+      "clip": [
+        "a photo of parsley",
+        "a bunch of fresh parsley",
+        "a parsley plant"
+      ],
       "oi": [
         {
           "nombre": "Parsley",
           "id": "/m/05s28"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [
+        "Petroselinum crispum"
+      ],
+      "clip_no": []
     },
     {
       "clase": "salvia",
       "grupo": "planta",
-      "oi": [
-        {
-          "nombre": "Sage",
-          "id": "/m/06p4j"
-        }
-      ]
+      "cubre": [
+        "salvia"
+      ],
+      "clip": [
+        "a photo of sage leaves, the herb",
+        "a common sage plant with grey-green leaves"
+      ],
+      "oi": [],
+      "oi_maquina": [],
+      "inat": [
+        "Salvia officinalis"
+      ],
+      "clip_no": []
     },
     {
       "clase": "hinojo",
       "grupo": "planta",
+      "cubre": [
+        "hinojo"
+      ],
+      "clip": [
+        "a photo of fennel",
+        "a fennel bulb",
+        "a fennel plant with feathery leaves"
+      ],
       "oi": [
         {
           "nombre": "Fennel",
           "id": "/m/017dqv"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Fennel",
+          "id": "/m/017dqv"
+        }
+      ],
+      "inat": [
+        "Foeniculum vulgare"
+      ],
+      "clip_no": []
     },
     {
       "clase": "jengibre",
       "grupo": "tierra",
+      "cubre": [
+        "jengibre"
+      ],
+      "clip": [
+        "a photo of ginger root",
+        "fresh ginger rhizomes",
+        "a close-up photo of ginger"
+      ],
       "oi": [
         {
           "nombre": "Ginger",
           "id": "/m/0f9n3"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Ginger",
+          "id": "/m/0f9n3"
+        }
+      ],
+      "inat": [
+        "Zingiber officinale"
+      ],
+      "clip_no": []
     },
     {
       "clase": "ajo",
       "grupo": "tierra",
+      "cubre": [
+        "ajo"
+      ],
+      "clip": [
+        "a photo of garlic bulbs",
+        "garlic cloves",
+        "a close-up photo of garlic"
+      ],
       "oi": [
         {
           "nombre": "Garlic",
           "id": "/m/0dbrl"
         }
-      ]
+      ],
+      "oi_maquina": [
+        {
+          "nombre": "Garlic",
+          "id": "/m/0dbrl"
+        }
+      ],
+      "inat": [
+        "Allium sativum"
+      ],
+      "clip_no": []
     },
     {
       "clase": "piedras",
       "grupo": "escena",
+      "cubre": [],
+      "clip": [
+        "a photo of rocks and stones",
+        "a pile of pebbles",
+        "gravel on the ground",
+        "a close-up photo of stones"
+      ],
       "oi": [
         {
           "nombre": "Rock",
           "id": "/m/01cbzq"
+        },
+        {
+          "nombre": "Pebble",
+          "id": "/m/01tp0c"
+        },
+        {
+          "nombre": "Gravel",
+          "id": "/m/016b3m"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "ladrillo",
       "grupo": "escena",
+      "cubre": [],
+      "clip": [
+        "a photo of a brick wall",
+        "a close-up photo of bricks"
+      ],
       "oi": [
         {
           "nombre": "Brick",
           "id": "/m/01g0g"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "arena",
       "grupo": "escena",
+      "cubre": [],
+      "clip": [
+        "a photo of sand",
+        "a close-up photo of sand on the ground",
+        "a sandy beach"
+      ],
       "oi": [
         {
           "nombre": "Sand",
           "id": "/m/099fz"
         }
-      ]
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": []
     },
     {
       "clase": "alacena",
       "grupo": "escena",
+      "cubre": [],
+      "clip": [
+        "a photo of kitchen cupboards",
+        "pantry shelves with food",
+        "a kitchen cabinet"
+      ],
       "oi": [
-        {
-          "nombre": "Pantry",
-          "id": "/m/02p413"
-        },
         {
           "nombre": "Cupboard",
           "id": "/m/0642b4"
         }
-      ]
-    },
-    {
-      "clase": "carne",
-      "grupo": "escena",
-      "oi": [
-        {
-          "nombre": "Meat",
-          "id": "/m/04scj"
-        }
+      ],
+      "oi_maquina": [],
+      "inat": [],
+      "clip_no": [
+        "a wardrobe with clothes"
       ]
     }
   ]
