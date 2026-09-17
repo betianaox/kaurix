@@ -126,7 +126,13 @@
     "tenes": "Você tem {cantidad}",
     "noTenesNinguno": "Você não tem nenhum",
     "porAhoraEnCualquierLugar": "Por enquanto aparece em qualquer lugar: a câmera ainda não distingue o que está vendo.",
-    "ningunaReceta": "Nenhuma receita pede isso ainda."
+    "ningunaReceta": "Nenhuma receita pede isso ainda.",
+    "apuntaA": "Aponte a câmera para a coisa de verdade:",
+    "compartenAzar": "A câmera não as diferencia: qual sai é sorte.",
+    "compartenColor": "A câmera não as diferencia: sai esta se o que você vê é de cor {color}.",
+    "colorDecide": "A cor decide qual sai: esta, com algo de cor {color}.",
+    "loQueHaya": "Não se procura uma em particular: sai o que houver.",
+    "tambienColor": "Se não tiver à mão, também pode sair com algo de cor {color}."
   },
   "lugares": {
     "planta": "Plantas",
@@ -376,5 +382,19 @@
     "texto": "Há criaturas escondidas no mundo real. Aponte a câmera {icono}. Junte ingredientes, cozinhe e faça-as crescer.",
     "empezar": "Começar",
     "ayuda": "Ajuda"
+  },
+  "colores": {
+    "rojo": "vermelha",
+    "naranja": "laranja",
+    "amarillo": "amarela",
+    "verde": "verde",
+    "celeste": "azul-clara",
+    "azul": "azul",
+    "violeta": "violeta",
+    "rosa": "rosa",
+    "tostado": "bege",
+    "blanco": "branca",
+    "gris": "cinza",
+    "negro": "preta"
   }
 }

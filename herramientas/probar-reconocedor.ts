@@ -49,10 +49,11 @@ const { OBJETIVOS, objetivosCompletos } = require(path.join(raiz, 'src/buscar/ob
 const { cumple } = require(path.join(raiz, 'src/buscar/resolver'));
 const { tonoDe } = require(path.join(raiz, 'src/buscar/tonos'));
 const { escenasDe } = require(path.join(raiz, 'src/buscar/etiquetas'));
+const { CLASES, escenasDeClases } = require(path.join(raiz, 'src/buscar/clases'));
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 type Rgb = { r: number; g: number; b: number };
-type Lectura = { escenas: string[]; tono: string | null };
+type Lectura = { clases: string[]; escenas: string[]; tono: string | null };
 type Ing = { id: string; nombre: string; lugar: string; peso: number };
 
 /**
@@ -75,7 +76,9 @@ function ingredientes(): Ing[] {
 
 const ING = ingredientes();
 
-type Candidato = { ing: Ing; fuerza: 'principal' | 'alternativa' };
+type Fuerza = 'clase' | 'clase-otro-color' | 'principal' | 'alternativa';
+type Candidato = { ing: Ing; fuerza: Fuerza };
+const NIVELES: Fuerza[] = ['clase', 'clase-otro-color', 'principal', 'alternativa'];
 
 /** La misma cuenta que `candidatos`, sobre la lista leída del fuente. */
 function resolver(l: Lectura): Candidato[] {
@@ -83,6 +86,16 @@ function resolver(l: Lectura): Candidato[] {
   for (const ing of ING) {
     const o = OBJETIVOS[ing.id];
     if (!o) continue;
+    if (o.clase) {
+      if (cumple(o.clase, l) === 'exacto') {
+        salida.push({ ing, fuerza: 'clase' });
+        continue;
+      }
+      if (l.clases.length && o.clase.clases.some((c: string) => l.clases.includes(c))) {
+        salida.push({ ing, fuerza: 'clase-otro-color' });
+        continue;
+      }
+    }
     const suyo = o.principal ? cumple(o.principal, l) : null;
     if (suyo === 'exacto') {
       salida.push({ ing, fuerza: 'principal' });
@@ -97,9 +110,53 @@ function resolver(l: Lectura): Candidato[] {
 }
 
 const lee = (etiquetas: string[], color: Rgb): Lectura => ({
+  clases: [],
   escenas: escenasDe(etiquetas),
   tono: tonoDe(color),
 });
+
+/** Como lee `mirar` con el modelo propio: las etiquetas son clases. */
+const leePropio = (clases: string[], color: Rgb): Lectura => ({
+  clases,
+  escenas: escenasDeClases(clases),
+  tono: tonoDe(color),
+});
+
+/** Lo que diría el modelo propio. Agregar acá al afinar la tabla. */
+const CASOS_PROPIO: { que: string; clases: string[]; color: Rgb }[] = [
+  { que: 'una naranja', clases: ['naranja'], color: { r: 243, g: 146, b: 55 } },
+  { que: 'manzana o durazno', clases: ['manzana', 'durazno'], color: { r: 200, g: 50, b: 45 } },
+  { que: 'una papa', clases: ['papa'], color: { r: 190, g: 150, b: 100 } },
+  { que: 'lechuga', clases: ['hoja-verde'], color: { r: 110, g: 170, b: 70 } },
+  { que: 'hibisco rojo', clases: ['hibisco'], color: { r: 210, g: 30, b: 50 } },
+  { que: 'hibisco, se ve verde', clases: ['hibisco'], color: { r: 70, g: 140, b: 60 } },
+  { que: 'carne roja', clases: ['carne-roja'], color: { r: 170, g: 40, b: 45 } },
+  { que: 'carne cocida', clases: ['carne-roja'], color: { r: 160, g: 110, b: 70 } },
+  { que: 'una salchicha', clases: ['embutido'], color: { r: 190, g: 90, b: 80 } },
+  { que: 'albahaca', clases: ['albahaca'], color: { r: 60, g: 130, b: 50 } },
+  { que: 'piedras grises', clases: ['piedras'], color: { r: 150, g: 150, b: 152 } },
+  { que: 'piedra violeta', clases: ['piedras'], color: { r: 150, g: 100, b: 200 } },
+  { que: 'la alacena', clases: ['alacena'], color: { r: 180, g: 160, b: 130 } },
+  { que: 'nada seguro', clases: [], color: { r: 240, g: 238, b: 235 } },
+];
+
+/**
+ * Las clases de `clases.ts` contra las del modelo entrenado, si está a mano.
+ *
+ * `modelo/salida/` no va al repo, así que esto solo corre donde se entrenó.
+ */
+function clasesContraModelo(): string {
+  const etiquetas = ['v1-large', '.']
+    .map((d) => path.join(raiz, 'modelo/salida', d, 'etiquetas.txt'))
+    .find((f) => fs.existsSync(f));
+  if (!etiquetas) return 'sin etiquetas.txt del modelo a mano: no se compara';
+  const delModelo = new Set(fs.readFileSync(etiquetas, 'utf8').split(/\r?\n/).filter(Boolean));
+  const escritas = new Set(Object.keys(CLASES));
+  const faltan = [...delModelo].filter((c) => !escritas.has(c));
+  const sobran = [...escritas].filter((c) => !delModelo.has(c));
+  return `clases del modelo: ${delModelo.size}  |  en clases.ts: ${escritas.size}  |  ` +
+    `faltan: ${faltan.join(', ') || 'ninguna'}  |  sobran: ${sobran.join(', ') || 'ninguna'}`;
+}
 
 /** Las escenas que se prueban. Agregar acá al afinar la tabla. */
 const CASOS: { que: string; etiquetas: string[]; color: Rgb }[] = [
@@ -124,8 +181,8 @@ const CASOS: { que: string; etiquetas: string[]; color: Rgb }[] = [
 /** Cuántas veces sale cada uno, con el sorteo por peso de `elegir`. */
 function reparto(cs: Candidato[], vueltas = 2000): string {
   if (cs.length === 0) return '—';
-  const hayPrincipal = cs.some((c) => c.fuerza === 'principal');
-  const enJuego = hayPrincipal ? cs.filter((c) => c.fuerza === 'principal') : cs;
+  const nivel = NIVELES.find((n) => cs.some((c) => c.fuerza === n));
+  const enJuego = cs.filter((c) => c.fuerza === nivel);
   const total = enJuego.reduce((s, c) => s + c.ing.peso, 0);
 
   const cuenta: Record<string, number> = {};
@@ -153,15 +210,27 @@ function main() {
   console.log(`faltan: ${faltan.length ? faltan.join(', ') : 'ninguno'}`);
   console.log(`sobran: ${sobran.length ? sobran.join(', ') : 'ninguno'}`);
 
-  console.log('\n─── qué aparece ───');
+  console.log(clasesContraModelo());
+
+  const fila = (que: string, que2: string, l: Lectura) => {
+    const cs = resolver(l);
+    const n = (f: Fuerza) => cs.filter((c) => c.fuerza === f).length;
+    console.log(
+      `${que.padEnd(20)} ${que2.padEnd(22)} ${String(l.tono).padEnd(9)}` +
+        ` ${n('clase')} cla / ${n('clase-otro-color')} otro / ${n('principal')} pri / ${n('alternativa')} alt   ${reparto(cs)}`
+    );
+  };
+
+  console.log('\n─── qué aparece, modelo base ───');
   for (const caso of CASOS) {
     const l = lee(caso.etiquetas, caso.color);
-    const cs = resolver(l);
-    const pri = cs.filter((c) => c.fuerza === 'principal').length;
-    console.log(
-      `${caso.que.padEnd(18)} ${(l.escenas.join(',') || '—').padEnd(20)} ${String(l.tono).padEnd(9)}` +
-        ` ${pri} pri / ${cs.length - pri} alt   ${reparto(cs)}`
-    );
+    fila(caso.que, l.escenas.join(',') || '—', l);
+  }
+
+  console.log('\n─── qué aparece, modelo propio ───');
+  for (const caso of CASOS_PROPIO) {
+    const l = leePropio(caso.clases, caso.color);
+    fila(caso.que, caso.clases.join(',') || '—', l);
   }
 }
 

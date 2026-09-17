@@ -1,6 +1,7 @@
 import type { CameraView } from 'expo-camera';
 
 import { etiquetar, hayEtiquetador, modeloPropio } from '../../modules/reconocedor';
+import { escenasDeClases, esClase } from './clases';
 import { escenasDe } from './etiquetas';
 import type { Lectura } from './resolver';
 import { tonoDe, type Rgb } from './tonos';
@@ -102,6 +103,21 @@ if (__DEV__) {
 const CONFIANZA = 0.55;
 
 /**
+ * Lo mismo, para el modelo propio, que se lee distinto.
+ *
+ * El base da cada etiqueta por separado —puede decir `Fruit` 0,9 y `Food` 0,9 a
+ * la vez—; el propio reparte el 100% entre cuarenta y nueve clases, así que una
+ * foto clara de una manzana puede dar `manzana` 0,6 y `durazno` 0,2. Con 0,55
+ * se perderían muchas lecturas buenas.
+ *
+ * 0,4 deja pasar una sola clase casi siempre y dos cuando el modelo duda entre
+ * parecidas —manzana y durazno—, que es cuando conviene que las dos compitan.
+ * Tampoco está medido: **no hay fotos propias para calibrarlo**, así que se
+ * ajusta jugando.
+ */
+const CONFIANZA_PROPIO = 0.4;
+
+/**
  * A cuántos puntos se achica la foto antes de mirarla.
  *
  * El etiquetador no necesita más: trabaja sobre una entrada chica igual, y una
@@ -146,7 +162,8 @@ async function foto(camara: CameraView): Promise<string | null> {
 async function etiquetasDe(uri: string): Promise<string[]> {
   try {
     const crudas = await etiquetar(uri);
-    return crudas.filter((e) => e.confianza >= CONFIANZA).map((e) => e.texto);
+    const umbral = modeloPropio ? CONFIANZA_PROPIO : CONFIANZA;
+    return crudas.filter((e) => e.confianza >= umbral).map((e) => e.texto);
   } catch {
     return [];
   }
@@ -202,8 +219,13 @@ export async function mirar(camara: CameraView): Promise<Lectura | null> {
 
   const [etiquetas, color] = await Promise.all([etiquetasDe(uri), colorDe(uri)]);
 
+  // Con el modelo propio cada etiqueta es una clase, y las escenas salen de
+  // ellas; con el base son palabras en inglés y salen de `etiquetas.ts`.
+  const clases = modeloPropio ? etiquetas.filter(esClase) : [];
+
   return {
-    escenas: escenasDe(etiquetas),
+    clases,
+    escenas: modeloPropio ? escenasDeClases(clases) : escenasDe(etiquetas),
     tono: color ? tonoDe(color) : null,
   };
 }

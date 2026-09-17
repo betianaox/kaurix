@@ -1,6 +1,8 @@
 import React from 'react';
 import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { compartenClase, OBJETIVOS } from '../buscar/objetivos';
+import { RECONOCEDOR_MANDA } from '../flags';
 import { useT } from '../i18n';
 import { LUGARES, type Ingrediente } from '../juego/ingredientes';
 import { RECETAS, claveDe, type Receta } from '../juego/recetas';
@@ -50,12 +52,51 @@ const COMO_BUSCARLO: Record<string, string> = {
   proteina: 'pistas.proteina',
 };
 
+/**
+ * Qué decirle a alguien para que consiga este ingrediente, leído de su objetivo
+ * en `buscar/objetivos.ts`.
+ *
+ * Sale de la misma tabla que decide qué aparece, y es a propósito: si la ficha
+ * dijera "apunta a una manzana" y la tabla pidiera "algo rojo", la ficha
+ * mentiría, y nadie lo notaría hasta jugar.
+ *
+ * - **Con clase**, la cosa por nombre. Si comparte clase con otros —la lechuga
+ *   con la espinaca—, se nombran todos y se dice qué decide cuál sale.
+ * - **Sin clase pero con color** —gemas, jengibre, tofu—, el lugar y el color.
+ * - **Sin nada** —la despensa—, el lugar, y que sale lo que haya.
+ */
+type Guia =
+  | { tipo: 'clase'; nombres: string[]; decide: 'solo' | 'azar' | 'color'; color?: string; alternativa?: string }
+  | { tipo: 'color'; color: string }
+  | { tipo: 'lugar' };
+
+function guiaDe(id: string): Guia {
+  const r = OBJETIVOS[id];
+  if (r?.clase) {
+    const nombres = compartenClase(id);
+    const alternativa = r.alternativas.find((a) => a.tonos?.length)?.tonos?.[0];
+    if (nombres.length <= 1) return { tipo: 'clase', nombres: [id], decide: 'solo', alternativa };
+
+    // El color solo decide si es suyo: bife y picada piden los dos rojo, y
+    // entre ellos decide la suerte aunque la clase lleve tono.
+    const color = r.clase.tonos?.[0];
+    const suyo = color && nombres.every((otro) => otro === id || !OBJETIVOS[otro].clase?.tonos?.includes(color));
+    return suyo
+      ? { tipo: 'clase', nombres, decide: 'color', color, alternativa }
+      : { tipo: 'clase', nombres, decide: 'azar', alternativa };
+  }
+  const color = r?.principal?.tonos?.[0];
+  return color ? { tipo: 'color', color } : { tipo: 'lugar' };
+}
+
 export function DondeSeEncuentra({ ingrediente, cuantos, tinte, onCerrar }: Props) {
   const t = useT();
   if (!ingrediente) return null;
 
   const lugar = LUGARES[ingrediente.lugar];
   const recetas = usadoEn(ingrediente.id);
+  const guia = guiaDe(ingrediente.id);
+  const color = (tono: string) => t(`colores.${tono}`);
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onCerrar} statusBarTranslucent>
@@ -85,15 +126,45 @@ export function DondeSeEncuentra({ ingrediente, cuantos, tinte, onCerrar }: Prop
           <View style={estilos.separador} />
 
           <Text style={estilos.titulo}>{t('ingrediente.dondeSeEncuentra')}</Text>
-          <Text style={estilos.instruccion}>{t(COMO_BUSCARLO[ingrediente.lugar])}</Text>
-          <Text style={estilos.pendiente}>{t('ingrediente.porAhoraEnCualquierLugar')}</Text>
+          {guia.tipo === 'clase' ? (
+            <>
+              <Text style={estilos.instruccion}>{t('ingrediente.apuntaA')}</Text>
+              <Text style={[estilos.cosa, { color: tinte }]}>
+                {guia.nombres.map((n) => t(`ingredientes.${n}`)).join(' · ')}
+              </Text>
+              {guia.decide === 'azar' ? (
+                <Text style={estilos.sirve}>{t('ingrediente.compartenAzar')}</Text>
+              ) : guia.decide === 'color' && guia.color ? (
+                <Text style={estilos.sirve}>{t('ingrediente.compartenColor', { color: color(guia.color) })}</Text>
+              ) : null}
+              {guia.alternativa ? (
+                <Text style={estilos.sirve}>
+                  {t('ingrediente.tambienColor', { color: color(guia.alternativa) })}
+                </Text>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <Text style={estilos.instruccion}>{t(COMO_BUSCARLO[ingrediente.lugar])}</Text>
+              <Text style={estilos.sirve}>
+                {guia.tipo === 'color'
+                  ? t('ingrediente.colorDecide', { color: color(guia.color) })
+                  : t('ingrediente.loQueHaya')}
+              </Text>
+            </>
+          )}
+          {/* Mientras el reconocedor esté apagado, lo de arriba es cómo va a
+              ser, no cómo es: hoy aparece cualquier cosa en cualquier lado. */}
+          {!RECONOCEDOR_MANDA ? (
+            <Text style={estilos.pendiente}>{t('ingrediente.porAhoraEnCualquierLugar')}</Text>
+          ) : null}
 
           <View style={estilos.separador} />
 
           <Text style={estilos.titulo}>{t('ingrediente.paraQueSirve')}</Text>
           {recetas.length ? (
             <Text style={estilos.sirve}>
-              {recetas.map((r) => r.nombre).join(' · ')}
+              {recetas.map((r) => t(claveDe(r))).join(' · ')}
             </Text>
           ) : (
             <Text style={estilos.sirve}>{t('ingrediente.ningunaReceta')}</Text>
@@ -135,6 +206,7 @@ const estilos = StyleSheet.create({
 
   titulo: { color: colors.textFaint, fontSize: 10.5, letterSpacing: 2 },
   instruccion: { color: colors.text, fontSize: 14, lineHeight: 20 },
+  cosa: { fontSize: 15, lineHeight: 21, letterSpacing: 0.2 },
   sirve: { color: colors.textMuted, fontSize: 12.5, lineHeight: 18 },
   pendiente: { color: colors.textFaint, fontSize: 11, fontStyle: 'italic' },
 });

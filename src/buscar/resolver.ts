@@ -1,4 +1,5 @@
 import { INGREDIENTES, type Familia, type Ingrediente } from '../juego/ingredientes';
+import type { Clase } from './clases';
 import type { Escena } from './etiquetas';
 import { OBJETIVOS, type Objetivo } from './objetivos';
 import { tonoSirve, type Tono } from './tonos';
@@ -15,6 +16,11 @@ import { tonoSirve, type Tono } from './tonos';
 
 /** Lo que se sacó en limpio de mirar una vez. */
 export type Lectura = {
+  /**
+   * Las clases del modelo propio que pasaron el umbral. Vacío con el modelo
+   * base, que no sabe nombres: ahí todo sale de escenas y color.
+   */
+  clases: readonly Clase[];
   /** Las escenas presentes. Pueden ser varias: una maceta es planta y tierra. */
   escenas: readonly Escena[];
   /** El tono dominante, o null si no se pudo leer el color. */
@@ -37,8 +43,9 @@ export type Exactitud = 'exacto' | 'vecino' | null;
 export function cumple(objetivo: Objetivo, lectura: Lectura): Exactitud {
   // Un objetivo vacio matchearia siempre, y eso convertiria a su ingrediente en
   // el que sale con cualquier cosa. Se rechaza: si no pide nada, no vale.
-  if (!objetivo.escenas && !objetivo.tonos) return null;
+  if (!objetivo.clases && !objetivo.escenas && !objetivo.tonos) return null;
 
+  if (!claseVista(objetivo, lectura)) return null;
   if (objetivo.escenas && !objetivo.escenas.some((e) => lectura.escenas.includes(e))) {
     return null;
   }
@@ -49,15 +56,30 @@ export function cumple(objetivo: Objetivo, lectura: Lectura): Exactitud {
   return tonoSirve(lectura.tono, objetivo.tonos) ? 'vecino' : null;
 }
 
+/** Si el objetivo pide clases, alguna está entre las que vio el modelo. */
+function claseVista(objetivo: Objetivo, lectura: Lectura): boolean {
+  return !objetivo.clases || objetivo.clases.some((c) => lectura.clases.includes(c));
+}
+
 /**
  * Con cuánta fuerza matcheó un ingrediente.
  *
- * `principal` es el objeto real y `alternativa` es la salida de emergencia.
- * Separarlos no es un detalle: **si hay algo que matchea por lo principal, las
- * alternativas de los demás no compiten**. Apuntar a una naranja tiene que dar
- * la naranja, no una zanahoria que también acepta cosas anaranjadas.
+ * `clase` es la cosa dicha por el modelo, `principal` la cosa deducida de escena
+ * y color, y `alternativa` la salida de emergencia. Separarlos no es un detalle:
+ * **si hay algo de un nivel, los de abajo no compiten**. Apuntar a una naranja
+ * tiene que dar la naranja, no una zanahoria que también acepta cosas
+ * anaranjadas; y si el modelo dice `papa`, tiene que dar papa y no el jengibre,
+ * que se busca como "verdura tostada".
  */
-export type Fuerza = 'principal' | 'alternativa';
+export type Fuerza = 'clase' | 'clase-otro-color' | 'principal' | 'alternativa';
+
+/**
+ * `clase-otro-color` es la clase vista con un color que no es el suyo. Va debajo
+ * de la clase acertada —si el modelo ve carne y es roja, gana el bife y no la
+ * desmenuzada— pero **encima de lo deducido**: un hibisco que se lee verde por
+ * las hojas es un planta verde, y sin este nivel competía con la albahaca.
+ */
+const NIVELES: readonly Fuerza[] = ['clase', 'clase-otro-color', 'principal', 'alternativa'];
 
 export type Candidato = { ingrediente: Ingrediente; fuerza: Fuerza };
 
@@ -75,6 +97,21 @@ export function candidatos(lectura: Lectura, familia?: Familia): Candidato[] {
 
     const objetivo = OBJETIVOS[ingrediente.id];
     if (!objetivo) continue;
+
+    // La clase acertada de lleno —el modelo la vio y el color, si lo pide, es el
+    // suyo— es lo unico que cuenta como clase. Vista pero con otro color baja un
+    // nivel: sigue siendo esa cosa, aunque no se sepa cual de las que la
+    // comparten. Un hibisco que se lee verde por las hojas sigue siendo hibisco.
+    if (objetivo.clase) {
+      if (cumple(objetivo.clase, lectura) === 'exacto') {
+        salida.push({ ingrediente, fuerza: 'clase' });
+        continue;
+      }
+      if (claseVista(objetivo.clase, lectura) && lectura.clases.length) {
+        salida.push({ ingrediente, fuerza: 'clase-otro-color' });
+        continue;
+      }
+    }
 
     // El principal acertado de lleno es lo unico que cuenta como principal.
     // Acertado por vecindad de color baja a alternativa: sirve para que algo
@@ -115,9 +152,10 @@ const LUGAR_A_FAMILIA: Record<string, Familia> = {
 /**
  * Elige uno entre los candidatos, con el peso de cada uno.
  *
- * **Los principales le ganan a las alternativas**, siempre: si hay aunque sea
- * uno que matcheó por lo suyo, las alternativas quedan afuera del sorteo. Es lo
- * que hace que apuntar a la cosa correcta dé la cosa correcta.
+ * **El nivel más alto que haya gana**, siempre: si hay aunque sea uno por
+ * clase, los principales y las alternativas quedan afuera del sorteo; si no hay
+ * clase pero hay principal, quedan afuera las alternativas. Es lo que hace que
+ * apuntar a la cosa correcta dé la cosa correcta.
  *
  * Adentro del grupo que quedó, sortea el `peso`. Eso es lo que hace que en la
  * alacena salga harina más seguido que chocolate, y que entre las nueve piedras
@@ -131,8 +169,8 @@ export function elegir(
 ): Ingrediente | null {
   if (lista.length === 0) return null;
 
-  const hayPrincipal = lista.some((c) => c.fuerza === 'principal');
-  const enJuego = hayPrincipal ? lista.filter((c) => c.fuerza === 'principal') : lista;
+  const nivel = NIVELES.find((n) => lista.some((c) => c.fuerza === n));
+  const enJuego = lista.filter((c) => c.fuerza === nivel);
 
   const total = enJuego.reduce((s, c) => s + c.ingrediente.peso, 0);
   if (total <= 0) return enJuego[0].ingrediente;

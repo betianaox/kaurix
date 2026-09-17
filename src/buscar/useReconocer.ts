@@ -70,12 +70,14 @@ export type Contexto = {
 /** Dos lecturas dicen lo mismo. */
 function igual(a: Lectura, b: Lectura): boolean {
   if (a.tono !== b.tono) return false;
+  if (a.clases.length !== b.clases.length) return false;
+  if (!a.clases.every((c) => b.clases.includes(c))) return false;
   if (a.escenas.length !== b.escenas.length) return false;
   return a.escenas.every((e) => b.escenas.includes(e));
 }
 
 /** Una lectura que no vio nada no sirve para nada. */
-const vacia = (l: Lectura) => l.escenas.length === 0 && l.tono === null;
+const vacia = (l: Lectura) => l.clases.length === 0 && l.escenas.length === 0 && l.tono === null;
 
 export function useReconocer(
   camara: React.RefObject<CameraView | null>,

@@ -126,7 +126,13 @@
     "tenes": "Ne hai {cantidad}",
     "noTenesNinguno": "Non ne hai nessuno",
     "porAhoraEnCualquierLugar": "Per ora compare ovunque: la fotocamera non distingue ancora cosa sta guardando.",
-    "ningunaReceta": "Nessuna ricetta lo richiede ancora."
+    "ningunaReceta": "Nessuna ricetta lo richiede ancora.",
+    "apuntaA": "Punta la fotocamera sulla cosa vera:",
+    "compartenAzar": "La fotocamera non le distingue: quale esce lo decide la fortuna.",
+    "compartenColor": "La fotocamera non le distingue: esce questa se ciò che vedi è di colore {color}.",
+    "colorDecide": "Il colore decide quale esce: questa, con qualcosa di colore {color}.",
+    "loQueHaya": "Non si cerca una cosa in particolare: esce quello che c'è.",
+    "tambienColor": "Se non ne hai a portata di mano, può uscire anche con qualcosa di colore {color}."
   },
   "lugares": {
     "planta": "Piante",
@@ -376,5 +382,19 @@
     "texto": "Ci sono creature nascoste nel mondo reale. Punta la fotocamera {icono}. Raccogli ingredienti, cucina e falle crescere.",
     "empezar": "Inizia",
     "ayuda": "Aiuto"
+  },
+  "colores": {
+    "rojo": "rosso",
+    "naranja": "arancione",
+    "amarillo": "giallo",
+    "verde": "verde",
+    "celeste": "azzurro",
+    "azul": "blu",
+    "violeta": "viola",
+    "rosa": "rosa",
+    "tostado": "beige",
+    "blanco": "bianco",
+    "gris": "grigio",
+    "negro": "nero"
   }
 }

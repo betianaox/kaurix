@@ -126,7 +126,13 @@
     "tenes": "You have {cantidad}",
     "noTenesNinguno": "You have none",
     "porAhoraEnCualquierLugar": "For now it shows up anywhere: the camera can’t tell yet what it’s looking at.",
-    "ningunaReceta": "No recipe calls for it yet."
+    "ningunaReceta": "No recipe calls for it yet.",
+    "apuntaA": "Point the camera at the real thing:",
+    "compartenAzar": "The camera can't tell these apart: which one you get is luck.",
+    "compartenColor": "The camera can't tell these apart: you get this one if what you see is {color}.",
+    "colorDecide": "The color decides which one you get: this one comes from something {color}.",
+    "loQueHaya": "You don't look for one in particular: you get whatever's there.",
+    "tambienColor": "If you don't have any around, it can also come from something {color}."
   },
   "lugares": {
     "planta": "Plants",
@@ -376,5 +382,19 @@
     "texto": "There are creatures hidden in the real world. Point the camera {icono}. Gather ingredients, cook and help them grow.",
     "empezar": "Start",
     "ayuda": "Help"
+  },
+  "colores": {
+    "rojo": "red",
+    "naranja": "orange",
+    "amarillo": "yellow",
+    "verde": "green",
+    "celeste": "light blue",
+    "azul": "blue",
+    "violeta": "purple",
+    "rosa": "pink",
+    "tostado": "tan",
+    "blanco": "white",
+    "gris": "gray",
+    "negro": "black"
   }
 }
