@@ -36,7 +36,8 @@ uv pip install --python .venv-clip/Scripts/python.exe open_clip_torch pillow
 # cada vez
 .venv/Scripts/python.exe fotos.py               # horas la primera vez; retoma si se corta
 .venv-clip/Scripts/python.exe filtrar.py        # minutos
-.venv/Scripts/python.exe entrenar.py entrenar   # unos 12 minutos en el procesador
+# el v1: base Large, ajuste más largo (media hora en el procesador)
+.venv/Scripts/python.exe entrenar.py entrenar --base large --capas 80 --paso-ajuste 1e-4 --epocas-ajuste 15
 .venv/Scripts/python.exe entrenar.py exportar
 .venv/Scripts/python.exe entrenar.py propias    # con fotos en propias/<clase>/
 ```
@@ -129,13 +130,18 @@ se sostienen.
 Un modelo del que solo se sabe el número contra su propio dataset es un modelo
 del que no se sabe nada.
 
-## Cuando el modelo esté
+## Cómo se pone en la app
+
+El v1 —MobileNetV3Large, 49 clases, 3,3 MB— ya está adentro. Para uno nuevo:
 
 1. El `.tflite` va a `modules/reconocedor/android/src/main/assets/modelo.tflite`.
-2. Se recompila: `npx expo run:android`.
-3. Al arrancar, `mirar.ts` escribe en la consola de Metro cuál quedó:
+2. Si cambiaron las clases, `src/buscar/clases.ts` tiene que decir lo mismo que
+   `salida/etiquetas.txt`, y `src/buscar/objetivos.ts` tiene que pedir las
+   nuevas. `npm run reconocedor` compara las dos listas y prueba la tabla.
+3. Se recompila: `npx expo run:android`.
+4. Al arrancar, `mirar.ts` escribe en la consola de Metro cuál quedó:
    `[mirar] etiquetador: sí · modelo: propio · color: sí`.
-4. Se enciende `RECONOCEDOR_MANDA` en `src/flags.ts`.
-5. Se reescribe `src/buscar/objetivos.ts` para que cada ingrediente pida su
-   clase por nombre, usando `cubre` para los que comparten clase.
-   `etiquetas.ts` queda como red para cuando el modelo no está seguro.
+
+Lo que falta es encenderlo: `RECONOCEDOR_MANDA` en `src/flags.ts` sigue
+apagado, y el umbral de confianza del modelo propio (`CONFIANZA_PROPIO` en
+`mirar.ts`) se ajusta jugando.

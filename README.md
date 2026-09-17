@@ -25,7 +25,7 @@ pesaba 31 MB. Está descartado a propósito, no por no haberlo intentado.
 |---|---|
 | Colección | La casa. Las criaturas encontradas, la ruleta diaria y cuánto falta. |
 | Bicho | La ficha de una criatura: su barra, qué come y qué le falta. |
-| Buscar | La cámara. Aparecen criaturas e ingredientes. |
+| Buscar | La cámara, en dos modos que se eligen abajo: bichos o ingredientes. |
 | Cocina | El caldero: se tiran ingredientes y sale lo que salga. |
 | Inventario | El bolso, con las recetas y dónde se encuentra cada cosa. |
 | Álbum | Las cartas que dejan las criaturas al crecer. |
@@ -36,21 +36,34 @@ lo decide el dispositivo sin preguntarle nada al jugador:
 
 | Motor | Cómo funciona | Requiere |
 |---|---|---|
-| `orientacion` | La criatura ocupa una dirección fija del mundo y aparece al apuntar hacia allá. | Sensor de rotación |
-| `deriva` | Va y viene por la pantalla. | Nada, solo cámara |
+| `orientacion` | La criatura ocupa una dirección fija del mundo y aparece al apuntar hacia allá. | Giroscopio |
+| `deriva` | Va y viene dentro de la pantalla, sin salirse. | Nada, solo cámara |
+
+Sin giroscopio la rotación sale de la brújula y tiembla demasiado para ubicar
+nada, así que esos equipos —la Galaxy Tab A11, por ejemplo— van a `deriva`.
+
+Con cualquier motor, la criatura aparece después de un minuto y medio en modo
+bichos, y entre encontrar una y poder buscar la siguiente pasan 8 horas.
 
 Si la criatura se mueve para el lado contrario al giro, el único valor a tocar
 es `YAW_SIGN` en `src/buscar/useAparicion.ts`.
 
 ## Estado
 
-El juego se puede recorrer entero. Lo que falta para testing cerrado:
+El juego se puede recorrer entero, y el modelo propio del reconocedor ya está
+adentro de la app (`modelo/`, ver `modelo/LEEME.md`), con cada ingrediente
+pidiendo su clase en `src/buscar/objetivos.ts`. Lo que falta para testing
+cerrado:
 
-- **El reconocedor.** Hoy los ingredientes salen al azar. El modelo propio se
-  entrena con `modelo/` (ver `modelo/LEEME.md`) y, cuando esté, se enciende
-  `RECONOCEDOR_MANDA` y se reescribe `src/buscar/objetivos.ts`.
-- **Las distancias reales.** `TODO_CERCA` está encendido para probar sentado;
-  se apaga y se calibra en la calle.
+- **Encender el reconocedor.** `RECONOCEDOR_MANDA` sigue apagado: los
+  ingredientes salen al azar. Hay que encenderlo, probarlo con cosas reales y
+  ajustar el umbral de confianza en `src/buscar/mirar.ts`.
+- **Las distancias reales.** `TODO_CERCA` está encendido para probar sentado:
+  acerca las criaturas en segundos y deja la espera entre criaturas en un
+  minuto. Se apaga y se calibra en la calle.
+- **El reloj de prueba de la cámara**, marcado `TEMPORAL`, se saca.
+- **Un build de producción con EAS**, probado como tal: anuncios reales, sin
+  micrófono.
 
 Los interruptores de prueba viven en `src/flags.ts`, y cada uno dice cuándo se
 enciende y cuándo se borra.
