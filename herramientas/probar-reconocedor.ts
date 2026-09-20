@@ -141,15 +141,15 @@ const CASOS_PROPIO: { que: string; clases: string[]; color: Rgb }[] = [
 ];
 
 /**
- * Las clases de `clases.ts` contra las del modelo entrenado, si está a mano.
+ * Las clases de `clases.ts` contra las del modelo que está en la app.
  *
- * `modelo/salida/` no va al repo, así que esto solo corre donde se entrenó.
+ * La lista viaja al lado del `.tflite`, en los assets del módulo. `modelo/salida`
+ * no va al repo, y lo que hay que comparar es contra el modelo instalado y no
+ * contra el último que se haya entrenado en esta computadora.
  */
 function clasesContraModelo(): string {
-  const etiquetas = ['v1-large', '.']
-    .map((d) => path.join(raiz, 'modelo/salida', d, 'etiquetas.txt'))
-    .find((f) => fs.existsSync(f));
-  if (!etiquetas) return 'sin etiquetas.txt del modelo a mano: no se compara';
+  const etiquetas = path.join(raiz, 'modules/reconocedor/android/src/main/assets/etiquetas.txt');
+  if (!fs.existsSync(etiquetas)) return 'sin etiquetas.txt junto al modelo: no se compara';
   const delModelo = new Set(fs.readFileSync(etiquetas, 'utf8').split(/\r?\n/).filter(Boolean));
   const escritas = new Set(Object.keys(CLASES));
   const faltan = [...delModelo].filter((c) => !escritas.has(c));

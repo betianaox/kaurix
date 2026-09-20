@@ -187,6 +187,14 @@
         {
           "nombre": "Lime (Fruit)",
           "id": "/m/01mt0b"
+        },
+        {
+          "nombre": "Key lime",
+          "id": "/m/052b2y"
+        },
+        {
+          "nombre": "Persian lime",
+          "id": "/m/043b0s"
         }
       ],
       "inat": [],
@@ -218,7 +226,8 @@
         }
       ],
       "inat": [
-        "Actinidia deliciosa"
+        "Actinidia deliciosa",
+        "Actinidia chinensis"
       ],
       "clip_no": [
         "a photo of a kiwi bird"
@@ -398,6 +407,18 @@
         {
           "nombre": "Shallot",
           "id": "/m/0c2qc"
+        },
+        {
+          "nombre": "Yellow onion",
+          "id": "/m/0cwzcn"
+        },
+        {
+          "nombre": "Pearl onion",
+          "id": "/m/07cngz"
+        },
+        {
+          "nombre": "Fried onion",
+          "id": "/m/0fyw9s"
         }
       ],
       "inat": [],
@@ -467,6 +488,10 @@
         {
           "nombre": "Avocado",
           "id": "/m/01645p"
+        },
+        {
+          "nombre": "Guacamole",
+          "id": "/m/02g30s"
         }
       ],
       "inat": [
@@ -607,7 +632,8 @@
       "clip": [
         "a photo of green peas",
         "open pea pods with green peas",
-        "a bowl of green peas"
+        "a bowl of green peas",
+        "pea pods growing on a plant"
       ],
       "oi": [
         {
@@ -622,10 +648,11 @@
         }
       ],
       "inat": [
-        "Pisum sativum"
+        "Pisum sativum",
+        "Pisum"
       ],
       "clip_no": [
-        "a photo of a pea plant with only leaves and flowers"
+        "a photo of a pea plant with only leaves, without pods"
       ]
     },
     {
@@ -649,6 +676,18 @@
         {
           "nombre": "Sweet potato",
           "id": "/m/0dm32"
+        },
+        {
+          "nombre": "Baked sweet potato",
+          "id": "/m/05v687l"
+        },
+        {
+          "nombre": "Fried sweet potato",
+          "id": "/m/0_ftllt"
+        },
+        {
+          "nombre": "Wild sweet potato",
+          "id": "/m/03cph5p"
         }
       ],
       "inat": [
@@ -698,6 +737,10 @@
         {
           "nombre": "Cauliflower",
           "id": "/m/015w7p"
+        },
+        {
+          "nombre": "Broccoflower",
+          "id": "/m/02p1q8p"
         }
       ],
       "inat": [],
@@ -789,6 +832,18 @@
         {
           "nombre": "Chicken",
           "id": "/m/09b5t"
+        },
+        {
+          "nombre": "Crispy fried chicken",
+          "id": "/m/02r_4gm"
+        },
+        {
+          "nombre": "Chicken nugget",
+          "id": "/m/02fjhf"
+        },
+        {
+          "nombre": "Chicken fingers",
+          "id": "/m/050lqd"
         }
       ],
       "inat": [],
@@ -824,6 +879,34 @@
         {
           "nombre": "Chorizo",
           "id": "/m/01xg7s"
+        },
+        {
+          "nombre": "Salami",
+          "id": "/m/018dz0"
+        },
+        {
+          "nombre": "Pepperoni",
+          "id": "/m/018dy5"
+        },
+        {
+          "nombre": "Bratwurst",
+          "id": "/m/01gxnj"
+        },
+        {
+          "nombre": "Vienna sausage",
+          "id": "/m/06l9l9"
+        },
+        {
+          "nombre": "Italian sausage",
+          "id": "/m/09z27p"
+        },
+        {
+          "nombre": "Breakfast sausage",
+          "id": "/m/01xg0j"
+        },
+        {
+          "nombre": "Bologna sausage",
+          "id": "/m/03f7_0"
         }
       ],
       "inat": [],
@@ -1049,7 +1132,8 @@
         }
       ],
       "inat": [
-        "Ocimum basilicum"
+        "Ocimum basilicum",
+        "Ocimum"
       ],
       "clip_no": []
     },
@@ -1198,6 +1282,10 @@
         {
           "nombre": "Garlic",
           "id": "/m/0dbrl"
+        },
+        {
+          "nombre": "Elephant garlic",
+          "id": "/m/044b1l"
         }
       ],
       "inat": [

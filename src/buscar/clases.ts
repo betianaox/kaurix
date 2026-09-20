@@ -4,9 +4,9 @@ import type { Escena } from './etiquetas';
  * ───────────────────────────────────────────────────────────────────────────
  * LAS CLASES DEL MODELO PROPIO
  * ───────────────────────────────────────────────────────────────────────────
- * Lo que sabe decir `modules/reconocedor/.../modelo.tflite`: cuarenta y nueve
- * nombres, los mismos de `modelo/clases.json` menos el jengibre, que no llegó a
- * tener fotos suficientes.
+ * Lo que sabe decir `modules/reconocedor/.../modelo.tflite`: cuarenta y ocho
+ * nombres, los de `modelo/clases.json` menos el jengibre y el boniato, que no
+ * llegaron a juntar fotos suficientes.
  *
  * Con el modelo base, las etiquetas son palabras en inglés —`Fruit`, `Rock`— y
  * `etiquetas.ts` las agrupa en escenas. Con el propio, cada etiqueta ya es una
@@ -15,7 +15,7 @@ import type { Escena } from './etiquetas';
  * 1. **Piden por nombre.** Un ingrediente con clase se consigue apuntando a esa
  *    cosa: ver `clase` en `objetivos.ts`.
  * 2. **Siguen dando escena.** Todo lo que no tiene clase —las gemas, la
- *    despensa, el tofu, el jengibre— se busca por escena y color como antes, y
+ *    despensa, el tofu, el jengibre, el boniato— se busca por escena y color, y
  *    esas escenas salen de acá: `piedras` es la escena de piedra, cualquier
  *    fruta es `fruta` y también `comida`.
  *
@@ -55,7 +55,6 @@ export const CLASES = {
   brocoli: ['verdura', 'comida'],
   maiz: ['verdura', 'comida'],
   arvejas: ['verdura', 'comida'],
-  boniato: ['verdura', 'comida', 'tierra'],
   champinon: ['verdura', 'comida', 'tierra'],
   coliflor: ['verdura', 'comida'],
 

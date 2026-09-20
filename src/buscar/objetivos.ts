@@ -250,8 +250,8 @@ const VERDURA: Record<string, Reconocimiento> = {
     principal: { escenas: ['verdura'], tonos: ['verde'] },
     alternativas: [{ escenas: ['planta'], tonos: ['verde'] }],
   },
+  // Sin clase: no juntó fotos suficientes, como el jengibre.
   boniato: {
-    clase: nombre('boniato'),
     principal: { escenas: ['verdura'], tonos: ['naranja', 'tostado'] },
     alternativas: [{ escenas: ['tierra'], tonos: ['naranja'] }],
   },
@@ -372,7 +372,8 @@ const FLOR: Record<string, Reconocimiento> = {
  * TIERRA — dos raíces
  *
  * El ajo tiene clase. El jengibre no: entre Open Images e iNaturalist no
- * llegaron a treinta fotos usables, así que sigue por escena y color. Por eso
+ * llegaron a treinta fotos usables, así que sigue por escena y color, igual que
+ * el boniato. Por eso
  * `clase` le gana a `principal`: una papa es una verdura tostada.
  * ──────────────────────────────────────────────────────────────────────────── */
 

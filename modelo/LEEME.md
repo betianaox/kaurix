@@ -63,8 +63,10 @@ que no tienen fotos en ningún lado.
   - `hoja-verde`: espinaca, kale, lechuga y apio. Casi no hay fotos de cada una
     por separado, y juntas son la clase general "Leaf vegetable".
   - `hibisco`: rojo y violeta. Es la misma flor; el color desempata.
-- **Sin fotos suficientes.** Jengibre: menos de treinta usables entre todas las
-  fuentes. Se resuelve por escena y color, como las gemas.
+- **Sin fotos suficientes.** Jengibre y boniato: entre todas las fuentes no
+  llegan al mínimo de fotos usables —del boniato, casi todo lo que hay son
+  plantas de camote y no el tubérculo—. Se resuelven por escena y color, como
+  las gemas.
 
 ## De dónde salen las fotos
 
@@ -132,12 +134,16 @@ del que no se sabe nada.
 
 ## Cómo se pone en la app
 
-El v1 —MobileNetV3Large, 49 clases, 3,3 MB— ya está adentro. Para uno nuevo:
+El v2 —MobileNetV3Large, 48 clases, 3,3 MB, 89% contra sus propias fuentes— ya
+está adentro. Para uno nuevo:
 
-1. El `.tflite` va a `modules/reconocedor/android/src/main/assets/modelo.tflite`.
+1. El `.tflite` y su `etiquetas.txt` van a
+   `modules/reconocedor/android/src/main/assets/`. La lista de clases viaja al
+   lado del modelo a propósito: es contra el modelo instalado —y no contra el
+   último entrenado acá— que hay que comparar el código.
 2. Si cambiaron las clases, `src/buscar/clases.ts` tiene que decir lo mismo que
-   `salida/etiquetas.txt`, y `src/buscar/objetivos.ts` tiene que pedir las
-   nuevas. `npm run reconocedor` compara las dos listas y prueba la tabla.
+   ese `etiquetas.txt`, y `src/buscar/objetivos.ts` tiene que pedir las nuevas.
+   `npm run reconocedor` compara las dos listas y prueba la tabla.
 3. Se recompila: `npx expo run:android`.
 4. Al arrancar, `mirar.ts` escribe en la consola de Metro cuál quedó:
    `[mirar] etiquetador: sí · modelo: propio · color: sí`.
