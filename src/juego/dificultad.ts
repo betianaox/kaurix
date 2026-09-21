@@ -38,9 +38,21 @@ export type Numeros = {
   esperaCriatura: number;
   /** Cuánto tarda la criatura en aparecer, con la cámara en modo bichos. */
   apareceCriatura: number;
-  /** Cuánto se acerca la criatura por lectura del sensor si la seguís. */
+  /**
+   * Cuánto se acerca la criatura por lectura del sensor si la tenés centrada.
+   *
+   * El sensor da unas treinta lecturas por segundo, así que el tiempo de
+   * seguimiento es uno dividido esto, sobre treinta: 0,006 son unos cinco
+   * segundos y 0,0015, algo más de veinte. Fuera del centro rinde menos de la
+   * mitad, y perderla de cuadro resta.
+   */
   acerca: number;
-  /** Cuánto se aleja por lectura si mirás para otro lado. */
+  /**
+   * Cuánto se aleja por lectura si mirás para otro lado.
+   *
+   * Alrededor de un tercio de `acerca`: si alejarse fuera más rápido que
+   * acercarse, no se alcanzaría nunca por más que la sigas.
+   */
   aleja: number;
   /** Cada cuánto puede aparecer un ingrediente. */
   cadaIngrediente: number;
@@ -51,6 +63,10 @@ export type Numeros = {
   cuestaEncontrar: number;
 };
 
+/**
+ * En casa: unos cinco segundos de tenerla centrada, o diez si se te va del
+ * medio. Alcanza con girar sobre uno mismo en una habitación.
+ */
 const FACIL: Numeros = {
   esperaIngrediente: 60 * 60 * 1000,
   esperaCriatura: 4 * 60 * 60 * 1000,
@@ -58,15 +74,24 @@ const FACIL: Numeros = {
   acerca: 0.006,
   aleja: 0.002,
   cadaIngrediente: 3000,
-  cuestaEncontrar: 0.6,
+  cuestaEncontrar: 0.8,
 };
 
+/**
+ * Afuera: unos veinte segundos centrada y cerca de un minuto si la seguís de
+ * costado. Con la criatura fija en una dirección del mundo, eso es caminar
+ * hacia allá sin perderla de vista, que es el juego que se quiso hacer.
+ *
+ * Está calibrado a ojo, con la cuenta de arriba y no con un cronómetro en la
+ * calle. El número para tocar si queda largo o corto es `acerca`, y `aleja`
+ * atrás de él.
+ */
 const DIFICIL: Numeros = {
   esperaIngrediente: 3 * 60 * 60 * 1000,
   esperaCriatura: 8 * 60 * 60 * 1000,
   apareceCriatura: 120_000,
-  acerca: 0.002,
-  aleja: 0.0007,
+  acerca: 0.0015,
+  aleja: 0.0005,
   cadaIngrediente: 3800,
   cuestaEncontrar: 1,
 };

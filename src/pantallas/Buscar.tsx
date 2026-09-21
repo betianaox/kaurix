@@ -14,7 +14,6 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { porId, type Criatura, type Pieza } from '../art';
-import { RECONOCEDOR_MANDA } from '../flags';
 import { enEspera, ingredienteAlAzar, type Ingrediente } from '../juego/ingredientes';
 import { useAnuncioRecompensado, useReintentarAlOfrecer } from '../anuncios/useAnuncioRecompensado';
 import { Conseguido } from '../components/Conseguido';
@@ -291,14 +290,12 @@ export function BuscarScreen({ navigation }: Props) {
    * para siempre. Los dos se usan abajo, y no significan lo mismo.
    * Ver `../docs/kaurix-reconocer-el-lugar.md`.
    *
-   * Con `RECONOCEDOR_MANDA` apagado ni siquiera arranca el reloj: no se saca
-   * ninguna foto, no se gasta batería y la imagen no se toca. Un reconocedor
-   * mirando para nada mientras se prueba otra cosa es puro costo. Por lo mismo,
-   * en modo bichos tampoco mira: no hay ingredientes que decidir.
+   * En modo bichos no mira: no hay ingredientes que decidir, y un reconocedor
+   * sacando una foto por segundo y medio para nada es batería tirada.
    */
   const { lectura, disponible } = useReconocer(
     camara,
-    !!permiso?.granted && RECONOCEDOR_MANDA && modo === 'ingredientes'
+    !!permiso?.granted && modo === 'ingredientes'
   );
 
   /**
@@ -357,10 +354,8 @@ export function BuscarScreen({ navigation }: Props) {
      * abre la pantalla y que sale un ingrediente pasan segundos, y lo que la
      * cámara ve pudo haber cambiado.
      *
-     * Son tres casos, y no significan lo mismo:
+     * Son dos casos, y no significan lo mismo:
      *
-     * - **Con el reconocedor apagado a mano** —`RECONOCEDOR_MANDA`, mientras se
-     *   prueba el resto— sortea libre. Es temporal; ver `flags`.
      * - **Sin reconocedor** —Expo Go, o un binario de antes de instalarlo— no
      *   hay con qué saber qué hay enfrente. El sorteo libre se queda: es lo
      *   único que mantiene el juego jugable mientras tanto.
@@ -373,8 +368,9 @@ export function BuscarScreen({ navigation }: Props) {
      * que no necesita la referencia que sí necesita la lectura.
      */
     elegir: () => {
-      // Mientras se prueba el resto del juego, sortea libre como antes.
-      if (!RECONOCEDOR_MANDA || !disponible) return ingredienteAlAzar();
+      // Sin reconocedor en el binario, sorteo libre: es lo único que mantiene el
+      // juego jugable en Expo Go.
+      if (!disponible) return ingredienteAlAzar();
       const leido = lecturaRef.current;
       if (!leido) return null;
 
@@ -645,7 +641,7 @@ export function BuscarScreen({ navigation }: Props) {
         </View>
 
         {/* Desarrollo: qué está viendo el modelo, para calibrar el umbral. */}
-        {__DEV__ && modo === 'ingredientes' && RECONOCEDOR_MANDA ? (
+        {__DEV__ && modo === 'ingredientes' ? (
           <Text style={estilos.pruebaVisto}>{ultimoVisto || '…'}</Text>
         ) : null}
 

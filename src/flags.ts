@@ -15,25 +15,6 @@
  */
 
 /**
- * Si lo que aparece sale de lo que la cámara ve.
- *
- * **Apagado.** Con esto en `false` el juego sortea libre cada tanto, como antes
- * del reconocedor: aparece cualquier cosa sin mirar qué hay enfrente, y la
- * cámara no saca ninguna foto.
- *
- * Está apagado para poder probar todo lo demás —la secuencia, las recetas, el
- * video, la tablet— sin tener que apuntarle a un ladrillo para que pase algo.
- * El reconocedor es lo último que se prueba, y se prueba solo: es el diferencial
- * del juego y merece su propia vuelta, no colarse en las pruebas de otra cosa.
- *
- * **Se enciende** cuando el resto esté andando y toque pulirlo, antes de mandar
- * a testing cerrado. Ahí este flag se borra y se queda solo `disponible`, que es
- * la pregunta de verdad —si este binario trae el reconocedor— y no un
- * interruptor de pruebas.
- */
-export const RECONOCEDOR_MANDA = true;
-
-/**
  * Todo al alcance de la mano, para probar sentado.
  *
  * **Solo en desarrollo**, y por eso no hay nada que acordarse de apagar antes

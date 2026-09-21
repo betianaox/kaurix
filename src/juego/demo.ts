@@ -20,12 +20,15 @@ import { carta, type EnCrianza, type Guardado } from './guardado';
  * arranque: cuatro criaturas —tres criándose y una ya crecida—, medio bolso y
  * las ocho hojas del álbum empezadas.
  *
- * ## Cómo se saca
+ * ## Solo en desarrollo
  *
- * Cambiando `PRECARGA` a `__DEV__`: la precarga sigue viva mientras se
- * desarrolla y no sale nunca en un build de tienda. Es una línea y es el único
- * lugar donde hay que tocar; nada más del juego sabe que esto existe salvo la
- * llamada en `store.iniciar`.
+ * `PRECARGA` es `__DEV__`, así que esto vive mientras se desarrolla y **no sale
+ * nunca en un build de tienda**: quien instala la app empieza con la colección
+ * en sombras, el bolso vacío y las ocho hojas por llenar, que es el arranque de
+ * verdad. El bundler resuelve la constante en tiempo de compilación, así que en
+ * producción ni siquiera llega la partida armada.
+ *
+ * Nada más del juego sabe que esto existe, salvo la llamada en `store.iniciar`.
  *
  * ## Por qué solo cuando no hay nada
  *
@@ -44,13 +47,8 @@ import { carta, type EnCrianza, type Guardado } from './guardado';
  * ingredientes justos y en el teléfono del otro salió otra cosa.
  */
 
-/**
- * Si la precarga corre.
- *
- * En `true` mientras se muestra el juego. Para que quede solo en desarrollo:
- * `export const PRECARGA = __DEV__;`
- */
-export const PRECARGA = true;
+/** Si la precarga corre: solo en desarrollo. */
+export const PRECARGA = __DEV__;
 
 /** La semilla. Cambiarla es sortear otra demo. */
 const SEMILLA = 'kaurix.demo.1';
