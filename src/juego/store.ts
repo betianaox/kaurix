@@ -328,7 +328,7 @@ export const useJuego = create<Estado>((set, get) => {
          * `abrirElDia` devuelve el mismo objeto cuando no hay nada que abrir,
          * así que abrir la app diez veces en un día no cambia nada.
          */
-        sendero: abrirElDia(guardado.sendero, ahora),
+        sendero: abrirElDia(guardado.sendero, numerosDe(guardado.modo).esperaPremio, ahora),
         visto: new Date(ahora).toISOString(),
       };
 
@@ -596,9 +596,9 @@ export const useJuego = create<Estado>((set, get) => {
       let dado: Reclamo = null;
 
       aplicar((j) => {
-        // Se abre el día antes de preguntar: si la app quedó abierta pasada la
-        // medianoche, el premio de hoy tiene que estar aunque nadie la reinició.
-        const sendero = abrirElDia(j.sendero);
+        // Se abre antes de preguntar: si la app quedó abierta mientras se
+        // cumplía el tiempo, el premio tiene que estar sin reiniciar nada.
+        const sendero = abrirElDia(j.sendero, numerosDe(j.modo).esperaPremio);
         if (!gratisDisponible(sendero, dia)) return j;
 
         const salida = repartirPremio(j.inventario, premioDe(dia), 1);
@@ -615,7 +615,7 @@ export const useJuego = create<Estado>((set, get) => {
       let dado: Reclamo = null;
 
       aplicar((j) => {
-        const sendero = abrirElDia(j.sendero);
+        const sendero = abrirElDia(j.sendero, numerosDe(j.modo).esperaPremio);
         if (!videoDisponible(sendero, dia)) return j;
 
         // El premio del día que se está cobrando, no el de hoy: los de atrás

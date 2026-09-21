@@ -4,8 +4,14 @@ import type { LugarId } from './ingredientes';
  * ───────────────────────────────────────────────────────────────────────────
  * EL CAMINO DE LOS DÍAS
  * ───────────────────────────────────────────────────────────────────────────
- * Siete pasos, uno por día, cada uno con un premio mejor que el anterior. Al
- * llegar al séptimo vuelve a empezar, así que no se termina nunca.
+ * Siete pasos, cada uno con un premio mejor que el anterior. Al llegar al
+ * séptimo vuelve a empezar, así que no se termina nunca.
+ *
+ * **Un paso abre cuando pasó el tiempo**, no cuando cambia la fecha: doce horas
+ * en fácil y veinticuatro en difícil. Por calendario, quien entraba a las once
+ * de la noche y volvía a las ocho de la mañana cobraba dos premios con nueve
+ * horas de diferencia, y quien juega siempre a la misma hora esperaba un día
+ * entero: el mismo juego daba el doble según a qué hora se entrara.
  *
  * ## Cada día abre DOS premios, y son dos caminos distintos
  *
@@ -26,7 +32,7 @@ import type { LugarId } from './ingredientes';
  *
  * Es la misma decisión que se tomó con la crianza cuando se le sacó el
  * decaimiento: **lo que agregaba era el miedo a irse, no una decisión
- * interesante**. Un premio que caduca a la medianoche castiga por no haber
+ * interesante**. Un premio que caduca por no entrar castiga por no haber
  * entrado, y en un juego que se juega apuntando la cámara a la cocina de tu
  * casa, el que se siente vigilado desinstala.
  *
@@ -41,9 +47,9 @@ import type { LugarId } from './ingredientes';
  * secuencia solo dejaba premios a la vista que no respondían al tocarlos. Lo
  * que se ve entero y a color se puede tocar; lo que todavía no llegó, no.
  *
- * ## Se abre un día por jornada, no uno por día ausente
+ * ## Se abre uno por vez, no uno por cada espera cumplida
  *
- * Quien vuelve después de una semana encuentra **un** día nuevo, no siete. El
+ * Quien vuelve después de una semana encuentra **un** paso nuevo, no siete. El
  * camino espera, pero no acumula: si acumulara, no entrar sería la mejor forma
  * de jugar, y volver una vez al mes daría treinta premios de un saque.
  *
@@ -180,11 +186,13 @@ export type Sendero = {
    */
   abiertos: number;
   /**
-   * El día calendario en que se abrió el último, como `2026-09-10`.
+   * Cuándo se abrió el último premio, en ISO.
    *
-   * Se guarda la fecha y no un booleano porque un booleano habría que limpiarlo,
-   * y limpiarlo obliga a saber cuándo empieza el día: con la fecha guardada, la
-   * pregunta se contesta comparando contra hoy y no hay nada que mantener.
+   * **Un momento y no una fecha de calendario.** Con la fecha, quien entraba a
+   * las once de la noche y volvía a las ocho de la mañana tenía dos premios con
+   * nueve horas de diferencia, y quien juega todas las tardes esperaba
+   * veinticuatro: el mismo juego daba el doble a quien entrara de noche. Ahora
+   * el premio abre cuando pasó el tiempo, y cuánto lo dice el modo.
    */
   ultimo: string | null;
   /**
@@ -220,15 +228,6 @@ export const senderoNuevo = (): Sendero => ({
 export const premioDe = (dia: number): Premio => CAMINO[(dia - 1) % PASOS];
 
 /**
- * El día calendario de una fecha, en la zona del teléfono.
- *
- * Se compara por día y no por horas: quien entró anoche a las 23 y vuelve hoy a
- * las 8 hizo dos días, aunque hayan pasado nueve horas. Es la misma cuenta que
- * usa el giro gratis de la ruleta.
- */
-const diaDe = (ms: number) => new Date(ms).toLocaleDateString('sv');
-
-/**
  * El sendero con el día de hoy abierto, si correspondía abrirlo.
  *
  * Se llama al arrancar y antes de cada cobro: alcanza con eso, porque lo único
@@ -236,14 +235,16 @@ const diaDe = (ms: number) => new Date(ms).toLocaleDateString('sv');
  * objeto** cuando no hay nada que abrir, así que llamarlo de más no ensucia el
  * estado ni escribe disco.
  *
- * Abre **uno**, no uno por día ausente. El porqué está arriba.
+ * Abre **uno**, no uno por cada espera cumplida. El porqué está arriba.
  */
-export function abrirElDia(s: Sendero, ahora = Date.now()): Sendero {
-  const hoy = diaDe(ahora);
-  if (s.ultimo === hoy) return s;
-  // La primera vez solo se anota la fecha: el día uno ya viene abierto.
-  if (s.ultimo === null) return { ...s, ultimo: hoy };
-  return { ...s, abiertos: s.abiertos + 1, ultimo: hoy };
+export function abrirElDia(s: Sendero, espera: number, ahora = Date.now()): Sendero {
+  // La primera vez solo se anota el momento: el día uno ya viene abierto.
+  if (s.ultimo === null) return { ...s, ultimo: new Date(ahora).toISOString() };
+
+  const desde = Date.parse(s.ultimo);
+  if (Number.isNaN(desde) || ahora - desde < espera) return s;
+
+  return { ...s, abiertos: s.abiertos + 1, ultimo: new Date(ahora).toISOString() };
 }
 
 /**
@@ -345,8 +346,8 @@ export function diasVisibles(s: Sendero): number {
  * tomó solo el gratis del día 1 ve un 3 al día siguiente —el video del 1, y el
  * gratis y el video del 2—, que es la cuenta que tiene que ver.
  */
-export const pendientesDe = (s: Sendero, ahora = Date.now()): number => {
-  const a = abrirElDia(s, ahora);
+export const pendientesDe = (s: Sendero, espera: number, ahora = Date.now()): number => {
+  const a = abrirElDia(s, espera, ahora);
   // Lo cobrado son los que quedaron atrás de la base más los de la lista.
   const hechos = (cola: readonly number[]) => a.base - 1 + cola.length;
   return a.abiertos - hechos(a.gratis) + (a.abiertos - hechos(a.videos));

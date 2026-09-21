@@ -36,6 +36,8 @@ export type Numeros = {
   esperaIngrediente: number;
   /** Cuánto pasa entre encontrar una criatura y poder buscar la siguiente. */
   esperaCriatura: number;
+  /** Cuánto tiene que pasar para que abra el próximo premio del camino. */
+  esperaPremio: number;
   /** Cuánto tarda la criatura en aparecer, con la cámara en modo bichos. */
   apareceCriatura: number;
   /**
@@ -70,6 +72,7 @@ export type Numeros = {
 const FACIL: Numeros = {
   esperaIngrediente: 60 * 60 * 1000,
   esperaCriatura: 4 * 60 * 60 * 1000,
+  esperaPremio: 12 * 60 * 60 * 1000,
   apareceCriatura: 30_000,
   acerca: 0.006,
   aleja: 0.002,
@@ -89,6 +92,7 @@ const FACIL: Numeros = {
 const DIFICIL: Numeros = {
   esperaIngrediente: 3 * 60 * 60 * 1000,
   esperaCriatura: 8 * 60 * 60 * 1000,
+  esperaPremio: 24 * 60 * 60 * 1000,
   apareceCriatura: 120_000,
   acerca: 0.0015,
   aleja: 0.0005,
@@ -100,6 +104,7 @@ const DIFICIL: Numeros = {
 const PROBANDO: Numeros = {
   esperaIngrediente: 60_000,
   esperaCriatura: 60_000,
+  esperaPremio: 60_000,
   apareceCriatura: 60_000,
   acerca: 0.011,
   aleja: 0.004,

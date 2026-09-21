@@ -29,6 +29,7 @@ import {
   type Premio,
   type Reclamo,
 } from '../juego/sendero';
+import { numerosDe } from '../juego/dificultad';
 import { useJuego } from '../juego/store';
 import { Pantalla } from '../shell/Pantalla';
 import { colors, radius, spacing } from '../theme';
@@ -37,7 +38,7 @@ import { colors, radius, spacing } from '../theme';
  * ───────────────────────────────────────────────────────────────────────────
  * EL CAMINO DE LOS DÍAS
  * ───────────────────────────────────────────────────────────────────────────
- * Siete escalones, uno por día, cada uno con el dibujo de lo que da y un color
+ * Siete escalones, cada uno con el dibujo de lo que da y un color
  * propio. Se sube de a uno: el de hoy se reclama tocándolo, los de atrás quedan
  * marcados y los de adelante se ven desde el primer día.
  *
@@ -99,10 +100,10 @@ export function PendientesScreen() {
    * El camino con el día de hoy ya abierto.
    *
    * Se abre acá también y no solo al arrancar la app: quien la deja abierta
-   * pasada la medianoche tiene que ver el premio de hoy sin reiniciar. No
+   * mientras se cumple el tiempo tiene que ver el premio sin reiniciar. No
    * escribe nada —eso lo hace el store al cobrar—, solo mira.
    */
-  const camino = abrirElDia(sendero);
+  const camino = abrirElDia(sendero, numerosDe(juego.modo).esperaPremio);
 
   /**
    * Qué días se dibujan: la vuelta entera, con los ya cobrados incluidos.
