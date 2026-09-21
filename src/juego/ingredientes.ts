@@ -190,6 +190,27 @@ export const normalizar = (t: string) =>
     .replace(new RegExp('[̀-ͯ]', 'g'), '');
 
 /**
+ * Los ingredientes que todavía no pueden volver a aparecer.
+ *
+ * `ingredienteDesde` guarda, por id, desde cuándo vuelve a estar disponible
+ * cada uno. Solo entran los que el modelo reconoce como sí mismos: lo que sale
+ * de una categoría —la alacena, unas piedras, la hoja verde— no espera nada, o
+ * la categoría se vaciaría hasta no tener nada que dar. Cuánto dura la espera
+ * lo dice el modo: ver `dificultad.ts`.
+ */
+export function enEspera(
+  ingredienteDesde: Record<string, string>,
+  ahora = Date.now()
+): Set<string> {
+  const esperando = new Set<string>();
+  for (const [id, cuando] of Object.entries(ingredienteDesde)) {
+    const fin = Date.parse(cuando);
+    if (!Number.isNaN(fin) && fin > ahora) esperando.add(id);
+  }
+  return esperando;
+}
+
+/**
  * Sortea un ingrediente por peso.
  *
  * Si viene un lugar, sortea solo entre los de ahí. Cuando esté el

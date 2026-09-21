@@ -31,20 +31,23 @@
  * la pregunta de verdad —si este binario trae el reconocedor— y no un
  * interruptor de pruebas.
  */
-export const RECONOCEDOR_MANDA = false;
+export const RECONOCEDOR_MANDA = true;
 
 /**
  * Todo al alcance de la mano, para probar sentado.
  *
- * **Encendido.** La criatura se acerca en unos tres segundos de tenerla
- * centrada y los ingredientes salen cada 3,8 s: el juego entero cabe en un
- * metro cuadrado. Es lo que permite probar la cocina, las recetas o el cartel
- * de lo que encontrás sin salir a caminar veinte metros por cada prueba.
+ * **Solo en desarrollo**, y por eso no hay nada que acordarse de apagar antes
+ * de publicar: en la app instalada es siempre falso y los números salen del
+ * modo que se haya elegido, fácil o difícil. Ver `juego/dificultad.ts`.
  *
- * Apagado son las distancias de verdad: la criatura tarda cerca de veinte
- * segundos de seguimiento sostenido y los ingredientes se espacian. Esos son
- * los números que hay que calibrar en la calle, y los que van a producción.
+ * Mientras corre desde la computadora, en cambio, el juego entero cabe en un
+ * metro cuadrado: la criatura se acerca en unos segundos, las esperas son de un
+ * minuto y los ingredientes salen seguido. Es lo que permite probar la cocina,
+ * las recetas o el cartel de lo que encontrás sin salir a caminar veinte metros
+ * por cada prueba.
  *
- * **Se apaga** para probar el ritmo real, y antes de mandar a testing cerrado.
+ * La contra, que conviene tener presente: **en desarrollo el modo no se nota**,
+ * porque esto lo pisa. Para ver la diferencia entre fácil y difícil hay que
+ * probar un build de verdad.
  */
-export const TODO_CERCA = true;
+export const TODO_CERCA = __DEV__;

@@ -8,6 +8,7 @@ import {
 } from '../i18n/idiomas';
 import { esRegionSoportada, regionDelDispositivo, type Region } from '../i18n/region';
 import type { Impulso } from './ruleta';
+import type { Modo } from './dificultad';
 
 /**
  * Todo lo que el juego recuerda, en un solo objeto.
@@ -135,12 +136,25 @@ export type Guardado = {
   /** El camino de los días: en qué paso va y cuándo reclamó el último premio. */
   sendero: Sendero;
   /**
-   * Cuándo se encontró la última criatura, en ISO.
+   * Desde cuándo se puede volver a buscar una criatura, en ISO.
    *
-   * Entre una y otra tiene que pasar `ESPERA_ENTRE_CRIATURAS`: que haya lugar
-   * para criar no quiere decir que salgan una atrás de la otra.
+   * Se anota al encontrar una: que haya lugar para criar no quiere decir que
+   * salgan una atrás de la otra.
+   *
+   * Es **hasta cuándo** y no cuándo empezó, a propósito: así cambiar de modo no
+   * recorta ni estira una espera que ya estaba corriendo. Ver `dificultad.ts`.
    */
-  ultimaCriatura: string | null;
+  proximaCriatura: string | null;
+  /**
+   * Desde cuándo puede volver a aparecer cada ingrediente, en ISO y por id.
+   *
+   * Solo entran los que el modelo reconoce como sí mismos: lo que sale de una
+   * categoría no espera nada. Va al guardado y no en memoria porque si no,
+   * cerrar y abrir la app sería la forma de saltear la espera.
+   */
+  ingredienteDesde: Record<string, string>;
+  /** Fácil o difícil: cuánto hay que caminar y esperar. Ver `dificultad.ts`. */
+  modo: Modo;
 };
 
 export function partidaNueva(): Guardado {
@@ -159,7 +173,9 @@ export function partidaNueva(): Guardado {
     visto: new Date().toISOString(),
     saludado: false,
     sendero: senderoNuevo(),
-    ultimaCriatura: null,
+    proximaCriatura: null,
+    ingredienteDesde: {},
+    modo: 'facil',
   };
 }
 
@@ -267,7 +283,10 @@ function completar(j: Guardado): Guardado {
     cambiosDeRuleta: j.cambiosDeRuleta ?? 0,
     impulso: j.impulso ?? null,
     // Sin dato, la próxima se puede buscar ya: no hay de qué esperar.
-    ultimaCriatura: j.ultimaCriatura ?? null,
+    proximaCriatura: j.proximaCriatura ?? null,
+    ingredienteDesde: j.ingredienteDesde ?? {},
+    // Quien ya venía jugando sigue en fácil, que es donde arranca todo el mundo.
+    modo: j.modo === 'dificil' ? 'dificil' : 'facil',
     crianza: (j.crianza ?? []).map((c) => ({ ...c, entregado: c.entregado ?? {} })),
     completadas: j.completadas ?? [],
     cartas: j.cartas ?? [],

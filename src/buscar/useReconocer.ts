@@ -67,9 +67,19 @@ export type Contexto = {
   disponible: boolean;
 };
 
-/** Dos lecturas dicen lo mismo. */
+/**
+ * Dos lecturas dicen lo mismo, y **el color no cuenta**.
+ *
+ * Lo que tiene que estar firme es qué se está mirando: la clase y la escena. El
+ * color cambia de una foto a la siguiente por la luz, el encuadre y el
+ * compresor —apuntando a la misma banana salía amarillo, después tostado—, así
+ * que exigiéndolo también no había dos lecturas iguales nunca: la clase estaba
+ * bien y aun así no se publicaba, y el juego seguía con la lectura vieja.
+ *
+ * El tono de la lectura que se publica es el de la última foto, que es el que
+ * corresponde a lo que la cámara ve ahora.
+ */
 function igual(a: Lectura, b: Lectura): boolean {
-  if (a.tono !== b.tono) return false;
   if (a.clases.length !== b.clases.length) return false;
   if (!a.clases.every((c) => b.clases.includes(c))) return false;
   if (a.escenas.length !== b.escenas.length) return false;

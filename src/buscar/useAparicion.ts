@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, useWindowDimensions } from 'react-native';
 
 import { probeOrientation } from './sensores';
-import { TODO_CERCA } from '../flags';
+import type { Numeros } from '../juego/dificultad';
 
 /**
  * Cómo aparece una criatura sobre la imagen de la cámara.
@@ -64,29 +64,19 @@ export const LEJOS = 0.45;
  */
 const A_LA_VISTA_MIN = 0.5;
 
-/**
- * Cuánto se acerca por lectura del sensor si la tenés en el centro.
+/*
+ * Cuánto se acerca la criatura por lectura del sensor, cuánto se aleja si mirás
+ * para otro lado y cuánto tarda en aparecer salen del modo —fácil o difícil— y
+ * llegan en `numeros`. Ver `juego/dificultad.ts`.
  *
- * A unas treinta lecturas por segundo, esto es lo que decide cuánto hay que
- * buscar. Empezó en 0,011 —un tercio de la distancia por segundo— y con eso la
- * criatura estaba encima en tres segundos sin moverse del lugar: todo el juego
- * pasaba en un metro cuadrado. Ahora tarda cerca de veinte segundos de
- * seguimiento sostenido, que es lo que obliga a caminar y a buscarla de verdad.
+ * A unas treinta lecturas por segundo, acercarse es lo que decide cuánto hay
+ * que buscar: en fácil son unos segundos de seguimiento y en difícil hay que
+ * caminar de verdad.
  *
- * Es el número para calibrar en la calle. Más bajo, más lejos se siente.
+ * Acercarse y alejarse van atados, alrededor de un tercio. Si alejarse fuera
+ * más rápido, la criatura no se alcanzaría nunca por más que la sigas; y
+ * perderla de vista un segundo no tiene que mandarla al fondo.
  */
-const ACERCA = TODO_CERCA ? 0.011 : 0.002;
-
-/**
- * Cuánto se aleja por lectura si mirás para otro lado. Más lento que lo que se
- * acerca, a propósito: perderla de vista un segundo no debería mandarla al
- * fondo y obligar a empezar de nuevo.
- *
- * **Va atado a `ACERCA`**, alrededor de un tercio. Si alejarse fuera más rápido
- * que acercarse, la criatura no se alcanzaría nunca por más que la sigas: al
- * bajar uno hay que bajar el otro.
- */
-const ALEJA = TODO_CERCA ? 0.004 : 0.0007;
 
 /** A partir de acá se considera que la tenés cerca. */
 export const CERCA = 0.75;
@@ -107,18 +97,14 @@ export const CERCA = 0.75;
  */
 const LECTURAS_CONGELADAS = 75;
 
-/**
- * Cuánto tarda en aparecer la criatura, en milisegundos: un minuto y medio.
+/*
+ * La criatura no está apenas se abre la cámara: hay que esperarla, y cuánto lo
+ * dice el modo (`numeros.apareceCriatura`). Sin esta espera, en deriva estaba
+ * en pantalla desde el primer segundo y encontrarla no costaba nada.
  *
- * Vale para los dos motores y también en desarrollo. Sin esto, en deriva la
- * criatura estaba en pantalla apenas se entraba a la cámara, y con sensores
- * alcanzaba con girar un poco: encontrarla no costaba nada. La espera es lo que
- * la hace un hallazgo.
- *
- * Cuenta solo el tiempo con la cámara en modo bichos, y no se pierde al
- * cambiar de modo ni al salir de la cámara y volver.
+ * Cuenta solo el tiempo en modo bichos, y no se pierde al cambiar de modo ni al
+ * salir de la cámara y volver: lo que falta queda en `ESPERAS`.
  */
-const ESPERA_ANTES_DE_APARECER = 90_000;
 
 /**
  * Lo que le falta a cada espera para terminar, por su clave, en milisegundos.
@@ -161,6 +147,8 @@ type Opciones = {
    * lejos. Lo decide `dificultadDe`, que tiene una tabla por bicho.
    */
   dificultad?: number;
+  /** Los números del modo elegido: cuánto se acerca, cuánto tarda en aparecer. */
+  numeros: Numeros;
   /**
    * Congela la distancia. Va en verdadero mientras pasa algo que hay que mirar
    * —un intento fallido, la eclosión—: no corresponde que se aleje justo ahí.
@@ -220,6 +208,7 @@ export function useAparicion({
   activo,
   tamano,
   dificultad = 1,
+  numeros,
   congelado = false,
   clave,
 }: Opciones): Aparicion {
@@ -234,18 +223,21 @@ export function useAparicion({
    */
   const dificultadRef = useRef(dificultad);
   dificultadRef.current = dificultad;
+  // Por el mismo motivo que la dificultad: el bucle del sensor no se rearma.
+  const numerosRef = useRef(numeros);
+  numerosRef.current = numeros;
   const { width, height } = useWindowDimensions();
 
   const [motor, setMotor] = useState<Motor>('probando');
   const [listo, setListo] = useState(false);
   /**
    * Si ya pasó la espera y la criatura puede aparecer. Ver
-   * `ESPERA_ANTES_DE_APARECER`. Mientras no, los motores corren igual pero la
+   * `numeros.apareceCriatura`. Mientras no, los motores corren igual pero la
    * criatura no se dibuja ni se acerca.
    */
   const [habilitada, setHabilitada] = useState(false);
   // TEMPORAL, para probar: cuánto falta, refrescado cada segundo.
-  const [falta, setFalta] = useState(ESPERA_ANTES_DE_APARECER);
+  const [falta, setFalta] = useState(numeros.apareceCriatura);
   const habilitadaRef = useRef(false);
   const [offset, setOffset] = useState({ dYaw: 0, dPitch: 0 });
   const [cercania, setCercania] = useState(0);
@@ -312,7 +304,7 @@ export function useAparicion({
   useEffect(() => {
     if (!activo || habilitadaRef.current) return;
     const llave = clave ?? '';
-    const falta = ESPERAS.get(llave) ?? ESPERA_ANTES_DE_APARECER;
+    const falta = ESPERAS.get(llave) ?? numerosRef.current.apareceCriatura;
     const habilitar = () => {
       ESPERAS.set(llave, 0);
       habilitadaRef.current = true;
@@ -433,8 +425,13 @@ export function useAparicion({
         // cambia entre un bicho y otro es cuánto hay que seguirlo, no cuánto
         // castiga perderlo de vista. Dividiendo los dos, un bicho difícil sería
         // además más indulgente, que es justo al revés.
-        const acerca = ACERCA / dificultadRef.current;
-        const paso = porcion < A_LA_VISTA_MIN ? -ALEJA : enElCentro ? acerca : acerca * 0.45;
+        const acerca = numerosRef.current.acerca / dificultadRef.current;
+        const paso =
+          porcion < A_LA_VISTA_MIN
+            ? -numerosRef.current.aleja
+            : enElCentro
+              ? acerca
+              : acerca * 0.45;
         cercaniaRef.current = Math.max(0, Math.min(1, cercaniaRef.current + paso));
       }
       visibleRef.current = porcion;

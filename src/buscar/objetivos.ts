@@ -581,6 +581,22 @@ export function objetivosCompletos(ids: readonly string[]): {
 }
 
 /**
+ * Si el modelo reconoce a este ingrediente **como él mismo**.
+ *
+ * Verdadero solo cuando tiene clase propia y no la comparte con nadie: la
+ * manzana sí, la lechuga no —sale de `hoja-verde`, que son cuatro— y el ajo sí,
+ * pero el jengibre no, porque se deduce de escena y color.
+ *
+ * Lo usa la espera entre hallazgos del modo elegido, que solo vale para
+ * estos: lo que sale de una categoría —la alacena, unas piedras, la hoja verde—
+ * se sortea entre varios, y hacer esperar a cada uno vaciaría la categoría hasta
+ * dejarla sin nada que dar.
+ */
+export function seReconoceSolo(id: string): boolean {
+  return compartenClase(id).length === 1;
+}
+
+/**
  * Los ingredientes que comparten la clase de uno, él incluido y primero.
  *
  * Lo usa la ficha del ingrediente: si la lechuga se consigue apuntando a hoja

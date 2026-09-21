@@ -23,6 +23,7 @@ import { avanceDe, faltanDe, menuDe, pocionDe, tramoCompleto, type Pedido } from
 import { cuanto, saleDe, type Mezcla } from './caldero';
 import type { CodigoIdioma } from '../i18n/idiomas';
 import type { Region } from '../i18n/region';
+import { hasta, numerosDe, type Modo } from './dificultad';
 import { multiplicadorDe, nuevoImpulso, puedeGirarGratis, type Casilla } from './ruleta';
 import { recetaPorId, type Receta } from './recetas';
 import { barajar } from './azar';
@@ -89,6 +90,14 @@ type Estado = {
    * teléfono no vuelve a opinar.
    */
   setIdioma: (idioma: CodigoIdioma) => void;
+  /**
+   * Elige fácil o difícil.
+   *
+   * Vale de acá en adelante: lo que ya está esperando termina cuando iba a
+   * terminar, porque el guardado anota hasta cuándo dura cada espera y no
+   * cuándo empezó. Ver `dificultad.ts`.
+   */
+  setModo: (modo: Modo) => void;
   /** Dar por visto el saludo de la primera vez. Se llama al cerrarlo. */
   saludar: () => void;
   /** Volver a ofrecerlo. Herramienta de desarrollo. */
@@ -158,6 +167,14 @@ type Estado = {
 
   /** Suma lo encontrado con la cámara. */
   sumarIngrediente: (id: string, cantidad?: number) => void;
+  /**
+   * Anota que este ingrediente acaba de aparecer, y arranca su espera.
+   *
+   * Se llama cuando **aparece**, no cuando se lo toca: lo que se gasta es
+   * haberlo encontrado. Si contara el toque, dejar pasar el que salió sería la
+   * forma de seguir buscándolo. Cuánto dura lo dice el modo.
+   */
+  anotarHallazgo: (id: string) => void;
   /**
    * Reclamar el premio del día y avanzar un paso del camino.
    *
@@ -325,7 +342,7 @@ export const useJuego = create<Estado>((set, get) => {
         return {
           ...j,
           crianza: [...j.crianza, recienNacida(criatura)],
-          ultimaCriatura: new Date().toISOString(),
+          proximaCriatura: hasta(numerosDe(j.modo).esperaCriatura),
         };
       });
     },
@@ -623,6 +640,20 @@ export const useJuego = create<Estado>((set, get) => {
           },
         },
       }));
+    },
+
+    anotarHallazgo(id) {
+      aplicar((j) => ({
+        ...j,
+        ingredienteDesde: {
+          ...j.ingredienteDesde,
+          [id]: hasta(numerosDe(j.modo).esperaIngrediente),
+        },
+      }));
+    },
+
+    setModo(modo) {
+      aplicar((j) => ({ ...j, modo }));
     },
   };
 });

@@ -16,6 +16,7 @@ import {
 
 import { useT } from '../i18n';
 import { IDIOMAS } from '../i18n/idiomas';
+import { MODOS } from '../juego/dificultad';
 import { colorDeNivel } from '../juego/datos';
 import { useJuego } from '../juego/store';
 import type { Rutas } from '../navegacion/rutas';
@@ -69,6 +70,8 @@ export function AyudaScreen() {
   const t = useT();
   const nav = useNavigation<NativeStackNavigationProp<Rutas>>();
   const idioma = useJuego((e) => e.juego.idioma);
+  const modo = useJuego((e) => e.juego.modo);
+  const setModo = useJuego((e) => e.setModo);
   const nivel = useJuego((e) => e.juego.nivel);
   const setIdioma = useJuego((e) => e.setIdioma);
   const olvidarSaludo = useJuego((e) => e.olvidarSaludo);
@@ -126,6 +129,36 @@ export function AyudaScreen() {
             textos={[t('ayuda.albumTexto')]}
             borde
           />
+        </View>
+
+        {/* ── Fácil o difícil ─────────────────────────────────────────────
+            Cuánto hay que caminar y cuánto hay que esperar. Dos nombres y
+            nada más: qué cambia exactamente no es asunto de quien juega, y
+            escribirlo sería contar el truco. No cambia ninguna regla, y lo que
+            ya está esperando termina cuando iba a terminar: ver
+            `juego/dificultad.ts`. */}
+        <Text style={estilos.rotulo}>{t('ajustes.modo')}</Text>
+        <View style={estilos.grupo}>
+          {MODOS.map((item, i) => {
+            const puesto = item === modo;
+            return (
+              <Pressable
+                key={item}
+                onPress={() => setModo(item)}
+                style={({ pressed }) => [
+                  estilos.fila,
+                  i > 0 && estilos.filaBorde,
+                  pressed && estilos.filaPresionada,
+                ]}
+                accessibilityRole="button"
+                accessibilityState={{ selected: puesto }}
+                accessibilityLabel={t(`modos.${item}`)}
+              >
+                <Text style={estilos.filaTitulo}>{t(`modos.${item}`)}</Text>
+                {puesto ? <Ionicons name="checkmark" size={20} color={tinte} /> : null}
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* ── El idioma ───────────────────────────────────────────────────── */}

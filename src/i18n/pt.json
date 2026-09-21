@@ -349,7 +349,8 @@
     "cachorro-miel": "Filhote de mel"
   },
   "ajustes": {
-    "idioma": "IDIOMA"
+    "idioma": "IDIOMA",
+    "modo": "MODO"
   },
   "ruleta": {
     "girar": "Toque para girar. Um giro grátis por dia.",
@@ -396,5 +397,9 @@
     "blanco": "branca",
     "gris": "cinza",
     "negro": "preta"
+  },
+  "modos": {
+    "facil": "Fácil",
+    "dificil": "Difícil"
   }
 }

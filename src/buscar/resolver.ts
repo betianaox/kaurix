@@ -89,11 +89,22 @@ export type Candidato = { ingrediente: Ingrediente; fuerza: Fuerza };
  * Se filtra por familia porque las dos economías del juego no se mezclan: en el
  * campo no aparece harina. Ver `Familia` en `juego/ingredientes.ts`.
  */
-export function candidatos(lectura: Lectura, familia?: Familia): Candidato[] {
+export function candidatos(
+  lectura: Lectura,
+  familia?: Familia,
+  /**
+   * Los que están esperando su turno y no pueden salir todavía: ver
+   * `juego/dificultad.ts`. Se filtran acá, con los candidatos, y no después del
+   * sorteo: sacarlos al final haría que apuntar a una manzana en espera no
+   * diera nada, en vez de dar lo segundo que corresponda.
+   */
+  enEspera?: ReadonlySet<string>
+): Candidato[] {
   const salida: Candidato[] = [];
 
   for (const ingrediente of INGREDIENTES) {
     if (familia && familiaDelIngrediente(ingrediente) !== familia) continue;
+    if (enEspera?.has(ingrediente.id)) continue;
 
     const objetivo = OBJETIVOS[ingrediente.id];
     if (!objetivo) continue;
@@ -194,7 +205,8 @@ export function elegir(
 export function queAparece(
   lectura: Lectura,
   familia?: Familia,
-  azar: () => number = Math.random
+  azar: () => number = Math.random,
+  enEspera?: ReadonlySet<string>
 ): Ingrediente | null {
-  return elegir(candidatos(lectura, familia), azar);
+  return elegir(candidatos(lectura, familia, enEspera), azar);
 }

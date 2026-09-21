@@ -349,7 +349,8 @@
     "cachorro-miel": "Cucciolo di miele"
   },
   "ajustes": {
-    "idioma": "LINGUA"
+    "idioma": "LINGUA",
+    "modo": "MODALITÀ"
   },
   "ruleta": {
     "girar": "Tocca per girare. Un giro gratis al giorno.",
@@ -396,5 +397,9 @@
     "blanco": "bianco",
     "gris": "grigio",
     "negro": "nero"
+  },
+  "modos": {
+    "facil": "Facile",
+    "dificil": "Difficile"
   }
 }

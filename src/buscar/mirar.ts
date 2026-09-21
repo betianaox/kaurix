@@ -110,12 +110,12 @@ const CONFIANZA = 0.55;
  * foto clara de una manzana puede dar `manzana` 0,6 y `durazno` 0,2. Con 0,55
  * se perderían muchas lecturas buenas.
  *
- * 0,4 deja pasar una sola clase casi siempre y dos cuando el modelo duda entre
- * parecidas —manzana y durazno—, que es cuando conviene que las dos compitan.
- * Tampoco está medido: **no hay fotos propias para calibrarlo**, así que se
- * ajusta jugando.
+ * 0,75, mirando lo que devuelve apuntando a cosas de verdad: una banana o una
+ * manzana dan entre 0,93 y 0,99, y lo que sale de apuntar a una mesa, una
+ * pantalla apagada o una pared queda bastante abajo. Con 0,4 pasaba cualquier
+ * cosa y aparecían ingredientes donde no había nada.
  */
-const CONFIANZA_PROPIO = 0.4;
+const CONFIANZA_PROPIO = 0.75;
 
 /**
  * A cuántos puntos se achica la foto antes de mirarla.
@@ -158,12 +158,34 @@ async function foto(camara: CameraView): Promise<string | null> {
   }
 }
 
+/**
+ * HERRAMIENTA DE DESARROLLO: lo último que vio el modelo, con su confianza.
+ *
+ * Lo dibuja la cámara sobre la imagen mientras `__DEV__`, para poder ajustar el
+ * umbral apuntando a cosas de verdad.
+ */
+export let ultimoVisto = '';
+
 /** Las etiquetas que pasaron el umbral, en texto. */
 async function etiquetasDe(uri: string): Promise<string[]> {
   try {
     const crudas = await etiquetar(uri);
     const umbral = modeloPropio ? CONFIANZA_PROPIO : CONFIANZA;
-    return crudas.filter((e) => e.confianza >= umbral).map((e) => e.texto);
+    // HERRAMIENTA DE DESARROLLO: lo último que vio el modelo, pasara el umbral
+    // o no, para poder calibrarlo mirando el teléfono. La consola de Metro no
+    // recibe nada desde este equipo, así que se muestra en pantalla.
+    if (__DEV__) {
+      ultimoVisto =
+        crudas
+          .slice(0, 3)
+          .map((e) => `${e.texto || e.indice} ${Math.round(e.confianza * 100)}%`)
+          .join("   ") || "nada";
+    }
+    // Se limpia el nombre. El archivo de etiquetas que va adentro del modelo se
+    // escribió en Windows, así que cada nombre termina en un retorno de carro:
+    // en pantalla se lee igual y no coincide con ninguna clase nunca, que es la
+    // peor forma que tiene un error de aparecer.
+    return crudas.filter((e) => e.confianza >= umbral).map((e) => e.texto.trim());
   } catch {
     return [];
   }
@@ -218,6 +240,12 @@ export async function mirar(camara: CameraView): Promise<Lectura | null> {
   if (!uri) return null;
 
   const [etiquetas, color] = await Promise.all([etiquetasDe(uri), colorDe(uri)]);
+  const tono = color ? tonoDe(color) : null;
+
+  // A OSCURAS NO SE VE NADA, y el modelo igual contesta: con la cámara tapada o
+  // el cuarto apagado devolvía clases con confianza suficiente y el juego
+  // regalaba ingredientes. Si lo que hay enfrente es negro, no se vio nada.
+  if (tono === 'negro') return { clases: [], escenas: [], tono };
 
   // Con el modelo propio cada etiqueta es una clase, y las escenas salen de
   // ellas; con el base son palabras en inglés y salen de `etiquetas.ts`.
@@ -226,6 +254,6 @@ export async function mirar(camara: CameraView): Promise<Lectura | null> {
   return {
     clases,
     escenas: modeloPropio ? escenasDeClases(clases) : escenasDe(etiquetas),
-    tono: color ? tonoDe(color) : null,
+    tono,
   };
 }

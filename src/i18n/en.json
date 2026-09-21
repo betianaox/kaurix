@@ -349,7 +349,8 @@
     "cachorro-miel": "Honey pup"
   },
   "ajustes": {
-    "idioma": "LANGUAGE"
+    "idioma": "LANGUAGE",
+    "modo": "MODE"
   },
   "ruleta": {
     "girar": "Tap to spin. One free spin a day.",
@@ -396,5 +397,9 @@
     "blanco": "white",
     "gris": "gray",
     "negro": "black"
+  },
+  "modos": {
+    "facil": "Easy",
+    "dificil": "Hard"
   }
 }

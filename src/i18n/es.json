@@ -349,7 +349,8 @@
     "cachorro-miel": "Cachorro de miel"
   },
   "ajustes": {
-    "idioma": "IDIOMA"
+    "idioma": "IDIOMA",
+    "modo": "MODO"
   },
   "ruleta": {
     "girar": "Toca para girar. Un giro gratis por día.",
@@ -396,5 +397,9 @@
     "blanco": "blanco",
     "gris": "gris",
     "negro": "negro"
+  },
+  "modos": {
+    "facil": "Fácil",
+    "dificil": "Difícil"
   }
 }

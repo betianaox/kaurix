@@ -15,17 +15,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { porId, type Criatura, type Pieza } from '../art';
 import { RECONOCEDOR_MANDA } from '../flags';
-import { ingredienteAlAzar, type Ingrediente } from '../juego/ingredientes';
+import { enEspera, ingredienteAlAzar, type Ingrediente } from '../juego/ingredientes';
 import { useAnuncioRecompensado, useReintentarAlOfrecer } from '../anuncios/useAnuncioRecompensado';
 import { Conseguido } from '../components/Conseguido';
 import { useT } from '../i18n';
+import { seReconoceSolo } from '../buscar/objetivos';
 import { queAparece } from '../buscar/resolver';
 import { useAparicion } from '../buscar/useAparicion';
+import { ultimoVisto } from '../buscar/mirar';
 import { useReconocer } from '../buscar/useReconocer';
-import { CADA, useIngredientes } from '../buscar/useIngredientes';
+import { useIngredientes } from '../buscar/useIngredientes';
 import { CriaturaView, medida } from '../components/CriaturaView';
 import { juegoTerminado } from '../juego/avisos';
-import { esperaParaCriatura } from '../juego/crianza';
+import { falta, numerosDe } from '../juego/dificultad';
 import { hayLugar, useJuego } from '../juego/store';
 import { colorDeNivel, criaturaABuscar, dificultadDe, fallosAntesDeRomper } from '../juego/datos';
 import type { Rutas } from '../navegacion/rutas';
@@ -118,6 +120,7 @@ export function BuscarScreen({ navigation }: Props) {
   const juego = useJuego((e) => e.juego);
   const nacer = useJuego((e) => e.nacer);
   const sumarIngrediente = useJuego((e) => e.sumarIngrediente);
+  const anotarHallazgo = useJuego((e) => e.anotarHallazgo);
 
   const [criatura, setCriatura] = useState<Criatura | null>(null);
   const [fase, setFase] = useState<Fase>('huevo');
@@ -163,7 +166,17 @@ export function BuscarScreen({ navigation }: Props) {
     return () => clearInterval(reloj);
   }, []);
 
-  const espera = esperaParaCriatura(juego.ultimaCriatura, ahora);
+  // Desarrollo: redibuja cada segundo para que se vea lo último que miró el
+  // modelo. Solo en `__DEV__`, y el bundler saca el efecto en producción.
+  const [, tic] = useState(0);
+  useEffect(() => {
+    if (!__DEV__) return;
+    const reloj = setInterval(() => tic((n) => n + 1), 1000);
+    return () => clearInterval(reloj);
+  }, []);
+
+  const numeros = numerosDe(juego.modo);
+  const espera = falta(juego.proximaCriatura, ahora);
   const quedanPorEncontrar =
     criaturaABuscar(juego.completadas, juego.crianza.map((c) => c.criatura)) !== null;
 
@@ -262,11 +275,12 @@ export function BuscarScreen({ navigation }: Props) {
     tamano,
     // Cuánto cuesta encontrar a esta: el tutorial aparece encima casi enseguida
     // y las demás varían. Ver `dificultadDe`.
-    dificultad: criatura ? dificultadDe(criatura.id) : 1,
+    dificultad: (criatura ? dificultadDe(criatura.id) : 1) * numeros.cuestaEncontrar,
+    numeros,
     congelado: fase === 'falla' || fase === 'eclosion',
     // La espera es de 'la próxima criatura', no de una en particular: al
     // entrar se sortea cuál, y sin esto cada entrada empezaría de cero.
-    clave: juego.ultimaCriatura ?? 'primera',
+    clave: juego.proximaCriatura ?? 'primera',
   });
 
   /**
@@ -337,7 +351,7 @@ export function BuscarScreen({ navigation }: Props) {
      */
     // Y nada cuando el juego terminó —ver `terminado`— ni en modo bichos.
     activo: !!permiso?.granted && !conseguido && !terminado && modo === 'ingredientes',
-    cada: CADA,
+    cada: numeros.cadaIngrediente,
     /**
      * Qué aparece, decidido en el momento de aparecer y no antes: entre que se
      * abre la pantalla y que sale un ingrediente pasan segundos, y lo que la
@@ -362,7 +376,43 @@ export function BuscarScreen({ navigation }: Props) {
       // Mientras se prueba el resto del juego, sortea libre como antes.
       if (!RECONOCEDOR_MANDA || !disponible) return ingredienteAlAzar();
       const leido = lecturaRef.current;
-      return leido ? queAparece(leido) : null;
+      if (!leido) return null;
+
+      /*
+       * UNA COSA, UNA VEZ.
+       *
+       * Sin esto, dejar el teléfono apoyado frente a una banana da una banana
+       * cada 3,8 segundos para siempre: juntar deja de ser encontrar algo, y el
+       * video que multiplica por tres pierde sentido porque alcanza con
+       * esperar. Lo que se cobra una vez es **lo que se está mirando**; para
+       * volver a cobrar hay que ir a mirar otra cosa.
+       *
+       * La firma es la lectura entera —clases, escenas y color—, así que mover
+       * el teléfono a otra fruta vuelve a habilitar.
+       */
+      const firma = [
+        [...leido.clases].sort().join('|'),
+        [...leido.escenas].sort().join('|'),
+        leido.tono,
+      ].join('·');
+      if (firma === cobrada.current) return null;
+
+      // Y lo que ya apareció hace poco tampoco sale, aunque se cambie de
+      // escena: encontrar algo tiene que ser encontrar algo distinto. Ver
+      // el modo (`esperaIngrediente`).
+      const sale = queAparece(leido, undefined, Math.random, enEspera(juego.ingredienteDesde));
+      if (sale) {
+        cobrada.current = firma;
+        // La espera de tres horas es solo para lo que el modelo reconoce como
+        // sí mismo. Ver `seReconoceSolo`.
+        if (seReconoceSolo(sale.id)) anotarHallazgo(sale.id);
+      }
+
+      // Desarrollo: con qué lectura se decidió y qué salió, para afinar la tabla.
+      if (__DEV__) {
+        console.log('[elige]', JSON.stringify({ clases: leido.clases, tono: leido.tono, sale: sale?.id ?? null }));
+      }
+      return sale;
     },
     /**
      * Se suma en el momento de tocarlo, y recién después se anuncia.
@@ -377,6 +427,9 @@ export function BuscarScreen({ navigation }: Props) {
       setConseguido({ que: 'ingrediente', ingrediente: i });
     },
   });
+
+  /** La firma de lo último que ya dio un ingrediente. Ver `elegir`. */
+  const cobrada = useRef('');
 
   // La lectura se lee desde `elegir`, que corre adentro de un temporizador y no
   // en el render: sin la referencia veria siempre la primera.
@@ -591,6 +644,11 @@ export function BuscarScreen({ navigation }: Props) {
           </Pressable>
         </View>
 
+        {/* Desarrollo: qué está viendo el modelo, para calibrar el umbral. */}
+        {__DEV__ && modo === 'ingredientes' && RECONOCEDOR_MANDA ? (
+          <Text style={estilos.pruebaVisto}>{ultimoVisto || '…'}</Text>
+        ) : null}
+
         {/* TEMPORAL, para probar: cuánto falta para que aparezca la criatura. */}
         {__DEV__ && modo === 'bicho' && criatura && aparicion.faltaParaAparecer > 0 ? (
           <Text style={estilos.pruebaReloj}>
@@ -746,6 +804,20 @@ const estilos = StyleSheet.create({
   salir: { padding: 4 },
 
   abajo: { alignItems: 'center', gap: spacing.sm },
+  // Desarrollo: lo que ve el modelo.
+  pruebaVisto: {
+    position: 'absolute',
+    top: '12%',
+    alignSelf: 'center',
+    color: '#fff',
+    fontSize: 15,
+    textAlign: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
   // TEMPORAL, para probar.
   pruebaReloj: {
     position: 'absolute',

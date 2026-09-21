@@ -1,27 +1,4 @@
-import { TODO_CERCA } from '../flags';
 import type { EnCrianza } from './guardado';
-
-/**
- * Cuánto tiene que pasar entre encontrar una criatura y poder buscar la
- * siguiente.
- *
- * Ocho horas. Que haya lugar para cuatro no quiere decir que salgan una atrás de
- * la otra: encontrar una es un acontecimiento, y si al cerrar el cartel ya hay
- * otra esperando, deja de serlo. Además da tiempo a ocuparse de la que acaba de
- * nacer antes de sumar otra.
- *
- * Con `TODO_CERCA` es un minuto, para poder probar la secuencia entera varias
- * veces seguidas.
- */
-export const ESPERA_ENTRE_CRIATURAS = TODO_CERCA ? 60_000 : 8 * 60 * 60 * 1000;
-
-/** Cuántos milisegundos faltan para poder buscar otra criatura. Cero si ya se puede. */
-export function esperaParaCriatura(ultima: string | null, ahora = Date.now()): number {
-  if (!ultima) return 0;
-  const desde = Date.parse(ultima);
-  if (Number.isNaN(desde)) return 0;
-  return Math.max(0, desde + ESPERA_ENTRE_CRIATURAS - ahora);
-}
 
 /**
  * Las reglas de la crianza: cuánto avanza la barra, cuánto baja sola, y cuándo
