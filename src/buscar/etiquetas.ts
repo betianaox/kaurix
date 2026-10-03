@@ -133,6 +133,14 @@ export const ETIQUETAS: Record<Escena, readonly string[]> = {
   // veces. Una pared tiene que decir de que esta hecha para contar.
   ladrillo: ['brick', 'brickwork', 'brick wall', 'masonry', 'stone wall'],
   arena: ['sand', 'beach', 'dune', 'sandstone', 'desert'],
+  // PENDIENTE, `shelf` Y `shelving`. Es el mismo caso que `wall` aca arriba y
+  // todavia no esta resuelto: una biblioteca da esas dos etiquetas igual que un
+  // estante de cocina, y con la madera clara el tono sale blanco, asi que
+  // apuntarle a los libros devuelve ajo --que tiene `alacena` + blanco entre sus
+  // alternativas, ver `objetivos.ts`--. Se vio en el telefono, con una captura
+  // de la ficha incluida. La correccion es sacarlas y dejar solo las etiquetas
+  // que dicen de que estante se trata, pero toca la tabla entera y por eso
+  // espera a la proxima tanda de cambios del reconocedor.
   alacena: [
     'kitchen',
     'countertop',
