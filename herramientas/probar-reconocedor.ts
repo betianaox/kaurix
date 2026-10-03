@@ -169,6 +169,9 @@ const CASOS: { que: string; etiquetas: string[]; color: Rgb }[] = [
   { que: 'piedra violeta', etiquetas: ['Rock'], color: { r: 150, g: 100, b: 200 } },
   { que: 'arena', etiquetas: ['Sand', 'Beach'], color: { r: 214, g: 184, b: 130 } },
   { que: 'la alacena', etiquetas: ['Kitchen', 'Shelf', 'Bottle'], color: { r: 180, g: 160, b: 130 } },
+  // La biblioteca da las mismas etiquetas que la alacena y antes devolvia ajo.
+  // Tiene que quedar en nada: entre los libros no hay nada que juntar.
+  { que: 'una biblioteca', etiquetas: ['Shelf', 'Shelving', 'Book', 'Publication'], color: { r: 190, g: 170, b: 140 } },
   { que: 'la heladera', etiquetas: ['Refrigerator', 'Food'], color: { r: 200, g: 90, b: 90 } },
   { que: 'pasto', etiquetas: ['Grass', 'Plant'], color: { r: 90, g: 150, b: 60 } },
   { que: 'una maceta', etiquetas: ['Potted plant', 'Soil'], color: { r: 120, g: 82, b: 48 } },

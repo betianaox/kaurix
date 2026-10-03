@@ -133,14 +133,8 @@ export const ETIQUETAS: Record<Escena, readonly string[]> = {
   // veces. Una pared tiene que decir de que esta hecha para contar.
   ladrillo: ['brick', 'brickwork', 'brick wall', 'masonry', 'stone wall'],
   arena: ['sand', 'beach', 'dune', 'sandstone', 'desert'],
-  // PENDIENTE, `shelf` Y `shelving`. Es el mismo caso que `wall` aca arriba y
-  // todavia no esta resuelto: una biblioteca da esas dos etiquetas igual que un
-  // estante de cocina, y con la madera clara el tono sale blanco, asi que
-  // apuntarle a los libros devuelve ajo --que tiene `alacena` + blanco entre sus
-  // alternativas, ver `objetivos.ts`--. Se vio en el telefono, con una captura
-  // de la ficha incluida. La correccion es sacarlas y dejar solo las etiquetas
-  // que dicen de que estante se trata, pero toca la tabla entera y por eso
-  // espera a la proxima tanda de cambios del reconocedor.
+  // `shelf` y `shelving` se quedan, pero con veto: ver `VETOS` abajo. Una
+  // biblioteca da las mismas etiquetas que una alacena.
   alacena: [
     'kitchen',
     'countertop',
@@ -160,6 +154,27 @@ export const ETIQUETAS: Record<Escena, readonly string[]> = {
   ],
   carne: ['meat', 'beef', 'pork', 'chicken', 'steak', 'sausage', 'seafood', 'fish', 'shrimp', 'ham'],
   comida: ['food', 'dish', 'cuisine', 'ingredient', 'recipe', 'meal', 'produce'],
+};
+
+/**
+ * Etiquetas que **cancelan** una escena aunque algo de la lista de arriba haya
+ * dado positivo.
+ *
+ * El caso que las trajo: una biblioteca. El modelo la etiqueta `Shelf` y
+ * `Shelving`, igual que a un estante de cocina, y la madera clara con los lomos
+ * blancos da el tono blanco; eso cae justo en una de las alternativas del ajo y
+ * aparecía una cabeza de ajo entre los libros. Sacar `shelf` de `alacena` era la
+ * otra salida, pero en una alacena real es la etiqueta que más sale: se perdía
+ * el caso bueno para arreglar el malo.
+ *
+ * Son la excepción y no la regla. Un veto convierte "a veces aparece algo donde
+ * no correspondía" en "acá no aparece nada nunca", que es peor si se escribe de
+ * más. Se agrega uno solo cuando dos escenas comparten las etiquetas más
+ * comunes y hay una palabra que las separa sin ambigüedad: `book` en una cocina
+ * es un libro de recetas y es raro; `shelf` en una biblioteca es todos los días.
+ */
+const VETOS: Partial<Record<Escena, readonly string[]>> = {
+  alacena: ['book', 'bookcase', 'publication', 'library', 'bookshelf'],
 };
 
 /**
@@ -208,7 +223,14 @@ export function escenasDe(etiquetas: readonly string[]): Escena[] {
   for (const escena of Object.keys(ETIQUETAS) as Escena[]) {
     const busca = ETIQUETAS[escena];
     const hay = busca.some((b) => limpias.some((l) => contiene(l, b)));
-    if (hay) salida.push(escena);
+    if (!hay) continue;
+
+    // Un veto manda sobre cualquier cantidad de etiquetas a favor: lo que lo
+    // activa es justamente lo que distingue a la escena parecida de la buena.
+    const veta = VETOS[escena]?.some((v) => limpias.some((l) => contiene(l, v)));
+    if (veta) continue;
+
+    salida.push(escena);
   }
 
   return salida;
