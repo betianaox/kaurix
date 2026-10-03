@@ -40,6 +40,12 @@ yarn-error.*
 /ios
 /android
 
+# El material de la ficha de Play: las capturas que saca herramientas/captura.js
+# y el icono y el grafico destacado, recortados de las imagenes del sitio. Se
+# sube a Play, no al repo: son megabytes de PNG que se rearman cuando hacen
+# falta, y las capturas se rehacen con cada build que se publica.
+tienda/
+
 # Lo que compila Gradle adentro de un modulo propio.
 #
 # `android/` entero ya esta ignorado mas arriba, pero los modulos de

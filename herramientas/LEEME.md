@@ -129,3 +129,21 @@ node herramientas/botones.js
 Corta `assets/boton central.png` en los cinco botones de la barra de abajo y los
 deja en `assets/ui/`. El orden de la lámina es el de la barra, de izquierda a
 derecha. El de buscar sale al doble de lado porque se dibuja al doble de tamaño.
+
+## captura.js
+
+```sh
+npm run captura coleccion
+```
+
+Baja una captura del teléfono conectado por adb y la deja en `tienda/` en dos
+versiones: la nativa, con `.original.png`, y la recortada al centro a 2:1.
+
+El recorte es lo único que hace falta recordar: **Play rechaza las capturas
+donde el lado largo pasa del doble del corto**, y el teléfono de desarrollo saca
+1080×2392, que es 2,21:1. Se van unos cien píxeles arriba y abajo, que en estas
+pantallas son la barra de estado y la de gestos. Vale mirar el recorte si la
+pantalla tiene algo pegado al borde.
+
+`tienda/` está en el `.gitignore`: es material de la ficha, no del proyecto, y
+las capturas se rehacen con cada versión que se publica.

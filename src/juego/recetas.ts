@@ -29,7 +29,7 @@ import { ingredientePorId, type Ingrediente } from './ingredientes';
  * 3, 5 y 7. Basta con duplicar los sueltos —la base ya viene duplicada de su
  * propio nivel—, así que el doble se propaga solo por toda la cadena.
  *
- * Son doce contra treinta y nueve comidas, y de una criatura entera se pide
+ * Son doce contra cuarenta comidas, y de una criatura entera se pide
  * **una sola**, al final. Al mismo precio que una comida, la poción sería el
  * paso más barato de la crianza justo cuando tiene que ser el más caro.
  *
