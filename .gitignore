@@ -40,6 +40,11 @@ yarn-error.*
 /ios
 /android
 
+# Las capturas ya armadas para la ficha, con su marco y su texto abajo. Se
+# hacen a mano y se guardan aparte: aca solo molestan, porque son megabytes que
+# cambian enteros cada vez que se rehace una.
+assets/caps/
+
 # El material de la ficha de Play: las capturas que saca herramientas/captura.js
 # y el icono y el grafico destacado, recortados de las imagenes del sitio. Se
 # sube a Play, no al repo: son megabytes de PNG que se rearman cuando hacen
