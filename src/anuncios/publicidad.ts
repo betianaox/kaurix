@@ -45,9 +45,14 @@ export const adsDisponible = modulo !== null;
  * `ca-app-pub-XXXXXXXXXXXXXXXX/YYYYYYYYYY` — con barra, que es lo que lo
  * distingue del App ID, que lleva tilde de virgulilla.
  *
- * LA DE KAURIX YA ESTA CREADA: `ca-app-pub-5829308591228932/2381630020`, y el
+ * LA DE KAURIX YA ESTA CREADA: `ca-app-pub-5829308591228932/4336851660`, y el
  * App ID de la app —el de la tilde, que va en `app.json`— es
- * `ca-app-pub-5829308591228932~8823020495`.
+ * `ca-app-pub-5829308591228932~4132837538`.
+ *
+ * Son los de la app de AdMob que quedo vinculada a la ficha publicada. Los
+ * primeros —`~8823020495` y `/2381630020`— eran de la app que se habia creado a
+ * mano antes de publicar, y ya no sirven: un App ID que no corresponde a la
+ * ficha no paga.
  *
  * El bloque NO se escribe aca a proposito: va en la variable de entorno del
  * perfil de produccion de EAS, por lo que dice el parrafo de arriba.
